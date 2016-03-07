@@ -149,7 +149,7 @@ bindkey -M vicmd "ciw" kill-word
 set -o ignoreeof
 
 function zle-line-init zle-keymap-select {
-    RPS1="${${KEYMAP/vicmd/-- NORMAL --}/(main|viins)/-- INSERT --}"
+    RPS1="${${KEYMAP/vicmd/-- CMD --}/(main|viins)/-- INS --}"
     RPS2=$RPS1
     zle reset-prompt
     }
