@@ -1,0 +1,5 @@
+[user]
+	name = Barrett Lowe
+	email = barrett.e.lowe@raytheon.com
+[diff]
+	tool = vimdiff
