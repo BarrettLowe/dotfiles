@@ -123,6 +123,7 @@ alias srm='svn remove'
 alias sa='svn add'
 
 alias gs='git status'
+alias gdd='git difftool -d'
 
 alias mktags='ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q .'
 
@@ -133,12 +134,15 @@ vt (){
     "$@" | vim -
 }
 
+#ZLE BINDINGS
 bindkey "[6~" history-beginning-search-forward
 bindkey "[5~" history-beginning-search-backward
 bindkey "^j" history-beginning-search-forward
 bindkey "" history-beginning-search-backward 
 bindkey "[3~" delete-char
 bindkey -M viins "" backward-delete-char
+bindkey -M vicmd "L" end-of-line
+bindkey -M vicmd "H" beginning-of-line
 bindkey "" vi-undo-change
 bindkey -M vicmd "ciw" kill-word
 
