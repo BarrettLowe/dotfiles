@@ -59,20 +59,22 @@ set autoindent
 set smartindent
 set laststatus=2
 
-
 """"""""""""""""""""""""""""""""""
 "" CSCOPE ""
 """""""""""""""""""""""""""""""""
-no \s: cs find s <C-r>=expand("<cword>")<CR><CR>
-no \d : cs find d <C-r>=expand("<cword>")<CR><CR>
-no \c : cs find c <C-r>=expand("<cword>")<CR><CR>
-no \t : cs find t <C-r>=expand("<cword>")<CR><CR>
-no \e : cs find e <C-r>=expand("<cword>")<CR><CR>
-no \f : cs find f <C-r>=expand("<cword>")<CR><CR>
-no \i : cs find i <C-r>=expand("<cword>")<CR><CR>
-no \d : cs find d <C-r>=expand("<cword>")<CR><CR>
+noremap \s : cs find s <C-r>=expand("<cword>")<CR><CR>
+noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
+noremap \c : cs find c <C-r>=expand("<cword>")<CR><CR>
+noremap \t : cs find t <C-r>=expand("<cword>")<CR><CR>
+noremap \e : cs find e <C-r>=expand("<cword>")<CR><CR>
+noremap \f : cs find f <C-r>=expand("<cword>")<CR><CR>
+noremap \i : cs find i <C-r>=expand("<cword>")<CR><CR>
+noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
 
+let g:unite_source_outline_ctags_program='\home\z1113218\DevTools\bin\ctags'
 set tags-=./tags tags^=./tags;
+noremap <c-\> :split<cr> :exec("tag ".expand("<cword>"))<cr>zz
+
 set csto=0
 if filereadable('cscope.out')
     cs add cscope.out
@@ -108,10 +110,10 @@ nmap <silent> <C-j> :wincmd j<CR>
 nmap <silent> <C-h> :wincmd h<CR>
 nmap <silent> <C-k> :wincmd k<CR>
 nmap <silent> <C-l> :wincmd l<CR>
-map <C-J> :call WinMove('j')<cr>
-map <C-H> :call WinMove('h')<cr>
-map <C-K> :call WinMove('k')<cr>
-map <C-L> :call WinMove('l')<cr>
+map <silent><C-J> :call WinMove('j')<cr>
+map <silent><C-H> :call WinMove('h')<cr>
+map <silent><C-K> :call WinMove('k')<cr>
+map <silent><C-L> :call WinMove('l')<cr>
 
 function! WinMove(key)
     let t:curwin = winnr()
@@ -152,6 +154,8 @@ noremap <leader><leader>lw :set wrap!<cr>
 noremap <leader>rld :source ~/.vimrc<cr>
 noremap <silent><leader>qq :bd<cr>
 noremap <silent><leader>rn :set relativenumber!<cr>
+noremap <silent><leader>a ggVG
+noremap <silent><C-p> %
 
 
 """"""""""""""""""""""""""""""""""
@@ -169,17 +173,66 @@ nnoremap <silent>]q :cnext<cr>
 nnoremap <silent>[q :cprev<cr>
 nnoremap <silent>]Q :cfirst<cr>
 nnoremap <silent>[Q :clast<cr>
-nnoremap <silent><leader>qf :botright copen<cr>:set cursorline<cr>
-autocmd BufReadPost quickfix nnoremap <buffer> <cr> <cr>:execute functions#TrunkGitDiffC()<cr>
+"nnoremap <silent><leader>qf :botright copen<cr>:set cursorline<cr>
+nnoremap <silent><leader>qf :call ToggleQuickFix()<cr>
+""autocmd BufReadPost quickfix nnoremap <buffer> <cr> <cr>:execute functions#TrunkGitDiffC()<cr>
 
+let g:quickFixOpen = 0
+
+function! ToggleQuickFix()
+    if g:quickFixOpen
+        cclose
+        let g:quickFixOpen = 0
+    else
+        copen
+        let g:quickFixOpen = 1
+    endif
+endfunction
 
 """"""""""""""""""""""""""""""""""
 "" Glog  MAPPINGS ""
 """"""""""""""""""""""""""""""""""
+" These will diff previous versions of the file from a git repository
+" TODO: make this work only when there is a git repo and when
+"       the quickfix list is populated with stuff
 nnoremap <silent>]qq :cnext<cr> :windo diffthis<cr>
 nnoremap <silent>[qq :cprev<cr> :windo diffthis<cr>
 nnoremap <silent>]QQ :cfirst<cr> :windo diffthis<cr>
 nnoremap <silent>[QQ :clast<cr> :windo diffthis<cr>
+
+""""""""""""""""""""""""""""""""""
+"" Matlab  MAPPINGS ""
+""""""""""""""""""""""""""""""""""
+augroup matlab
+    autocmd!
+    autocmd BufEnter *.m compiler mlint
+    autocmd BufEnter *.m nnoremap <silent><leader>mb :call MSetBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>md :call MDelBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>mda :call VimuxSendText("dbclear all")<cr> :call VimuxSendKeys("Enter")<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>ms :call VimuxSendText("dbstep")<cr> :call VimuxSendKeys("Enter")<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>mc :call VimuxSendText("dbcont")<cr> :call VimuxSendKeys("Enter")<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>mR :call VimuxSendText(expand("%:r"))<cr> :call VimuxSendKeys("Enter")<cr>
+    autocmd BufEnter *.m nnoremap <silent><leader>mr :call VimuxSendText(getline("."))<cr> :call VimuxSendKeys("Enter")<cr>
+augroup END
+
+function! MDelBreakpoint()
+    let t:ln=line(".")
+    let t:fn=expand("%:r")
+    "let t:theCall="dbstop in " . t:fn . " at " . t:ln
+    call VimuxSendText("dbclear in " . t:fn . " at " . t:ln)
+    call VimuxSendKeys("Enter")
+    "echo t:theCall
+endfunction
+
+function! MSetBreakpoint()
+    let t:ln=line(".")
+    let t:fn=expand("%:r")
+    "let t:theCall="dbstop in " . t:fn . " at " . t:ln
+    call VimuxSendText("dbstop in " . t:fn . " at " . t:ln)
+    call VimuxSendKeys("Enter")
+    "echo t:theCall
+endfunction
+
 
 """"""""""""""""""""""""""""""""""
 "" MOVEMENT MAPPINGS ""
@@ -217,8 +270,8 @@ nnoremap <C-n><C-g> :Unite grep -path=$PWD -input=
 nnoremap <C-q>      :<Plug>(unite_print_mesage_log)
 nnoremap <C-n><C-g>f :Unite -input=<C-R><C-W> <cr>
 nnoremap <C-n><C-g>w :Unite grep -path=$PWD -input=<C-R><C-W> <cr>
-nnoremap ** :Unite line -no-start-insert -input=<C-R><C-W> <cr>
-nnoremap // :Unite -start-insert line <cr>
+nnoremap <C-n>* :Unite line -no-start-insert -input=<C-R><C-W> <cr>
+nnoremap <C-n>/ :Unite -start-insert line <cr>
 
 let g:unite_options_direction='dynamixbottom'
 if executable('ag')
@@ -244,6 +297,7 @@ let g:unite_source_menu_menus.git.command_candidates = {
             \ }
 
 augroup VimrcAutocmds
+    autocmd!
     autocmd VimEnter * if exists(':Unite') | call s:UniteSetup() | endif
     autocmd FileType unite call s:UniteSettings()
     "autocmd CursorHold * silent! call unite#sources#history_yahk#_append()
@@ -341,10 +395,10 @@ vnoremap <leader>vs yy:VimuxSendText(@0)<cr>
 nnoremap <F5> :GundoToggle<CR>
 
 "Airline
-let g:airline_theme = "luna"
+let g:airline_theme = "solarized"
 let g:airline_powerline_fonts = 1
 let g:extensions = ['tabline', 'tagbar']
-"let g:tmuxline_theme = 'airline'
+let g:tmuxline_theme = 'airline'
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tmuxline#enabled = 1
 let g:airline#extensions#tmuxline#snapshot_file = "~/.tmux-statusline-colors.conf"
@@ -352,15 +406,16 @@ let g:tmuxline_powerline_separators = 1
 let g:tmuxline_preset = 'crosshair'
 
 "MultipleCursor
-let g:multi_cursor_use_default_mapping=0
-let g:multi_cursor_next_key='<c-m>'
-let g:multi_cursor_prev_key='<c-p>'
-let g:multi_cursor_skip_key='<c-x>'
-let g:multi_cursor_quit_key='<Esc>'
+"let g:multi_cursor_use_default_mapping=0
+"let g:multi_cursor_next_key='<c-m>'
+"let g:multi_cursor_prev_key='<c-p>'
+"let g:multi_cursor_skip_key='<c-x>'
+"let g:multi_cursor_quit_key='<Esc>'
 
 autocmd VimEnter * Tmuxline
 
 syntax enable
 set background=dark
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
+let g:solarized_termtrans=1 
 colorscheme solarized

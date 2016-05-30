@@ -81,7 +81,9 @@ source $ZSH/oh-my-zsh.sh
 # The following lines were added by compinstall
 
 zstyle ':completion:*' completer _complete _ignored
-zstyle ':completion:*' matcher-list 'm:{[:lower:]}={[:upper:]} m:{[:lower:][:upper:]}={[:upper:][:lower:]} r:|[._-]=** r:|=**'
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z} r:|[-_./]=** r:|=**' '+l:|=* r:|=*'
+
+# zstyle ':completion:*' matcher-list 'm:{[:lower:]}={[:upper:]} m:{[:lower:][:upper:]}={[:upper:][:lower:]} r:|[._-]=** r:|=**'
 zstyle :compinstall filename '/home/z1113218/.zshrc'
 
 autoload -Uz compinit
@@ -98,14 +100,22 @@ compinit
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# when using remote desktop don't screw up colors
+# if [[ -e $SSH_CONNECTION ]]; then
+alias tmux="TERM=screen-256color-bce tmux"
+# fi
+
 alias zc="vim ~/.zshrc"
 alias vc="vim ~/.vimrc"
 alias tc="vim ~/.tmux.conf"
-alias tmux="TERM=screen-256color-bce tmux"
 alias zrld="source ~/.zshrc"
 alias gi='grep -ri'
 alias gil='grep -ril'
 alias gl='grep -rl'
+
+alias matlab='/apps/matlab_r2015b/bin/matlab'
+alias rmat='/apps/matlab_r2015b/bin/matlab -nodesktop -nosplash -nosoftwareopengl'
 
 alias grep='grep --color=auto'
 alias gi='grep -ri'
@@ -132,6 +142,12 @@ bindkey -v
 # vimthis
 vt (){
     "$@" | vim -
+}
+
+# index a project
+index() {
+    ctags -R
+    cscope -bvRb
 }
 
 #ZLE BINDINGS
@@ -162,7 +178,7 @@ bindkey -M vicmd 'v' edit-command-line
 bindkey -M viins "jk" vi-cmd-mode
 
 if (tmux has -t Pasta 2> /dev/null) ; then
-    tmux attach-session -t Pasta
+    tmux attach-session -d -t Pasta
 else 
     tmux new-session -s Pasta
 fi
