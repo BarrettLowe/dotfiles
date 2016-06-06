@@ -135,7 +135,7 @@ alias sa='svn add'
 alias gs='git status'
 alias gdd='git difftool -d'
 
-alias mktags='ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q .'
+alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
 
 bindkey -v
 
