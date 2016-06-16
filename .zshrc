@@ -5,6 +5,9 @@ export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
 export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
 export EDITOR=vim
 export KEYTIMEOUT=40
+typeset -U MANPATH
+export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
+typeset -U path
 path=(/apps/python_2.7.11/bin $path)
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
