@@ -205,8 +205,8 @@ nnoremap <silent>[QQ :clast<cr> :windo diffthis<cr>
 augroup MATLAB
     autocmd!
     autocmd BufEnter *.m compiler mlint
-    autocmd BufEnter *.m nnoremap <silent><leader>mb :call MSetBreakpoint()<cr>
-    autocmd BufEnter *.m nnoremap <silent><leader>md :call MDelBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent><space>    :call MSetBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent>d<space>    :call MDelBreakpoint()<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>mda :call VimuxSendText("dbclear all")<cr> :call VimuxSendKeys("Enter")<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>ms :call VimuxSendText("dbstep")<cr> :call VimuxSendKeys("Enter")<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>mc :call VimuxSendText("dbcont")<cr> :call VimuxSendKeys("Enter")<cr>
@@ -265,6 +265,8 @@ nnoremap <C-n><C-n> :Unite -start-insert file_rec/git<cr>
 nnoremap <C-n><C-d> :UniteWithBufferDir -start-insert file<cr>
 nnoremap <C-n><C-r> :Unite -start-insert file_rec<cr>
 nnoremap <C-n><C-b> :Unite buffer<cr>
+nnoremap <C-n><C-j> :Unite jump<cr>
+nnoremap <C-n>j :Unite jump<cr>
 nnoremap <C-n><C-o> :Unite -start-insert outline <cr>
 nnoremap <C-n><C-g> :Unite grep -path=$PWD -input=
 nnoremap <C-q>      :<Plug>(unite_print_mesage_log)
