@@ -34,7 +34,7 @@ set wildmode=list:full
 set diffopt=filler,iwhite
 set cursorline
 
-set clipboard=unnamed,unnamedplus
+set clipboard=unnamed
 
 set ttyfast
 
