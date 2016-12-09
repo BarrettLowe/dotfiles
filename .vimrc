@@ -14,6 +14,7 @@ set relativenumber
 set nocompatible
 set hidden
 set ttimeoutlen=50
+set mouse=a
 
 set autoread
 
@@ -60,6 +61,11 @@ set smartindent
 set laststatus=2
 
 """"""""""""""""""""""""""""""""""
+"" COMMENTARY ""
+"""""""""""""""""""""""""""""""""
+autocmd filetype matlab setlocal commentstring=%%s%
+
+""""""""""""""""""""""""""""""""""
 "" CSCOPE ""
 """""""""""""""""""""""""""""""""
 noremap \s : cs find s <C-r>=expand("<cword>")<CR><CR>
@@ -84,13 +90,6 @@ elseif $CSCOPE_DB != ""
     cs add $CSCOPE_DB
 endif
 set cscopeverbose
-
-"noremap i h 
-"noremap I H
-"noremap h i
-"noremap H I
-"noremap j <Left>
-"noremap k g<Down>
 
 inoremap jk <esc>
 nnoremap n nzz
@@ -203,7 +202,7 @@ nnoremap <silent>[QQ :clast<cr> :windo diffthis<cr>
 """"""""""""""""""""""""""""""""""
 "" Matlab  MAPPINGS ""
 """"""""""""""""""""""""""""""""""
-augroup matlab
+augroup MATLAB
     autocmd!
     autocmd BufEnter *.m compiler mlint
     autocmd BufEnter *.m nnoremap <silent><leader>mb :call MSetBreakpoint()<cr>
@@ -214,6 +213,7 @@ augroup matlab
     autocmd BufEnter *.m nnoremap <silent><leader>mR :call VimuxSendText(expand("%:r"))<cr> :call VimuxSendKeys("Enter")<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>mr :call VimuxSendText(getline("."))<cr> :call VimuxSendKeys("Enter")<cr>
 augroup END
+
 
 function! MDelBreakpoint()
     let t:ln=line(".")

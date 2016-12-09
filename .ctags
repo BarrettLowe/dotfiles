@@ -1,0 +1,5 @@
+--regex-MatLab=/classdef\s+([a-zA-Z]+)$/\1/c,class/i
+--regex-MatLab=/function\s+([a-zA-Z]+)\s*\(\)/\1/f,function/i
+--regex-MatLab=/properties/Properties/p,properties/i
+--regex-MatLab=/methods/Methods/m,methods/i
+--regex-MatLab=/enumeration/Enumeration/e,enumeration/i
