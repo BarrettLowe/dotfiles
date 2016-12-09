@@ -71,7 +71,7 @@ noremap \f : cs find f <C-r>=expand("<cword>")<CR><CR>
 noremap \i : cs find i <C-r>=expand("<cword>")<CR><CR>
 noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
 
-let g:unite_source_outline_ctags_program='\home\z1113218\DevTools\bin\ctags'
+" let g:unite_source_outline_ctags_program='$HOME\DevTools\bin\ctags'
 set tags-=./tags tags^=./tags;
 noremap <c-\> :split<cr> :exec("tag ".expand("<cword>"))<cr>zz
 

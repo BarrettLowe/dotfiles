@@ -58,7 +58,7 @@ plugins=(themes tmux git)
 
 # User configuration
 DEFAULT_USER=z1113218
-export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:$PATH
+export PATH=$HOME/DevTools/bin:$HOME/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH
 # export MANPATH="/usr/local/man:$MANPATH"
 
 source $ZSH/oh-my-zsh.sh
