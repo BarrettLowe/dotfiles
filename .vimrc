@@ -14,7 +14,7 @@ set relativenumber
 set nocompatible
 set hidden
 set ttimeoutlen=50
-set mouse=a
+set mouse=
 
 set autoread
 
@@ -59,6 +59,21 @@ set encoding=utf8
 set autoindent
 set smartindent
 set laststatus=2
+
+
+""""""""""""""""""""""""""""""""""
+"" SYNTASTIC ""
+"""""""""""""""""""""""""""""""""
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+
 
 """"""""""""""""""""""""""""""""""
 "" COMMENTARY ""
@@ -155,6 +170,52 @@ noremap <silent><leader>qq :bd<cr>
 noremap <silent><leader>rn :set relativenumber!<cr>
 noremap <silent><leader>a ggVG
 noremap <silent><C-p> %
+noremap <silent><leader>ma :make<cr>
+
+noremap <silent><leader>m :MakeAsync('make -j26')<cr>
+function! OutHandler_Make(job, message)
+endfunction
+function! ExitHandler_Make(job_message)
+    exec 'silent! cb! ' . g:makeBufNum
+    let list = getqflist()
+    let g:lastMakeTime = strftime("%H:%M")
+    let ecount = 0
+    for i in list
+        if i.lnum != 0
+            let ecount+=1
+        endif
+    endfor
+    let g:makeErrorCount = ecount
+    exec 'AirlineRefresh'
+    exec g:makeBufNum . 'bdelete!'
+    if g:makeErrorCount > 0
+        exe 'cfirst'
+        exe 'cnfile'
+    endif
+endfunction
+function! MakeAsync(cmd)
+    mark a
+    let cmd = split(a:cmd)
+    let currentBuff = bufnr('%')
+    let g:makeBufNum = bufnr('make_buffer',1)
+    exec g:makeBufNum . 'bufdo %d'
+    exec below sb ' . g:makeBufNum
+    exec 'resize ' . (winheight(0) * 1/4)
+    setlocal filetype='make_buffer'
+    " TODO stop the job when the buffer gets closed
+    exec WinMove('k')
+    let job = job_start(cmd, {'out_io' : 'buffer',
+                \'in_io'    :   'null',
+                \'err_io'   :   'buffer',
+                \'err_name' :   'make_buffer',
+                \'out_name' :   'make_buffer',
+                \'out_cb'   :   'OutHandler_Make',
+                \'exit_cb'  :   'ExitHandler_Make'})
+    let g:makeErrorCount = '...'
+    exec 'AirlineRefresh'
+    'a
+endfunction
+command! -nargs=1 MakeAsync call MakeAsync(<args>)
 
 
 """"""""""""""""""""""""""""""""""
@@ -387,7 +448,11 @@ nnoremap <silent> <Leader>oh :FSLeft<cr>
 nnoremap <silent> <Leader>ok :FSAbove<cr>
 nnoremap <silent> <Leader>oj :FSBelow<cr>
 
-nnoremap <leader>p :call VimuxRunCommandInDir("python", 1)<cr>
+" autocmd FileType python nnoremap <leader>p :call VimuxPromptCommand('python '.bufname("%"))<cr>
+augroup Python
+    autocmd!
+    autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
+augroup END
 
 noremap <leader>dp :diffpu<cr>
 noremap <leader>dg :diffg<cr>
@@ -406,6 +471,8 @@ let g:airline#extensions#tmuxline#enabled = 1
 let g:airline#extensions#tmuxline#snapshot_file = "~/.tmux-statusline-colors.conf"
 let g:tmuxline_powerline_separators = 1
 let g:tmuxline_preset = 'crosshair'
+
+let g:jedi#force_py_version = 3
 
 "MultipleCursor
 "let g:multi_cursor_use_default_mapping=0
