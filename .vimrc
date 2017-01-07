@@ -14,7 +14,8 @@ set relativenumber
 set nocompatible
 set hidden
 set ttimeoutlen=50
-set mouse=a
+set mouse=
+set completeopt=longest,menuone
 
 set autoread
 
@@ -34,7 +35,7 @@ set wildmode=list:full
 set diffopt=filler,iwhite
 set cursorline
 
-set clipboard=unnamed
+" set clipboard=unnamed
 
 set ttyfast
 
@@ -405,6 +406,13 @@ let g:airline#extensions#tmuxline#snapshot_file = "~/.tmux-statusline-colors.con
 let g:tmuxline_powerline_separators = 1
 let g:tmuxline_preset = 'crosshair'
 
+" Jedi
+" let g:jedi#force_py_version = 3
+
+" define my own mappings for git gutter
+let g:gitgutter_map_keys=0
+nmap <silent> ]gg <Plug>GitGutterNextHunk
+nmap <silent> [gg <Plug>GitGutterPrevHunk
 "MultipleCursor
 "let g:multi_cursor_use_default_mapping=0
 "let g:multi_cursor_next_key='<c-m>'
@@ -418,4 +426,5 @@ syntax enable
 set background=dark
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
 let g:solarized_termtrans=1 
+let g:ipy_perform_mappings=0
 colorscheme solarized

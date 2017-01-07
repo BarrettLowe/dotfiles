@@ -2,10 +2,13 @@
 export ZSH=$HOME/.oh-my-zsh
 export LD_LIBRARY_PATH=$HOME/DevTools/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
 export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
 export EDITOR=vim
 export KEYTIMEOUT=40
-path=(/apps/python_2.7.11/bin $path)
+export PYTHON_PATH=/Users/barrettlowe/anaconda3/lib/python3.5/site-packages
+# export PYTHONPATH=/Users/barrettlowe/anaconda3/envs/python34/bin/:$PYTHONPATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -58,7 +61,7 @@ plugins=(themes tmux git)
 
 # User configuration
 DEFAULT_USER=z1113218
-export PATH=$HOME/DevTools/bin:$HOME/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH
+export PATH=$HOME/DevTools/bin:/Users/barrettlowe/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH
 # export MANPATH="/usr/local/man:$MANPATH"
 
 source $ZSH/oh-my-zsh.sh
@@ -106,9 +109,10 @@ compinit
 alias tmux="TERM=screen-256color-bce tmux"
 # fi
 
-alias zc="vim ~/.zshrc"
-alias vc="vim ~/.vimrc"
-alias tc="vim ~/.tmux.conf"
+alias zc="vim ~/dotfiles/.zshrc"
+alias vc="vim ~/dotfiles/.vimrc"
+alias tc="vim ~/dotfiles/.tmux.conf"
+alias v="vim"
 alias zrld="source ~/.zshrc"
 alias gi='grep -ri'
 alias gil='grep -ril'
