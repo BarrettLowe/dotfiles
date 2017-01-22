@@ -151,7 +151,7 @@ noremap <leader>cd :cd ..<cr>
 noremap <leader>vc :e ~/.vimrc<cr>
 noremap <leader><leader>sb :windo :set scrollbind!<cr>
 noremap <leader><leader>lw :set wrap!<cr>
-noremap <leader>rld :source ~/.vimrc<cr>
+noremap <leader>rld ma:source ~/.vimrc<cr>'a
 noremap <silent><leader>qq :bd<cr>
 noremap <silent><leader>rn :set relativenumber!<cr>
 noremap <silent><leader>a ggVG
@@ -163,8 +163,8 @@ noremap <silent><C-p> %
 """""""""""""""""""""""""""""""""
 nnoremap <silent><leader>gl :Glog<cr>
 nnoremap <silent><leader>gld :call functions#TrunkGitDiff()<cr>
-nnoremap <silent><leader>gst :Gstatus<cr>
-nnoremap <silent><leader>gdi :Gdiff<cr>
+nnoremap <silent><leader>gs :Gstatus<cr>
+nnoremap <silent><leader>gd :Gdiff<cr>
 
 """"""""""""""""""""""""""""""""""
 "" QUICKFIX MAPPINGS ""
@@ -423,7 +423,7 @@ nmap <silent> [gg <Plug>GitGutterPrevHunk
 autocmd VimEnter * Tmuxline
 
 syntax enable
-set background=dark
+set background=light
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
 let g:solarized_termtrans=1 
 let g:ipy_perform_mappings=0
