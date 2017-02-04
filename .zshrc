@@ -1,14 +1,18 @@
 # path to your oh-my-zsh installation.
 export ZSH=$HOME/.oh-my-zsh
+typeset -U LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/DevTools/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib64:$LD_LIBRARY_PATH
 export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
 export EDITOR=vim
 export KEYTIMEOUT=40
 typeset -U MANPATH
 export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
 typeset -U path
-path=(/apps/python_2.7.11/bin $path)
+path=(/apps/anaconda3_4.1.1/bin $path)
+export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -61,8 +65,6 @@ plugins=(themes tmux git)
 
 # User configuration
 DEFAULT_USER=z1113218
-export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:$PATH
-# export MANPATH="/usr/local/man:$MANPATH"
 
 source $ZSH/oh-my-zsh.sh
 # You may need to manually set your language environment
@@ -112,13 +114,14 @@ alias tmux="TERM=screen-256color-bce tmux"
 alias zc="vim ~/.zshrc"
 alias vc="vim ~/.vimrc"
 alias tc="vim ~/.tmux.conf"
+alias v="vim -X"
+
 alias zrld="source ~/.zshrc"
 alias gi='grep -ri'
 alias gil='grep -ril'
 alias gl='grep -rl'
 
-alias matlab='/apps/matlab_r2015b/bin/matlab'
-alias rmat='/apps/matlab_r2015b/bin/matlab -nodesktop -nosplash -nosoftwareopengl'
+alias rmat='matlab -nodesktop -nosplash -nosoftwareopengl'
 
 alias grep='grep --color=auto'
 alias gi='grep -ri'
@@ -139,6 +142,12 @@ alias gs='git status'
 alias gdd='git difftool -d'
 
 alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
+
+alias findBin="find -type f -executable -exec file -i \'{}\' \; | grep \'charset=binary\'"
+alias findExt='find . -type f | perl -ne "print $1 if m/(\\.[^.\\/]+)$/\" | sort -u'
+# function findExt() {
+#     find . -type f | perl -ne \'print $1 if m/(\\.[^.\\/]+)$/\' | sort -u
+# }
 
 bindkey -v
 

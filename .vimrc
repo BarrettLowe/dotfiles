@@ -15,6 +15,7 @@ set nocompatible
 set hidden
 set ttimeoutlen=50
 set mouse=
+set completeopt=longest,menuone
 
 set autoread
 
@@ -397,7 +398,7 @@ func! s:UniteSettings()
     nmap <buffer> M <Plug>(unite_toggle_mark_current_candidate_up)
     nmap <buffer> <F1> <Plug>(unite_quick_help)
     imap <buffer> <F1> <Esc><Plug>(unite_quick_help)
-    imap <buffer> <C-Space> <Plug>(unite_toggle_mark_current_candidate)
+    " imap <buffer> <C-Space> <Plug>(unite_toggle_mark_current_candidate)
     inor <buffer> . \.
     inor <buffer> \. .
     inor <buffer> <expr> <BS>
@@ -452,7 +453,12 @@ nnoremap <silent> <Leader>oj :FSBelow<cr>
 augroup Python
     autocmd!
     autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
+    let g:jedi#auto_initialization = 0
 augroup END
+let g:jedi#force_py_version = 3
+
+" map <C-@> <C-Space> 
+autocmd filetype python inoremap . .<C-x><C-o>
 
 noremap <leader>dp :diffpu<cr>
 noremap <leader>dg :diffg<cr>
@@ -472,7 +478,6 @@ let g:airline#extensions#tmuxline#snapshot_file = "~/.tmux-statusline-colors.con
 let g:tmuxline_powerline_separators = 1
 let g:tmuxline_preset = 'crosshair'
 
-let g:jedi#force_py_version = 3
 
 "MultipleCursor
 "let g:multi_cursor_use_default_mapping=0

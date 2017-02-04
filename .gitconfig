@@ -8,3 +8,6 @@
     tool = default-difftool
 [difftool "default-difftool"]
     cmd = vim -f '+execute \"DirDiff\" argv(0) argv(1)' $LOCAL $REMOTE
+[http]
+	proxy = http://proxy.ext.ray.com:80
+	sslVerify = false
