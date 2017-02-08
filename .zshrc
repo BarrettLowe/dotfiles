@@ -156,6 +156,15 @@ vt (){
     "$@" | vim -
 }
 
+vimDirDiff()
+{
+    echo "Please wait while vim diffs the files"
+    args=$@
+    vim -f "+execute \"DirDiff $args\""
+    echo "Thanks for using vimDirDiff"
+}
+
+
 # index a project
 index() {
     ctags -R
