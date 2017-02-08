@@ -8,6 +8,10 @@
     tool = default-difftool
 [difftool "default-difftool"]
     cmd = vim -f '+execute \"DirDiff\" argv(0) argv(1)' $LOCAL $REMOTE
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+    prompt = false
 [http]
 	proxy = http://proxy.ext.ray.com:80
 	sslVerify = false
