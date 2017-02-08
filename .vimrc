@@ -35,7 +35,7 @@ set wildmode=list:full
 set diffopt=filler,iwhite
 set cursorline
 
-set clipboard=unnamed,unnamedplus
+" set clipboard=unnamed
 
 set ttyfast
 
@@ -93,7 +93,7 @@ noremap \f : cs find f <C-r>=expand("<cword>")<CR><CR>
 noremap \i : cs find i <C-r>=expand("<cword>")<CR><CR>
 noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
 
-" let g:unite_source_outline_ctags_program='\home\z1113218\DevTools\bin\ctags'
+" let g:unite_source_outline_ctags_program='$HOME\DevTools\bin\ctags'
 set tags-=./tags tags^=./tags;
 noremap <c-\> :split<cr> :exec("tag ".expand("<cword>"))<cr>zz
 
@@ -489,7 +489,13 @@ let g:airline#extensions#tmuxline#snapshot_file = "~/.tmux-statusline-colors.con
 let g:tmuxline_powerline_separators = 1
 let g:tmuxline_preset = 'crosshair'
 
+" Jedi
+" let g:jedi#force_py_version = 3
 
+" define my own mappings for git gutter
+let g:gitgutter_map_keys=0
+nmap <silent> ]gg <Plug>GitGutterNextHunk
+nmap <silent> [gg <Plug>GitGutterPrevHunk
 "MultipleCursor
 "let g:multi_cursor_use_default_mapping=0
 "let g:multi_cursor_next_key='<c-m>'
@@ -503,4 +509,5 @@ syntax enable
 set background=dark
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
 let g:solarized_termtrans=1 
+let g:ipy_perform_mappings=0
 colorscheme solarized
