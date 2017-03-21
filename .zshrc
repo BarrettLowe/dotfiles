@@ -64,8 +64,8 @@ DISABLE_AUTO_UPDATE="true"
 plugins=(themes tmux git)
 
 # User configuration
-DEFAULT_USER=z1113218
-export PATH=$HOME/DevTools/bin:/Users/barrettlowe/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH
+DEFAULT_USER=$(whoami) # this is to shorten the zsh prompt - may cause issues
+export PATH="$HOME/DevTools/bin:/home/$(whoami)/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH"
 # export MANPATH="/usr/local/man:$MANPATH"
 
 source $ZSH/oh-my-zsh.sh

@@ -501,11 +501,11 @@ nnoremap <silent> <Leader>ok :FSAbove<cr>
 nnoremap <silent> <Leader>oj :FSBelow<cr>
 
 " autocmd FileType python nnoremap <leader>p :call VimuxPromptCommand('python '.bufname("%"))<cr>
-augroup Python
-    autocmd!
-    autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
-    let g:jedi#auto_initialization = 0
-augroup END
+" augroup Python
+"     autocmd!
+"     autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
+"     let g:jedi#auto_initialization = 0
+" augroup END
 let g:jedi#force_py_version = 3
 
 " map <C-@> <C-Space> 
