@@ -12,3 +12,6 @@
     tool = vimdiff
     conflictstyle = diff3
     prompt = false
+[http]
+    proxy = http://proxy.ext.ray.com:80
+    sslVerify = false
