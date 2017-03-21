@@ -61,6 +61,21 @@ set autoindent
 set smartindent
 set laststatus=2
 
+
+""""""""""""""""""""""""""""""""""
+"" SYNTASTIC ""
+"""""""""""""""""""""""""""""""""
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+
+
 """"""""""""""""""""""""""""""""""
 "" COMMENTARY ""
 """""""""""""""""""""""""""""""""
@@ -156,6 +171,52 @@ noremap <silent><leader>qq :bd<cr>
 noremap <silent><leader>rn :set relativenumber!<cr>
 noremap <silent><leader>a ggVG
 noremap <silent><C-p> %
+noremap <silent><leader>ma :make<cr>
+
+noremap <silent><leader>m :MakeAsync('make -j26')<cr>
+function! OutHandler_Make(job, message)
+endfunction
+function! ExitHandler_Make(job_message)
+    exec 'silent! cb! ' . g:makeBufNum
+    let list = getqflist()
+    let g:lastMakeTime = strftime("%H:%M")
+    let ecount = 0
+    for i in list
+        if i.lnum != 0
+            let ecount+=1
+        endif
+    endfor
+    let g:makeErrorCount = ecount
+    exec 'AirlineRefresh'
+    exec g:makeBufNum . 'bdelete!'
+    if g:makeErrorCount > 0
+        exe 'cfirst'
+        exe 'cnfile'
+    endif
+endfunction
+function! MakeAsync(cmd)
+    mark a
+    let cmd = split(a:cmd)
+    let currentBuff = bufnr('%')
+    let g:makeBufNum = bufnr('make_buffer',1)
+    exec g:makeBufNum . 'bufdo %d'
+    exec below sb ' . g:makeBufNum
+    exec 'resize ' . (winheight(0) * 1/4)
+    setlocal filetype='make_buffer'
+    " TODO stop the job when the buffer gets closed
+    exec WinMove('k')
+    let job = job_start(cmd, {'out_io' : 'buffer',
+                \'in_io'    :   'null',
+                \'err_io'   :   'buffer',
+                \'err_name' :   'make_buffer',
+                \'out_name' :   'make_buffer',
+                \'out_cb'   :   'OutHandler_Make',
+                \'exit_cb'  :   'ExitHandler_Make'})
+    let g:makeErrorCount = '...'
+    exec 'AirlineRefresh'
+    'a
+endfunction
+command! -nargs=1 MakeAsync call MakeAsync(<args>)
 
 
 """"""""""""""""""""""""""""""""""
@@ -206,8 +267,8 @@ nnoremap <silent>[QQ :clast<cr> :windo diffthis<cr>
 augroup MATLAB
     autocmd!
     autocmd BufEnter *.m compiler mlint
-    autocmd BufEnter *.m nnoremap <silent><leader>mb :call MSetBreakpoint()<cr>
-    autocmd BufEnter *.m nnoremap <silent><leader>md :call MDelBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent><space>    :call MSetBreakpoint()<cr>
+    autocmd BufEnter *.m nnoremap <silent>d<space>    :call MDelBreakpoint()<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>mda :call VimuxSendText("dbclear all")<cr> :call VimuxSendKeys("Enter")<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>ms :call VimuxSendText("dbstep")<cr> :call VimuxSendKeys("Enter")<cr>
     autocmd BufEnter *.m nnoremap <silent><leader>mc :call VimuxSendText("dbcont")<cr> :call VimuxSendKeys("Enter")<cr>
@@ -259,124 +320,137 @@ vnoremap <C-n>: normal<space>
 """""""""""""""""""""""""""""""""
 
 """"""""""""""""""""""""""""""""""
-"" UNITE MAPPINGS ""
+"" DENITE MAPPINGS ""
 """""""""""""""""""""""""""""""""
-call unite#filters#matcher_default#use(['matcher_fuzzy'])
-nnoremap <C-n><C-n> :Unite -start-insert file_rec/git<cr>
-nnoremap <C-n><C-d> :UniteWithBufferDir -start-insert file<cr>
-nnoremap <C-n><C-r> :Unite -start-insert file_rec<cr>
-nnoremap <C-n><C-b> :Unite buffer<cr>
-nnoremap <C-n><C-o> :Unite -start-insert outline <cr>
-nnoremap <C-n><C-g> :Unite grep -path=$PWD -input=
-nnoremap <C-q>      :<Plug>(unite_print_mesage_log)
-nnoremap <C-n><C-g>f :Unite -input=<C-R><C-W> <cr>
-nnoremap <C-n><C-g>w :Unite grep -path=$PWD -input=<C-R><C-W> <cr>
-nnoremap <C-n>* :Unite line -no-start-insert -input=<C-R><C-W> <cr>
-nnoremap <C-n>/ :Unite -start-insert line <cr>
+call denite#custom#var('grep', 'command', ['ag'])
+call denite#custom#var('grep', 'default_opts',
+		\ ['-i', '--vimgrep'])
+call denite#custom#var('grep', 'recursive_opts', [])
+call denite#custom#var('grep', 'pattern_opt', [])
+call denite#custom#var('grep', 'separator', ['--'])
+call denite#custom#var('grep', 'final_opts', [])
 
-let g:unite_options_direction='dynamixbottom'
-if executable('ag')
-    let g:unite_source_grep_command='ag'
-    let g:unite_source_grep_default_opts='--nogroup --nocolor --column -S'
-    let g:unite_source_grep_recursive_opt='-r'
-    let g:unite_source_rec_async_command=
-                \['ag', '--follow', '--nocolor', '--nogroup'
-                \'--hidden', '-g', '']
-endif
-if executable('git')
-    let g:unite_source_rec_git_command = 
-                \ ['git', 'ls-files', '--exclude-standars']
-endif
-let g:unite_source_menu_menus = {}
-let g:unite_source_menu_menus.git = {
-            \ 'description' : 'Git Functions',
-            \ }
+" """"""""""""""""""""""""""""""""""
+" "" UNITE MAPPINGS ""
+" """""""""""""""""""""""""""""""""
+" call unite#filters#matcher_default#use(['matcher_fuzzy'])
+" nnoremap <C-n><C-n> :Unite -start-insert file_rec/git<cr>
+" nnoremap <C-n><C-d> :UniteWithBufferDir -start-insert file<cr>
+" nnoremap <C-n><C-r> :Unite -start-insert file_rec<cr>
+" nnoremap <C-n><C-b> :Unite buffer<cr>
+" nnoremap <C-n><C-j> :Unite jump<cr>
+" nnoremap <C-n>j :Unite jump<cr>
+" nnoremap <C-n><C-o> :Unite -start-insert outline <cr>
+" nnoremap <C-n><C-g> :Unite grep -path=$PWD -input=
+" nnoremap <C-q>      :<Plug>(unite_print_mesage_log)
+" nnoremap <C-n><C-g>f :Unite -input=<C-R><C-W> <cr>
+" nnoremap <C-n><C-g>w :Unite grep -path=$PWD -input=<C-R><C-W> <cr>
+" nnoremap <C-n>* :Unite line -no-start-insert -input=<C-R><C-W> <cr>
+" nnoremap <C-n>/ :Unite -start-insert line <cr>
 
-let g:unite_source_menu_menus.git.command_candidates = {
-            \ 'git status'  :   'Gstatus',
-            \ 'git diff'    :   'Gdiff :cope',
-            \ }
+" let g:unite_options_direction='dynamixbottom'
+" if executable('ag')
+"     let g:unite_source_grep_command='ag'
+"     let g:unite_source_grep_default_opts='--nogroup --nocolor --column -S'
+"     let g:unite_source_grep_recursive_opt='-r'
+"     let g:unite_source_rec_async_command=
+"                 \['ag', '--follow', '--nocolor', '--nogroup'
+"                 \'--hidden', '-g', '']
+" endif
+" if executable('git')
+"     let g:unite_source_rec_git_command = 
+"                 \ ['git', 'ls-files', '--exclude-standars']
+" endif
+" let g:unite_source_menu_menus = {}
+" let g:unite_source_menu_menus.git = {
+"             \ 'description' : 'Git Functions',
+"             \ }
 
-augroup VimrcAutocmds
-    autocmd!
-    autocmd VimEnter * if exists(':Unite') | call s:UniteSetup() | endif
-    autocmd FileType unite call s:UniteSettings()
-    "autocmd CursorHold * silent! call unite#sources#history_yahk#_append()
-augroup END
+" let g:unite_source_menu_menus.git.command_candidates = {
+"             \ 'git status'  :   'Gstatus',
+"             \ 'git diff'    :   'Gdiff :cope',
+"             \ }
 
-func! s:UniteSettings()
-    setlocal conceallevel=0
-    imap <silent> <buffer> <expr> <C-q> unite#do_action('delete')
-                \."\<Plug>(unite_append_enter)"
-    nnor <silent> <buffer> <expr> <C-q> unite#do_action('delete')
-    imap <silent> <buffer> <expr> <C-d> <SID>UniteTogglePathSearch()."\<Esc>"
-                \.'1g0y$Q'.":\<C-u>Unite -buffer-name=buffers/neomru "
-    nmap <buffer> <expr> yy unite#do_action('yank').'<Plug>(unite_exit)'
-    imap <buffer> <expr> <C-o>v unite#do_action('vsplit')
-    imap <buffer> <expr> <C-o><C-v> unite#do_action('vsplit')
-    imap <buffer> <expr> <C-o>s unite#do_action('split')
-    imap <buffer> <expr> <C-o><C-s> unite#do_action('split')
-    imap <buffer> <expr> <C-o>t unite#do_action('tabopen')
-    imap <buffer> <expr> <C-o><C-t> unite#do_action('tabopen')
-    imap <buffer> <expr> ' <Plug>(unite_exit)
-    imap <buffer> <expr> <C-o> <Plug>(unite_choose_action)
-    nmap <buffer> <expr> <C-o> <Plug>(unite_choose_action)
-    inor <buffer> <C-f> <Esc><C-d>
-    inor <buffer> <C-b> <Esc><C-u>
-    nmap <buffer> <C-f> <C-d>
-    nmap <buffer> <C-b> <C-u>
-    imap <buffer> <C-p> <Plug>(unite_narrowing_input_history)
-    nmap <buffer> <C-p> <Plug>(unite_narrowing_input_history)
-    imap <buffer> <C-j> <Plug>(unite_select_next_line)
-    nmap <buffer> <C-k> <Plug>(unite_select_previous_line)
-    imap <buffer> <C-c> <Plug>(unite_exit)
-    nmap <buffer> <C-c> <Plug>(unite_exit)
-    nmap <buffer> m <Plug>(unite_toggle_mark_current_candidate)
-    nmap <buffer> M <Plug>(unite_toggle_mark_current_candidate_up)
-    nmap <buffer> <F1> <Plug>(unite_quick_help)
-    imap <buffer> <F1> <Esc><Plug>(unite_quick_help)
-    imap <buffer> <C-Space> <Plug>(unite_toggle_mark_current_candidate)
-    inor <buffer> . \.
-    inor <buffer> \. .
-    inor <buffer> <expr> <BS>
-                \ getline('.')[virtcol('.')-3:virtcol('.')-2] == '\.' ? '<BS><BS>' : '<BS>'
-    inor <buffer> <C-r>% <C-r>#
-    inor <buffer> <expr> <C-r>$ expand('#:t')
-    nmap <buffer> S <Plug>(unite_append_end)<Plug>(unite_delete_backward_line)
-    nmap <buffer> s <Plug>(unite_append_enter)<BS>
-    sil! nunmap <buffer> ?
-endfunc
+" augroup VimrcAutocmds
+"     autocmd!
+"     autocmd VimEnter * if exists(':Unite') | call s:UniteSetup() | endif
+"     autocmd FileType unite call s:UniteSettings()
+"     "autocmd CursorHold * silent! call unite#sources#history_yahk#_append()
+" augroup END
 
-func! s:UniteSetup()
-    call unite#filters#matcher_default#use(['matcher_regexp'])
-    call unite#custom#default_action('directory', 'cd')
-    call unite#custom#profile('default', 'context',
-                \ {'start_insert' : 0, 'direction':'dynamicbottom', 'prompt_direction': 'top'})
-    call unite#custom#source('file', 'ignore_pattern', '.*\.\(un\~\|mat\|pdf\)$')
-    call unite#custom#source('file,file_rec,file_rec/async', 'sorters', 'sorter_rank')
-    for source in ['history/yank', 'register', 'grep', 'vimgrep']
-        call unite#custom#profile('source\'.source, 'context', {'start_insert': 0})
-    endfor
-    function! s:action_replace(action, candidates)
-        for index in range(0, len(a:candidates) -1)
-            if index == 1 | wincmd o | endif
-            if index > 0 || len(a:candidates) == 1
-                call unite#util#command_with_restore_cursor(
-                            \ substitude(a:action, '^split$', 'belowright &', ''))
-            endif
-            call unite#take_action('open', a:candidates[index])
-            if index == 0 | let win = winnr() | endif
-        endfor
-        silent! execute win . "wincmd w"
-    endfunction
-    for type in ['split', 'vsplit']
-        let replace = {'is_selectable':1, 'description': type . ' replacing current window'}
-        execute "function! replace.func(candidates)\n"
-                    \ "call s:action_replace('" . type . "', a:candidates)\n" .
-                    \ "endfunction"
-        call unite#custom#action('openable', type, replace)
-    endfor
-endfunc
+" func! s:UniteSettings()
+"     setlocal conceallevel=0
+"     imap <silent> <buffer> <expr> <C-q> unite#do_action('delete')
+"                 \."\<Plug>(unite_append_enter)"
+"     nnor <silent> <buffer> <expr> <C-q> unite#do_action('delete')
+"     imap <silent> <buffer> <expr> <C-d> <SID>UniteTogglePathSearch()."\<Esc>"
+"                 \.'1g0y$Q'.":\<C-u>Unite -buffer-name=buffers/neomru "
+"     nmap <buffer> <expr> yy unite#do_action('yank').'<Plug>(unite_exit)'
+"     imap <buffer> <expr> <C-o>v unite#do_action('vsplit')
+"     imap <buffer> <expr> <C-o><C-v> unite#do_action('vsplit')
+"     imap <buffer> <expr> <C-o>s unite#do_action('split')
+"     imap <buffer> <expr> <C-o><C-s> unite#do_action('split')
+"     imap <buffer> <expr> <C-o>t unite#do_action('tabopen')
+"     imap <buffer> <expr> <C-o><C-t> unite#do_action('tabopen')
+"     imap <buffer> <expr> ' <Plug>(unite_exit)
+"     imap <buffer> <expr> <C-o> <Plug>(unite_choose_action)
+"     nmap <buffer> <expr> <C-o> <Plug>(unite_choose_action)
+"     inor <buffer> <C-f> <Esc><C-d>
+"     inor <buffer> <C-b> <Esc><C-u>
+"     nmap <buffer> <C-f> <C-d>
+"     nmap <buffer> <C-b> <C-u>
+"     imap <buffer> <C-p> <Plug>(unite_narrowing_input_history)
+"     nmap <buffer> <C-p> <Plug>(unite_narrowing_input_history)
+"     imap <buffer> <C-j> <Plug>(unite_select_next_line)
+"     nmap <buffer> <C-k> <Plug>(unite_select_previous_line)
+"     imap <buffer> <C-c> <Plug>(unite_exit)
+"     nmap <buffer> <C-c> <Plug>(unite_exit)
+"     nmap <buffer> m <Plug>(unite_toggle_mark_current_candidate)
+"     nmap <buffer> M <Plug>(unite_toggle_mark_current_candidate_up)
+"     nmap <buffer> <F1> <Plug>(unite_quick_help)
+"     imap <buffer> <F1> <Esc><Plug>(unite_quick_help)
+"     " imap <buffer> <C-Space> <Plug>(unite_toggle_mark_current_candidate)
+"     inor <buffer> . \.
+"     inor <buffer> \. .
+"     inor <buffer> <expr> <BS>
+"                 \ getline('.')[virtcol('.')-3:virtcol('.')-2] == '\.' ? '<BS><BS>' : '<BS>'
+"     inor <buffer> <C-r>% <C-r>#
+"     inor <buffer> <expr> <C-r>$ expand('#:t')
+"     nmap <buffer> S <Plug>(unite_append_end)<Plug>(unite_delete_backward_line)
+"     nmap <buffer> s <Plug>(unite_append_enter)<BS>
+"     sil! nunmap <buffer> ?
+" endfunc
+
+" func! s:UniteSetup()
+"     call unite#filters#matcher_default#use(['matcher_regexp'])
+"     call unite#custom#default_action('directory', 'cd')
+"     call unite#custom#profile('default', 'context',
+"                 \ {'start_insert' : 0, 'direction':'dynamicbottom', 'prompt_direction': 'top'})
+"     call unite#custom#source('file', 'ignore_pattern', '.*\.\(un\~\|mat\|pdf\)$')
+"     call unite#custom#source('file,file_rec,file_rec/async', 'sorters', 'sorter_rank')
+"     for source in ['history/yank', 'register', 'grep', 'vimgrep']
+"         call unite#custom#profile('source\'.source, 'context', {'start_insert': 0})
+"     endfor
+"     function! s:action_replace(action, candidates)
+"         for index in range(0, len(a:candidates) -1)
+"             if index == 1 | wincmd o | endif
+"             if index > 0 || len(a:candidates) == 1
+"                 call unite#util#command_with_restore_cursor(
+"                             \ substitude(a:action, '^split$', 'belowright &', ''))
+"             endif
+"             call unite#take_action('open', a:candidates[index])
+"             if index == 0 | let win = winnr() | endif
+"         endfor
+"         silent! execute win . "wincmd w"
+"     endfunction
+"     for type in ['split', 'vsplit']
+"         let replace = {'is_selectable':1, 'description': type . ' replacing current window'}
+"         execute "function! replace.func(candidates)\n"
+"                     \ "call s:action_replace('" . type . "', a:candidates)\n" .
+"                     \ "endfunction"
+"         call unite#custom#action('openable', type, replace)
+"     endfor
+" endfunc
 
 
 "FSwitch mappings
@@ -386,7 +460,16 @@ nnoremap <silent> <Leader>oh :FSLeft<cr>
 nnoremap <silent> <Leader>ok :FSAbove<cr>
 nnoremap <silent> <Leader>oj :FSBelow<cr>
 
-nnoremap <leader>p :call VimuxRunCommandInDir("python", 1)<cr>
+" autocmd FileType python nnoremap <leader>p :call VimuxPromptCommand('python '.bufname("%"))<cr>
+augroup Python
+    autocmd!
+    autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
+    let g:jedi#auto_initialization = 0
+augroup END
+let g:jedi#force_py_version = 3
+
+" map <C-@> <C-Space> 
+autocmd filetype python inoremap . .<C-x><C-o>
 
 noremap <leader>dp :diffpu<cr>
 noremap <leader>dg :diffg<cr>

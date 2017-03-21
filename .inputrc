@@ -1,0 +1,43 @@
+set bell-style none
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Insert mode bindings
+set keymap vi
+set editing-mode vi
+"@:": "\C-p\C-m"
+"\C-]": complete
+"\C-^": "\C-e()\C-m"
+"\C-a": "filter\(lambda x: "
+"\C-b": beginning-of-line
+"\C-e": end-of-line
+"\C-i": menu-complete
+"\C-l": clear-screen
+"\C-n": history-search-forward
+"\C-p": history-search-backward
+"\C-q": redraw-current-line
+"\C-t": transpose-words
+"\C-w": backward-kill-word
+"\C-x": "\C-e\C-u\C-q"
+"\e[1;5C": forward-word
+"\e[1;5D": backward-word
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+"\e[Z": menu-complete-backward
+
+# Command mode bindings
+set keymap vi-command
+"@:": "\C-p\C-m"
+"\C-^": "A()\C-m"
+"\C-k": kill-whole-line
+"\C-l": clear-screen
+"\C-q": redraw-current-line
+"\C-t": transpose-words
+"\C-x": "\C-k\C-qi"
+
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+set menu-complete-display-prefix on
+set completion-query-items 0
+set page-completions off
