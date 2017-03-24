@@ -322,6 +322,9 @@ vnoremap <C-n>: normal<space>
 """"""""""""""""""""""""""""""""""
 "" DENITE MAPPINGS ""
 """""""""""""""""""""""""""""""""
+call denite#custom#var('file_rec', 'command', 
+            \['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+
 call denite#custom#var('grep', 'command', ['ag'])
 call denite#custom#var('grep', 'default_opts',
 		\ ['-i', '--vimgrep'])
@@ -329,6 +332,43 @@ call denite#custom#var('grep', 'recursive_opts', [])
 call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
 call denite#custom#var('grep', 'final_opts', [])
+
+call denite#custom#var('grep', 'outline', ['ctags'])
+call denite#custom#var('grep', 'default_opts',
+		\ ['-f', '--c-kinds=f'])
+call denite#custom#var('grep', 'recursive_opts', [])
+call denite#custom#var('grep', 'pattern_opt', [])
+call denite#custom#var('grep', 'separator', ['--'])
+call denite#custom#var('grep', 'final_opts', [])
+
+call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
+call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
+
+call denite#custom#alias('source', 'file_rec/git', 'file_rec')
+call denite#custom#var('file_rec/git', 'command', ['git', 'ls-files', '-co', '--exclude-standard'])
+call denite#custom#source('file_rec/git', 'matchers', ['matcher_fuzzy','matcher_project_files'])
+
+call denite#custom#map('insert', '<C-h>', '<denite:do_action:vsplit', 'noremap')
+call denite#custom#map('insert', 'jk', '<denite:enter_mode:normal', 'noremap')
+
+noremap <silent> <C-n><C-n> :Denite `finddir('.git', ';') != '' ? 'file_rec/git' : 'file_rec'`<cr>
+noremap <C-n><C-b> :Denite buffer<cr>
+noremap <C-n><C-d> :Denite file_rec<cr>
+noremap <C-n><C-g> :Denite grep<cr>
+noremap <C-n><C-/> :Denite line<cr>
+noremap <C-n>/ :Denite line<cr>
+noremap <C-n><C-o> :Denite outline<cr>
+noremap <C-n><C-*> :DeniteCusorWord line<cr>
+noremap <C-n><C-f> :call FindGetAndSetters('<C-R><C-W>')<cr>
+
+function! FindGetAndSetters(input)
+    echom a:input[len(a:input)-1]
+    if a:input[len(a:input)-1] == '_'
+        let a:input=a:input[0:len(a:input)-2]
+    endif
+    execute 'Denite -input='.a:input.' line grep'
+endfunction
+
 
 " """"""""""""""""""""""""""""""""""
 " "" UNITE MAPPINGS ""
