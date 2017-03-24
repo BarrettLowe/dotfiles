@@ -3,15 +3,15 @@ export ZSH=$HOME/.oh-my-zsh
 typeset -U LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/DevTools/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib64:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib64:$LD_LIBRARY_PATH
 export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
 export EDITOR=vim
 export KEYTIMEOUT=40
 typeset -U MANPATH
 export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
 typeset -U path
-path=(/apps/anaconda3_4.1.1/bin $path)
+# path=(/apps/anaconda3_4.1.1/bin $path)
 export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -91,7 +91,7 @@ zstyle ':completion:*' completer _complete _ignored
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z} r:|[-_./]=** r:|=**' '+l:|=* r:|=*'
 
 # zstyle ':completion:*' matcher-list 'm:{[:lower:]}={[:upper:]} m:{[:lower:][:upper:]}={[:upper:][:lower:]} r:|[._-]=** r:|=**'
-zstyle :compinstall filename '/home/z1113218/.zshrc'
+zstyle :compinstall filename "/home/$(whoami)/.zshrc"
 
 autoload -Uz compinit
 compinit

@@ -466,7 +466,7 @@ nnoremap <silent> <Leader>oj :FSBelow<cr>
 "     autocmd filetype python nnoremap <leader>p :exec('!tmux split-window -p 15 /apps/anaconda3_4.1.1/bin/python ' . bufname("%"))<cr><cr>
 "     let g:jedi#auto_initialization = 0
 " augroup END
-let g:jedi#force_py_version = 3
+" let g:jedi#force_py_version = 3
 
 " map <C-@> <C-Space> 
 autocmd filetype python inoremap . .<C-x><C-o>
