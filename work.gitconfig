@@ -1,0 +1,6 @@
+[user]
+    name = Barrett Lowe
+    email = barrett.e.lowe@raytheon.com
+[http]
+    proxy = http://proxy.ext.ray.com:80
+    sslVerify = false

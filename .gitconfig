@@ -1,6 +1,5 @@
-[user]
-    name = Barrett Lowe
-    email = barrett.lowe@gmail.com
+[include] 
+    path = ~/.gitconfig-local
 [core]
     excludesfile = ~/.gitignore
     editor = vim
