@@ -8,7 +8,9 @@ execute pathogen#helptags()
 syntax on
 filetype plugin indent on
 
-set term=xterm-256color
+if !has('nvim')
+    set term=xterm-256color
+endif
 set number
 set relativenumber
 set nocompatible
@@ -60,6 +62,16 @@ set encoding=utf8
 set autoindent
 set smartindent
 set laststatus=2
+
+inoremap {<CR> {<CR>}<ESC>O
+vnoremap <C-n> :normal 
+
+let g:clang_snippet = 1
+let g:clang_snippets_engine = 'clang_complete'
+let g:clang_library_path='/usr/local/lib/libclang.dylib'
+let g:deoplete#enable_at_startup = 1
+let g:deoplete#sources#clang#libclang_path='/usr/local/lib/libclang.dylib'
+let g:deoplete#sources#clang#clang_header='/usr/local/lib/clang'
 
 
 """"""""""""""""""""""""""""""""""

@@ -11,3 +11,5 @@
     tool = vimdiff
     conflictstyle = diff3
     prompt = false
+[cola]
+	spellcheck = false
