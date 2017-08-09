@@ -8,16 +8,19 @@ export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
 export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
 export EDITOR=vim
 export KEYTIMEOUT=40
+export ESP_MAKEFILE_LOCATION=$HOME/Documents/Arduino/makeEspArduino
+export ESP_ROOT=$HOME/esp8266
+export LIGHTSAIL=54.69.196.211
 typeset -U MANPATH
 export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
 typeset -U path
-# path=(/apps/anaconda3_4.1.1/bin $path)
+path=($HOME/anaconda3/bin $path)
 export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="intheloop"
+ZSH_THEME="half-life"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -27,7 +30,7 @@ ZSH_THEME="intheloop"
 HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
-DISABLE_AUTO_UPDATE="true"
+DISABLE_AUTO_UPDATE="false"
 
 # Uncomment the following line to change how often to auto-update (in days).
 # export UPDATE_ZSH_DAYS=13
@@ -110,13 +113,21 @@ compinit
 
 # when using remote desktop don't screw up colors
 # if [[ -e $SSH_CONNECTION ]]; then
-alias tmux="TERM=screen-256color-bce tmux"
+alias tmux="TERM=xterm-256color tmux"
 # fi
 
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias vc="$EDITOR ~/dotfiles/.vimrc"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="nvim"
+# alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk BOARD=nodemcuv2"
+alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk"
+
+alias zc="vim ~/dotfiles/.zshrc"
+alias vc="vim ~/dotfiles/.vimrc"
+alias tc="vim ~/dotfiles/.tmux.conf"
+alias v="vim"
+alias vim="nvim"
 alias zrld="source ~/.zshrc"
 # alias gi='grep -ri'
 # alias gil='grep -ril'
@@ -135,7 +146,7 @@ alias sco='svn checkout'
 alias sc='svn commit'
 alias ss='svn stat'
 alias sd='svn diff'
-alias scp='svn copy'
+# alias scp='svn copy'
 alias srm='svn remove'
 alias sa='svn add'
 
