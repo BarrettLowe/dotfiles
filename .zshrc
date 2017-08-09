@@ -113,10 +113,10 @@ compinit
 alias tmux="TERM=screen-256color-bce tmux"
 # fi
 
-alias zc="vim ~/dotfiles/.zshrc"
-alias vc="vim ~/dotfiles/.vimrc"
-alias tc="vim ~/dotfiles/.tmux.conf"
-alias v="vim"
+alias zc="$EDITOR ~/dotfiles/.zshrc"
+alias vc="$EDITOR ~/dotfiles/.vimrc"
+alias tc="$EDITOR ~/dotfiles/.tmux.conf"
+alias v="nvim"
 alias zrld="source ~/.zshrc"
 alias gi='grep -ri'
 alias gil='grep -ril'
