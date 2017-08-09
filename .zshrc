@@ -118,9 +118,9 @@ alias vc="$EDITOR ~/dotfiles/.vimrc"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="nvim"
 alias zrld="source ~/.zshrc"
-alias gi='grep -ri'
-alias gil='grep -ril'
-alias gl='grep -rl'
+# alias gi='grep -ri'
+# alias gil='grep -ril'
+# alias gl='grep -rl'
 
 alias rmat='matlab -nodesktop -nosplash -nosoftwareopengl'
 
