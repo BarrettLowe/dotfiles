@@ -2,14 +2,16 @@
     path = ~/.gitconfig.local
 [core]
     excludesfile = ~/.gitignore
-    editor = vim
+    editor = nvim
 [diff]
     tool = default-difftool
 [difftool "default-difftool"]
-    cmd = vim -f '+execute \"DirDiff\" argv(0) argv(1)' $LOCAL $REMOTE
+    cmd = nvim -f '+execute \"DirDiff\" argv(0) argv(1)' $LOCAL $REMOTE
 [merge]
     tool = vimdiff
     conflictstyle = diff3
     prompt = false
 [cola]
 	spellcheck = false
+[push]
+	default = simple
