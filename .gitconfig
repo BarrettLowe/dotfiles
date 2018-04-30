@@ -13,3 +13,5 @@
     prompt = false
 [cola]
 	spellcheck = false
+[push]
+	default = simple

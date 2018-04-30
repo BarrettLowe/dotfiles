@@ -11,6 +11,7 @@ export KEYTIMEOUT=40
 export ESP_MAKEFILE_LOCATION=$HOME/Documents/Arduino/makeEspArduino
 export ESP_ROOT=$HOME/esp8266
 export LIGHTSAIL=54.69.196.211
+export EC2=18.204.53.120
 typeset -U MANPATH
 export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
 typeset -U path
