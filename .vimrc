@@ -37,7 +37,7 @@ set wildmode=list:full
 set diffopt=filler,iwhite
 set cursorline
 
-" set clipboard=unnamed
+set clipboard=unnamed
 
 set ttyfast
 
@@ -511,6 +511,12 @@ nnoremap <silent> <Leader>ol :FSRight<cr>
 nnoremap <silent> <Leader>oh :FSLeft<cr>
 nnoremap <silent> <Leader>ok :FSAbove<cr>
 nnoremap <silent> <Leader>oj :FSBelow<cr>
+
+augroup Html
+    autocmd!
+    set tabstop=2
+    set shiftwidth=2
+augroup END
 
 " autocmd FileType python nnoremap <leader>p :call VimuxPromptCommand('python '.bufname("%"))<cr>
 " augroup Python
