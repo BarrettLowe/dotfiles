@@ -128,7 +128,7 @@ alias zc="vim ~/dotfiles/.zshrc"
 alias vc="vim ~/dotfiles/.vimrc"
 alias tc="vim ~/dotfiles/.tmux.conf"
 alias v="vim"
-alias vim="nvim"
+# alias vim="nvim"
 alias zrld="source ~/.zshrc"
 alias ipy="python3 $HOME/.vim/bundle/vim-ipython/monitor.py & jupyter console"
 # alias gi='grep -ri'
@@ -217,3 +217,5 @@ if (tmux has -t Pasta 2> /dev/null) ; then
 else 
     tmux new-session -s Pasta
 fi
+
+source $HOME/.zshrc_local

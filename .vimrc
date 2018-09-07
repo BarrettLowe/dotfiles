@@ -56,8 +56,8 @@ set showmatch
 set mat=2
 
 set encoding=utf8
-"let base16colorspace=256
-"set t_Co=256
+let base16colorspace=256
+set t_Co=256
 
 set autoindent
 set smartindent
@@ -345,13 +345,10 @@ call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
 call denite#custom#var('grep', 'final_opts', [])
 
-" call denite#custom#var('grep', 'outline', ['ctags'])
-" call denite#custom#var('grep', 'default_opts',
-" 		\ ['-f', '--c-kinds=f'])
-" call denite#custom#var('grep', 'recursive_opts', [])
-" call denite#custom#var('grep', 'pattern_opt', [])
-" call denite#custom#var('grep', 'separator', ['--'])
-" call denite#custom#var('grep', 'final_opts', [])
+call denite#custom#var('grep', 'recursive_opts', [])
+call denite#custom#var('grep', 'pattern_opt', [])
+call denite#custom#var('grep', 'separator', ['--'])
+call denite#custom#var('grep', 'final_opts', [])
 
 call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
 call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
@@ -360,13 +357,14 @@ call denite#custom#alias('source', 'file_rec/git', 'file_rec')
 call denite#custom#var('file_rec/git', 'command', ['git', 'ls-files', '-co', '--exclude-standard'])
 call denite#custom#source('file_rec/git', 'matchers', ['matcher_fuzzy','matcher_project_files'])
 
-call denite#custom#map('insert', '<C-h>', '<denite:do_action:vsplit', 'noremap')
-call denite#custom#map('insert', 'jk', '<denite:enter_mode:normal', 'noremap')
+call denite#custom#map('insert', '<C-h>', '<denite:do_action:vsplit>', 'noremap')
+call denite#custom#map('insert', 'jk', '<denite:enter_mode:normal>', 'noremap')
 
 noremap <silent> <C-n><C-n> :Denite `finddir('.git', ';') != '' ? 'file_rec/git' : 'file_rec'`<cr>
 noremap <C-n><C-b> :Denite buffer<cr>
 noremap <C-n><C-d> :Denite file_rec<cr>
 noremap <C-n><C-g> :Denite grep<cr>
+noremap <C-n><C-w> :DeniteCursorWord grep<cr>
 noremap <C-n><C-/> :Denite line<cr>
 noremap <C-n>/ :Denite line<cr>
 noremap <C-n><C-o> :Denite outline<cr>
@@ -566,6 +564,6 @@ autocmd VimEnter * Tmuxline
 syntax enable
 set background=dark
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
-let g:solarized_termtrans=1 
+" let g:solarized_termtrans=1 
 let g:ipy_perform_mappings=0
 colorscheme solarized
