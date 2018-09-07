@@ -15,8 +15,8 @@ set editing-mode vi
 "\C-e": end-of-line
 "\C-i": menu-complete
 "\C-l": clear-screen
-"\C-n": history-search-forward
-"\C-p": history-search-backward
+"\C-j": history-search-forward
+"\C-k": history-search-backward
 "\C-q": redraw-current-line
 "\C-t": transpose-words
 "\C-w": backward-kill-word
