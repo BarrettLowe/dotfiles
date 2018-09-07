@@ -6,6 +6,7 @@ set convert-meta off
 # Insert mode bindings
 set keymap vi
 set editing-mode vi
+# bind "'jk':vi-movement-mode"
 "@:": "\C-p\C-m"
 "\C-]": complete
 "\C-^": "\C-e()\C-m"
@@ -14,8 +15,8 @@ set editing-mode vi
 "\C-e": end-of-line
 "\C-i": menu-complete
 "\C-l": clear-screen
-"\C-n": history-search-forward
-"\C-p": history-search-backward
+"\C-j": history-search-forward
+"\C-k": history-search-backward
 "\C-q": redraw-current-line
 "\C-t": transpose-words
 "\C-w": backward-kill-word
@@ -35,6 +36,10 @@ set keymap vi-command
 "\C-q": redraw-current-line
 "\C-t": transpose-words
 "\C-x": "\C-k\C-qi"
+
+set keymap vi-insert
+"jk": vi-movement-mode
+
 
 set show-all-if-ambiguous on
 set show-all-if-unmodified on

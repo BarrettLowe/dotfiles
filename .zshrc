@@ -11,11 +11,12 @@ export KEYTIMEOUT=40
 export ESP_MAKEFILE_LOCATION=$HOME/Documents/Arduino/makeEspArduino
 export ESP_ROOT=$HOME/esp8266
 export LIGHTSAIL=54.69.196.211
+export EC2=18.204.53.120
 typeset -U MANPATH
 export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
 typeset -U path
 path=($HOME/anaconda3/bin $path)
-export PATH=$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
+export PATH=$HOME/.local/bin:$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -129,6 +130,7 @@ alias tc="vim ~/dotfiles/.tmux.conf"
 alias v="vim"
 alias vim="nvim"
 alias zrld="source ~/.zshrc"
+alias ipy="python3 $HOME/.vim/bundle/vim-ipython/monitor.py & jupyter console"
 # alias gi='grep -ri'
 # alias gil='grep -ril'
 # alias gl='grep -rl'

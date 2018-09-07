@@ -37,7 +37,7 @@ set wildmode=list:full
 set diffopt=filler,iwhite
 set cursorline
 
-" set clipboard=unnamed
+set clipboard=unnamed
 
 set ttyfast
 
@@ -345,13 +345,13 @@ call denite#custom#var('grep', 'pattern_opt', [])
 call denite#custom#var('grep', 'separator', ['--'])
 call denite#custom#var('grep', 'final_opts', [])
 
-call denite#custom#var('grep', 'outline', ['ctags'])
-call denite#custom#var('grep', 'default_opts',
-		\ ['-f', '--c-kinds=f'])
-call denite#custom#var('grep', 'recursive_opts', [])
-call denite#custom#var('grep', 'pattern_opt', [])
-call denite#custom#var('grep', 'separator', ['--'])
-call denite#custom#var('grep', 'final_opts', [])
+" call denite#custom#var('grep', 'outline', ['ctags'])
+" call denite#custom#var('grep', 'default_opts',
+" 		\ ['-f', '--c-kinds=f'])
+" call denite#custom#var('grep', 'recursive_opts', [])
+" call denite#custom#var('grep', 'pattern_opt', [])
+" call denite#custom#var('grep', 'separator', ['--'])
+" call denite#custom#var('grep', 'final_opts', [])
 
 call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
 call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
@@ -511,6 +511,12 @@ nnoremap <silent> <Leader>ol :FSRight<cr>
 nnoremap <silent> <Leader>oh :FSLeft<cr>
 nnoremap <silent> <Leader>ok :FSAbove<cr>
 nnoremap <silent> <Leader>oj :FSBelow<cr>
+
+augroup Html
+    autocmd!
+    set tabstop=2
+    set shiftwidth=2
+augroup END
 
 " autocmd FileType python nnoremap <leader>p :call VimuxPromptCommand('python '.bufname("%"))<cr>
 " augroup Python
