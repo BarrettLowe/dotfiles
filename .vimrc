@@ -448,6 +448,6 @@ autocmd VimEnter * Tmuxline
 syntax enable
 set background=dark
 let g:solarized_termcolors=256 "Uncheck the box in Putty to use 256 colors
-" let g:solarized_termtrans=1 
+let g:solarized_termtrans=1 
 let g:ipy_perform_mappings=0
 colorscheme solarized
