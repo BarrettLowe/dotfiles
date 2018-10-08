@@ -1,9 +1,7 @@
 echo 'Installing oh my zsh and dotfiles'
 cd $HOME
-mkdir DevTools
-mkdir build
-cd build
-export $PATH=$HOME/DevTools/bin
+mkdir -p $HOME/DevTools
+export PATH=$HOME/DevTools/bin:$PATH
 
 ln -s $HOME/dotfiles/.agignore
 ln -s $HOME/dotfiles/.ctags
@@ -44,6 +42,16 @@ git clone http://github.com/BarrettLowe/vim-fswitch fswitch
 git clone http://github.com/BarrettLowe/vim-dirdiff dirdiff
 git clone http://github.com/benmills/vimux vimux
 git clone http://github.com/vim-scripts/Gundo Gundo
-git clone http://github.com/altercatipn/vim-colors-solarized
-#solarized
-#
+git clone http://github.com/altercation/vim-colors-solarized
+
+# create config directory for neovim
+mkdir -p $HOME/.config
+cd $HOME/.config
+# link the directory to the nomal .vim folder
+ln -s $HOME/.vim $HOME/.config/nvim
+# linkd the vimrc file to the neovim expected version
+ln -s $HOME/.vimrc $HOME/.config/nvim/init.vim
+echo 'You can now install neovim - config directory has been setup'
+
+cd $HOME
+git clone https://github.com/robbyrussell/oh-my-zsh .oh-my-zsh
