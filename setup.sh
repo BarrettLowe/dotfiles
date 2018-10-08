@@ -51,6 +51,7 @@ cd $HOME/.config
 ln -s $HOME/.vim $HOME/.config/nvim
 # linkd the vimrc file to the neovim expected version
 ln -s $HOME/.vimrc $HOME/.config/nvim/init.vim
+ln -s $HOME/dotfiles/vimconfig/ftplugin $HOME/.config/nvim/ftplugin
 echo 'You can now install neovim - config directory has been setup'
 
 cd $HOME
