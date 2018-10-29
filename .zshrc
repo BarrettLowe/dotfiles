@@ -218,4 +218,8 @@ else
     tmux new-session -s Pasta
 fi
 
-source $HOME/.zshrc_local
+if [ -e $HOME/.zshrc_local ]; then
+    source $HOME/.zshrc_local
+else
+    echo "No local zshrc found - add a blank one to make this message go away"
+fi
