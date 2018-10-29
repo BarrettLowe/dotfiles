@@ -96,14 +96,14 @@ autocmd filetype matlab setlocal commentstring=%%s%
 """"""""""""""""""""""""""""""""""
 "" CSCOPE ""
 """""""""""""""""""""""""""""""""
-noremap \s : cs find s <C-r>=expand("<cword>")<CR><CR>
-noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
-noremap \c : cs find c <C-r>=expand("<cword>")<CR><CR>
-noremap \t : cs find t <C-r>=expand("<cword>")<CR><CR>
-noremap \e : cs find e <C-r>=expand("<cword>")<CR><CR>
-noremap \f : cs find f <C-r>=expand("<cword>")<CR><CR>
-noremap \i : cs find i <C-r>=expand("<cword>")<CR><CR>
-noremap \d : cs find d <C-r>=expand("<cword>")<CR><CR>
+noremap s : cs find s <C-r>=expand("<cword>")<CR><CR>
+noremap d : cs find d <C-r>=expand("<cword>")<CR><CR>
+noremap c : cs find c <C-r>=expand("<cword>")<CR><CR>
+noremap t : cs find t <C-r>=expand("<cword>")<CR><CR>
+noremap e : cs find e <C-r>=expand("<cword>")<CR><CR>
+noremap f : cs find f <C-r>=expand("<cword>")<CR><CR>
+noremap i : cs find i <C-r>=expand("<cword>")<CR><CR>
+noremap d : cs find d <C-r>=expand("<cword>")<CR><CR>
 
 " let g:unite_source_outline_ctags_program='$HOME\DevTools\bin\ctags'
 set tags-=./tags tags^=./tags;
@@ -360,7 +360,9 @@ call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'nor
 
 call denite#custom#alias('source', 'file_rec/git', 'file_rec')
 call denite#custom#var('file_rec/git', 'command', ['git', 'ls-files', '-co', '--exclude-standard'])
-call denite#custom#source('file_rec/git', 'matchers', ['matcher_project_files','matcher_fuzzy'])
+call denite#custom#source('file_rec/git', 'matchers', ['matcher_substring'])
+call denite#custom#source('file_rec', 'matchers', ['matcher_substring'])
+call denite#custom#source('line', 'matchers', ['matcher_substring','matcher_fuzzy'])
 
 call denite#custom#source('file_rec', 'sorters', ['sorter_word', 'sorter_cpph'])
 
