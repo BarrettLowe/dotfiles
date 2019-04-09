@@ -17,7 +17,7 @@ set nocompatible
 set hidden
 set ttimeoutlen=50
 set mouse=
-set completeopt=longest,menuone
+set completeopt=longest,menuone,noinsert
 
 set autoread
 
@@ -66,12 +66,17 @@ set laststatus=2
 inoremap {<CR> {<CR>}<ESC>O
 vnoremap <C-n> :normal 
 
-let g:clang_snippet = 1
-let g:clang_snippets_engine = 'clang_complete'
-let g:clang_library_path='/usr/local/lib/libclang.dylib'
+" let g:clang_snippet = 1
+" let g:clang_snippets_engine = 'clang_complete'
+" let g:clang_library_path='/usr/lib/llvm-6.0/lib/libclang.so.1'
+"
 let g:deoplete#enable_at_startup = 1
-let g:deoplete#sources#clang#libclang_path='/usr/local/lib/libclang.dylib'
-let g:deoplete#sources#clang#clang_header='/usr/local/lib/clang'
+" let g:deoplete#sources#clang#executable='/usr/bin/clang'
+" let g:deoplete#sources#clang#clang_header='/usr/include/clang/6.0/include'
+" call deoplete#custom#source('clang', 'rank', 1000)
+"
+" call deoplete#custom#var('clangx', 'clang_binary', '/usr/bin/clang')
+" call deoplete#custom#var('clangx', 'default_cpp_options', '--std=c++14')
 
 
 """""""""""""""""""""""""""""""""""
@@ -92,6 +97,7 @@ let g:deoplete#sources#clang#clang_header='/usr/local/lib/clang'
 "" COMMENTARY ""
 """""""""""""""""""""""""""""""""
 autocmd filetype matlab setlocal commentstring=%%s%
+autocmd filetype cmake setlocal commentstring=#%s
 
 """"""""""""""""""""""""""""""""""
 "" CSCOPE ""
@@ -358,10 +364,11 @@ call denite#custom#var('grep', 'final_opts', [])
 call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
 call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
 
-call denite#custom#alias('source', 'file_rec/git', 'file_rec')
-call denite#custom#var('file_rec/git', 'command', ['git', 'ls-files', '-co', '--exclude-standard'])
-call denite#custom#source('file_rec/git', 'matchers', ['matcher_substring'])
-call denite#custom#source('file_rec', 'matchers', ['matcher_substring'])
+call denite#custom#alias('source', 'file/rec/git', 'file/rec')
+call denite#custom#var('file/rec/git', 'command',
+            \ ['git', 'ls-files', '-c', '--exclude-standard', '--recurse-submodules'])
+call denite#custom#source('file/rec/git', 'matchers', ['matcher_substring'])
+call denite#custom#source('file/rec', 'matchers', ['matcher_substring'])
 call denite#custom#source('line', 'matchers', ['matcher_substring','matcher_fuzzy'])
 
 call denite#custom#source('file_rec', 'sorters', ['sorter_word', 'sorter_cpph'])
@@ -369,7 +376,7 @@ call denite#custom#source('file_rec', 'sorters', ['sorter_word', 'sorter_cpph'])
 call denite#custom#map('insert', '<C-h>', '<denite:do_action:vsplit>', 'noremap')
 call denite#custom#map('insert', 'jk', '<denite:enter_mode:normal>', 'noremap')
 
-noremap <silent> <C-n><C-n> :Denite `finddir('.git', ';') != '' ? 'file_rec/git' : 'file_rec'`<cr>
+noremap <silent> <C-n><C-n> :Denite `finddir('.git', ';') != '' ? 'file/rec/git' : 'file_rec'`<cr>
 noremap <silent> <C-n><C-b> :Denite buffer<cr>
 noremap <silent> <C-n><C-d> :Denite file_rec<cr>
 noremap <silent> <C-n><C-g> :Denite grep<cr>

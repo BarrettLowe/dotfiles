@@ -12,8 +12,8 @@ nnoremap <leader>i :IPython<cr>
 inoremap . .<c-x><c-o>
 inoremap <c-space> <c-x><c-o>
 nmap <silent><buffer><c-i>r     <Plug>(IPython-RunLine)
-nmap <silent><buffer><c-i>i     <Plug>(IPython-ImportFile)
 vmap <silent><buffer><c-i>r     <Plug>(IPython-RunLines)
+nmap <silent><buffer><c-i>i     <Plug>(IPython-ImportFile)
 map  <silent><buffer><leader>k  <Plug>(IPython-OpenPyDoc)
 nmap <buffer>sos                <Plug>(IPython-ToggleSendOnSave)
 nmap <buffer><c-i>f          <Plug>(IPython-RunFile)

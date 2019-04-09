@@ -118,6 +118,7 @@ alias tmux="TERM=xterm-256color tmux"
 # fi
 
 alias zc="$EDITOR ~/dotfiles/.zshrc"
+alias zlc="$EDITOR ~/.zshrc_local"
 alias vc="$EDITOR ~/dotfiles/.vimrc"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="nvim"
@@ -213,7 +214,11 @@ bindkey -M vicmd 'v' edit-command-line
 bindkey -M viins "jk" vi-cmd-mode
 
 if (tmux has -t Pasta 2> /dev/null) ; then
-    tmux attach-session -d -t Pasta
+    if (tmux has -t Salad 2> /dev/null) ; then
+        tmux attach-session -d -t Pasta
+    else
+        tmux new-session -s Salad
+    fi
 else 
     tmux new-session -s Pasta
 fi
