@@ -30,7 +30,7 @@ git clone http://github.com/tpope/vim-fugitive futitive
 git clone http://github.com/tpope/vim-surround surround
 git clone http://github.com/tpope/vim-commentary commentary
 git clone http://github.com/tpope/vim-abolish abolish
-git clone http://github.com/shougo/denite.nvim denite
+# git clone http://github.com/shougo/denite.nvim denite
 # git clone http://github.com/shougo/vimproc vimproc
 git clone http://github.com/vim-airline/vim-airline airline
 git clone http://github.com/vim-airline/vim-airline-themes airline-themes
