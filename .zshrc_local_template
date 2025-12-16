@@ -1,0 +1,95 @@
+# .zshrc_local_template
+# This file contains system-specific configurations that should be customized
+# for each machine. Copy this file to ~/.zshrc_local and uncomment/modify as needed.
+
+# =============================================================================
+# SYSTEM-SPECIFIC PATHS AND ENVIRONMENT VARIABLES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Library Paths (Linux-specific)
+# -----------------------------------------------------------------------------
+# Uncomment and modify for custom library paths on Linux systems
+# typeset -U LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
+# export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
+
+# -----------------------------------------------------------------------------
+# Library Paths (macOS-specific)
+# -----------------------------------------------------------------------------
+# Uncomment for macOS systems (uses DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH)
+# typeset -U DYLD_LIBRARY_PATH
+# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+
+# -----------------------------------------------------------------------------
+# Perl Environment
+# -----------------------------------------------------------------------------
+# Uncomment if you use Perl modules in custom locations
+# export PERL5LIB="$HOME/DevTools/lib64/perl5:$PERL5LIB"
+
+# -----------------------------------------------------------------------------
+# Manual Pages
+# -----------------------------------------------------------------------------
+# Uncomment to add custom man page directories
+# typeset -U MANPATH
+# export MANPATH="$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH"
+
+# -----------------------------------------------------------------------------
+# ESP8266/Arduino Development
+# -----------------------------------------------------------------------------
+# Uncomment and modify paths for ESP8266 Arduino development
+# export ESP_MAKEFILE_LOCATION="$HOME/Documents/Arduino/makeEspArduino"
+# export ESP_ROOT="$HOME/esp8266"
+# alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk"
+# Uncomment below to specify a board:
+# alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk BOARD=nodemcuv2"
+
+# =============================================================================
+# SYSTEM-SPECIFIC ALIASES
+# =============================================================================
+
+# Example: Use neovim instead of vim on systems where it's preferred
+# export EDITOR=nvim
+# alias vim="nvim"
+
+# Example: Custom Python/Conda paths
+# [[ -d "$HOME/anaconda3/bin" ]] && export PATH="$HOME/anaconda3/bin:$PATH"
+# [[ -d "$HOME/miniconda3/bin" ]] && export PATH="$HOME/miniconda3/bin:$PATH"
+
+# Example: Work-specific configurations
+# export WORK_PROJECT_DIR="$HOME/projects/work"
+# alias cdwork="cd $WORK_PROJECT_DIR"
+
+# =============================================================================
+# OS-SPECIFIC CONFIGURATIONS
+# =============================================================================
+
+# Detect OS and apply OS-specific settings
+# case "$(uname -s)" in
+#     Darwin*)
+#         # macOS-specific settings
+#         # Example: Use different grep/sed on macOS
+#         # alias ls='ls -G'
+#         ;;
+#     Linux*)
+#         # Linux-specific settings
+#         # alias ls='ls --color=auto'
+#         ;;
+#     CYGWIN*|MINGW*|MSYS*)
+#         # Windows/WSL-specific settings
+#         ;;
+# esac
+
+# =============================================================================
+# ADDITIONAL CUSTOM CONFIGURATIONS
+# =============================================================================
+
+# Add any other machine-specific configurations below
+# Examples:
+# - SSH agent setup
+# - Proxy configurations
+# - Company VPN aliases
+# - Machine-specific PATH additions
+# - Database connection shortcuts
+# - Docker configurations

@@ -1,22 +1,37 @@
-# path to your oh-my-zsh installation.
-export ZSH=$HOME/.oh-my-zsh
-typeset -U LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/DevTools/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/DevTools/lib64:$LD_LIBRARY_PATH
-# export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib:$LD_LIBRARY_PATH
-# export LD_LIBRARY_PATH=/apps/gcc_5.3.0/lib64:$LD_LIBRARY_PATH
-export PERL5LIB=$HOME/DevTools/lib64/perl5:$PERL5LIB
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Basic environment settings
 export EDITOR=vim
 export KEYTIMEOUT=40
-export ESP_MAKEFILE_LOCATION=$HOME/Documents/Arduino/makeEspArduino
-export ESP_ROOT=$HOME/esp8266
-export LIGHTSAIL=54.69.196.211
-export EC2=18.204.53.120
-typeset -U MANPATH
-export MANPATH=$HOME/DevTools/share/man:$HOME/DevTools/man:$MANPATH
+
+# PATH configuratioindex() {
+    ctags -Rbindkey -M vicmd "L" end-of-line
+bindkey -M vicmd "H" beginning-of-line
+bindkey "^_" vi-undo-change                      # Ctrl+/
+bindkey -M vicmd "ciw" kill-word
+
+# Don't exit shell on Ctrl+D
+set -o ignoreeof
+
+# Visual indicator for vi mode
+function zle-line-init zle-keymap-select {cope -bvRb
+}
+
+# ZLE key bindings
+bindkey "[6~" history-beginning-search-forward   # Page Down
+bindkey "[5~" history-beginning-search-backward  # Page Up
+bindkey "^j" history-beginning-search-forward
+bindkey "^k" history-beginning-search-backward
+bindkey "[3~" delete-char                        # Delete
+bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
-path=($HOME/anaconda3/bin $path)
-export PATH=$HOME/.local/bin:$HOME/DevTools/bin:$HOME/bin:/usr/local/bin:/apps/matlab_r2015b/bin:/apps/gcc_5.3.0/bin:$PATH
+[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
+[[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
+[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
+[[ -d "$HOME/anaconda3/bin" ]] && path=("$HOME/anaconda3/bin" $path)
+[[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
+export PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -68,9 +83,8 @@ DISABLE_AUTO_UPDATE="false"
 plugins=(themes tmux git)
 
 # User configuration
-DEFAULT_USER=$(whoami) # this is to shorten the zsh prompt - may cause issues
-export PATH="$HOME/DevTools/bin:/home/$(whoami)/anaconda3/bin:$HOME/bin:/usr/local/bin:$PATH"
-# export MANPATH="/usr/local/man:$MANPATH"
+# Set DEFAULT_USER to hide username@hostname in prompt when you're the default user
+DEFAULT_USER=$(whoami)
 
 source $ZSH/oh-my-zsh.sh
 # You may need to manually set your language environment
@@ -90,12 +104,11 @@ source $ZSH/oh-my-zsh.sh
 # export SSH_KEY_PATH="~/.ssh/dsa_id"
 
 # The following lines were added by compinstall
-
 zstyle ':completion:*' completer _complete _ignored
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z} r:|[-_./]=** r:|=**' '+l:|=* r:|=*'
-
+# Alternative matcher (commented):
 # zstyle ':completion:*' matcher-list 'm:{[:lower:]}={[:upper:]} m:{[:lower:][:upper:]}={[:upper:][:lower:]} r:|[._-]=** r:|=**'
-zstyle :compinstall filename "/home/$(whoami)/.zshrc"
+zstyle :compinstall filename "$HOME/.zshrc"
 
 autoload -Uz compinit
 compinit
@@ -112,61 +125,47 @@ compinit
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-# when using remote desktop don't screw up colors
-# if [[ -e $SSH_CONNECTION ]]; then
+# When using remote desktop don't screw up colors
+# if [[ -n $SSH_CONNECTION ]]; then
 alias tmux="TERM=xterm-256color tmux"
 # fi
 
+# Config file shortcuts
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
 alias vc="$EDITOR ~/dotfiles/.vimrc"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
-alias v="nvim"
-# alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk BOARD=nodemcuv2"
-alias espmake="make -f $ESP_MAKEFILE_LOCATION/makeEspArduino.mk"
-
-alias zc="vim ~/dotfiles/.zshrc"
-alias vc="vim ~/dotfiles/.vimrc"
-alias tc="vim ~/dotfiles/.tmux.conf"
-alias v="vim"
+alias v="$EDITOR"
+# Alternative if you prefer neovim:
 # alias vim="nvim"
 alias zrld="source ~/.zshrc"
-alias ipy="python3 $HOME/.vim/bundle/vim-ipython/monitor.py & jupyter console"
-# alias gi='grep -ri'
-# alias gil='grep -ril'
-# alias gl='grep -rl'
 
+# MATLAB (if installed)
 alias rmat='matlab -nodesktop -nosplash -nosoftwareopengl'
 
+# Grep with color
 alias grep='grep --color=auto'
 alias gi='grep -ri'
 alias gil='grep -ril'
 
+# Find shortcuts
 alias f='find -name'
 alias fin='find -iname'
 
-alias sco='svn checkout'
-alias sc='svn commit'
-alias ss='svn stat'
-alias sd='svn diff'
-# alias scp='svn copy'
-alias srm='svn remove'
-alias sa='svn add'
-
+# Git shortcuts
 alias gs='git status'
 alias gdd='git difftool -d'
 
+# ctags
 alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
 
+# Find utilities
 alias findBin="find -type f -executable -exec file -i \'{}\' \; | grep \'charset=binary\'"
-alias findExt='find . -type f | perl -ne "print $1 if m/(\\.[^.\\/]+)$/\" | sort -u'
-# function findExt() {
-#     find . -type f | perl -ne \'print $1 if m/(\\.[^.\\/]+)$/\' | sort -u
-# }
-
+alias findExt='find . -type f | perl -ne "print \$1 if m/(\\.[^.\\/]+)\$/" | sort -u'
+# Enable vi mode
 bindkey -v
 
-# vimthis
+# Pipe command output to vim
 vt (){
     "$@" | vim -
 }
@@ -174,13 +173,12 @@ vt (){
 vimDirDiff()
 {
     echo "Please wait while vim diffs the files"
-    args=$@
+    local args=$@
     vim -f "+execute \"DirDiff $args\""
     echo "Thanks for using vimDirDiff"
 }
 
-
-# index a project
+# Index a project with ctags and cscope
 index() {
     ctags -R
     cscope -bvRb
@@ -204,27 +202,30 @@ function zle-line-init zle-keymap-select {
     RPS1="${${KEYMAP/vicmd/-- CMD --}/(main|viins)/-- INS --}"
     RPS2=$RPS1
     zle reset-prompt
-    }
+}
 zle -N zle-line-init
 zle -N zle-keymap-select
 
+# Edit command line in vim with 'v' in normal mode
 autoload -U edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd 'v' edit-command-line
 bindkey -M viins "jk" vi-cmd-mode
 
-if (tmux has -t Pasta 2> /dev/null) ; then
-    if (tmux has -t Salad 2> /dev/null) ; then
-        tmux attach-session -d -t Pasta
-    else
-        tmux new-session -s Salad
+# Auto-attach to tmux (only for interactive shells)
+if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
+    if tmux has-session -t Pasta 2>/dev/null; then
+        if tmux has-session -t Salad 2>/dev/null; then
+            tmux attach-session -d -t Pasta
+        else
+            tmux new-session -s Salad
+        fi
+    else 
+        tmux new-session -s Pasta
     fi
-else 
-    tmux new-session -s Pasta
 fi
 
-if [ -e $HOME/.zshrc_local ]; then
-    source $HOME/.zshrc_local
-else
-    echo "No local zshrc found - add a blank one to make this message go away"
+# Load local configurations (system-specific settings)
+if [[ -f "$HOME/.zshrc_local" ]]; then
+    source "$HOME/.zshrc_local"
 fi

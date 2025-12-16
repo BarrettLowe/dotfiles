@@ -4,9 +4,7 @@
     excludesfile = ~/.gitignore
     editor = vim
 [diff]
-    tool = default-difftool
-[difftool "default-difftool"]
-    cmd = vim -f '+execute \"DirDiff\" argv(0) argv(1)' $LOCAL $REMOTE
+    tool = vimdiff
 [merge]
     tool = vimdiff
     conflictstyle = diff3
