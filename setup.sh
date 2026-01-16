@@ -80,20 +80,31 @@ create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/neovim/init.lua" "$HOME/.config/nvim/init.lua"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
-# Step 3: Toolchain Installation (Strategy: Build/Download -> DevTools)
+# Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Helper for GH releases
+# Install clangd via apt for system header reliability
+if ! command -v clangd &> /dev/null; then
+    print_info "Installing clangd via apt..."
+    sudo apt update && sudo apt install -y clangd
+    print_success "clangd installed via apt"
+fi
+
+# Helper for GH releases (nvim, rg, fd)
 install_gh_release() {
     local repo=$1
     local pattern=$2
     local bin_name=$3
     
     print_info "Installing $bin_name from $repo..."
-    # Get latest release download URL via curl/grep
-    local url=$(curl -s https://api.github.com/repos/$repo/releases/latest | grep "browser_download_url" | grep "$pattern" | cut -d '"' -f 4)
-    local filename=$(basename "$url")
+    local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" | grep "browser_download_url" | grep "$pattern" | head -n 1 | cut -d '"' -f 4)
     
+    if [[ -z "$url" ]]; then
+        print_error "Could not find download URL for $bin_name"
+        return 1
+    fi
+
+    local filename=$(basename "$url")
     curl -LsSf "$url" -o "$HOME/.build/$filename"
     
     if [[ $filename == *.tar.gz ]]; then
@@ -102,31 +113,24 @@ install_gh_release() {
         unzip -q "$HOME/.build/$filename" -d "$HOME/.build/"
     fi
     
-    # Custom movement logic per tool
     case $bin_name in
         "nvim")
             cp -r "$HOME/.build/nvim-linux64/"* "$HOME/DevTools/"
             ;;
         "rg")
-            find "$HOME/.build" -name "rg" -type f -exec cp {} "$HOME/DevTools/bin/" \;
+            find "$HOME/.build" -name "rg" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
             ;;
         "fd")
-            find "$HOME/.build" -name "fd" -type f -exec cp {} "$HOME/DevTools/bin/" \;
-            ;;
-        "clangd")
-            # clangd releases usually have a bin/ folder inside the zip
-            local clangd_dir=$(find "$HOME/.build" -name "clangd_*" -type d | head -n 1)
-            cp -r "$clangd_dir/"* "$HOME/DevTools/"
+            find "$HOME/.build" -name "fd" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
             ;;
     esac
     print_success "$bin_name installed to ~/DevTools/bin"
 }
 
-# Install missing tools
+# Install core CLI tools from GitHub (more version-sensitive)
 [[ ! $(command -v nvim) ]] && install_gh_release "neovim/neovim" "nvim-linux64.tar.gz" "nvim"
 [[ ! $(command -v rg) ]]   && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
 [[ ! $(command -v fd) ]]   && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
-[[ ! $(command -v clangd) ]] && install_gh_release "clangd/clangd" "linux.zip" "clangd"
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"
@@ -137,6 +141,7 @@ if ! command -v uv &> /dev/null; then
     sh "$HOME/.build/uv_install.sh"
 fi
 
+export PATH="$HOME/.local/bin:$PATH"
 NVIM_VENV="$HOME/.local/share/nvim/uv-venv"
 if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
@@ -151,5 +156,5 @@ print_success "Plugins synchronized"
 
 # Final summary
 print_header "Setup Complete! 🎉"
-echo -e "${GREEN}Toolchain is now provisioned in ~/DevTools/bin${NC}"
+echo -e "${GREEN}Toolchain is now provisioned.${NC}"
 echo -e "Run 'source ~/.zshrc' to refresh PATH."
