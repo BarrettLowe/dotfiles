@@ -2,7 +2,7 @@
 
 # Dotfiles Setup Script - 2026 Modern Environment Edition
 # Optimized for Headless DevPods/Containers (Zsh + Tmux + Neovim)
-# Strategy: Downloads to ~/.build -> Installs to ~/DevTools
+# Strategy: Downloads to ~/.build -> Installs to ~/DevTools (except nvim in /opt)
 
 # Colors for output
 RED='\033[0;31m'
@@ -42,7 +42,7 @@ add_todo() {
 }
 
 print_header "Headless Dotfiles Setup Script"
-echo "Strategy: Artifacts in ~/.build | Tools in ~/DevTools"
+echo "Strategy: Artifacts in ~/.build | Tools in ~/DevTools & /opt"
 echo "Targeting: CLI Dev Environment (Neovim/LSP/Tmux)"
 
 # Verify we're in the dotfiles directory
@@ -52,7 +52,8 @@ if [ ! -f "$PWD/setup.sh" ]; then
 fi
 
 DOTFILES_DIR="$PWD"
-export PATH="$HOME/.local/bin:$HOME/DevTools/bin:$PATH"
+# Update PATH for the current session to include /opt/nvim/bin and DevTools
+export PATH="/opt/nvim-linux-x86_64/bin:$HOME/.local/bin:$HOME/DevTools/bin:$PATH"
 
 # Step 1: Create directory structure
 print_header "Step 1: Creating Directory Structure"
@@ -61,7 +62,7 @@ mkdir -p "$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/share"
 mkdir -p "$HOME/.config/nvim"
 mkdir -p "$HOME/.local/share/nvim"
 mkdir -p "$HOME/.local/bin"
-print_success "Created ~/.build and ~/DevTools structure"
+print_success "Created local directory structure"
 
 # Step 2: Create symlinks for dotfiles
 print_header "Step 2: Creating Symlinks"
@@ -90,14 +91,29 @@ if ! command -v clangd &> /dev/null; then
     print_success "clangd installed via apt"
 fi
 
-# Helper for GH releases (nvim, rg, fd)
+# Manual Neovim Install (Your preferred method)
+if ! command -v nvim &> /dev/null; then
+    print_info "Installing Neovim to /opt..."
+    cd "$HOME/.build"
+    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+    sudo rm -rf /opt/nvim-linux-x86_64
+    sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+    print_success "Neovim installed to /opt/nvim-linux-x86_64"
+    cd "$DOTFILES_DIR"
+fi
+
+# Helper for GH releases (rg, fd)
 install_gh_release() {
     local repo=$1
     local pattern=$2
     local bin_name=$3
     
-    print_info "Installing $bin_name from $repo..."
-    local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" | grep "browser_download_url" | grep "$pattern" | head -n 1 | cut -d '"' -f 4)
+    print_info "Finding latest release for $bin_name ($repo)..."
+    local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" \
+        | grep "browser_download_url" \
+        | grep -E "$pattern" \
+        | head -n 1 \
+        | cut -d '"' -f 4)
     
     if [[ -z "$url" ]]; then
         print_error "Could not find download URL for $bin_name"
@@ -110,27 +126,15 @@ install_gh_release() {
     if [[ $filename == *.tar.gz ]]; then
         tar -xzf "$HOME/.build/$filename" -C "$HOME/.build/"
     elif [[ $filename == *.zip ]]; then
-        unzip -q "$HOME/.build/$filename" -d "$HOME/.build/"
+        unzip -q -o "$HOME/.build/$filename" -d "$HOME/.build/"
     fi
     
-    case $bin_name in
-        "nvim")
-            cp -r "$HOME/.build/nvim-linux64/"* "$HOME/DevTools/"
-            ;;
-        "rg")
-            find "$HOME/.build" -name "rg" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
-            ;;
-        "fd")
-            find "$HOME/.build" -name "fd" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
-            ;;
-    esac
+    find "$HOME/.build" -name "$bin_name" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
     print_success "$bin_name installed to ~/DevTools/bin"
 }
 
-# Install core CLI tools from GitHub (more version-sensitive)
-[[ ! $(command -v nvim) ]] && install_gh_release "neovim/neovim" "nvim-linux64.tar.gz" "nvim"
-[[ ! $(command -v rg) ]]   && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
-[[ ! $(command -v fd) ]]   && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
+[[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
+[[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"
@@ -157,4 +161,5 @@ print_success "Plugins synchronized"
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"
+echo -e "Note: Neovim is in /opt/nvim-linux-x86_64/bin"
 echo -e "Run 'source ~/.zshrc' to refresh PATH."
