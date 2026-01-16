@@ -4,9 +4,11 @@ export ZSH="$HOME/.oh-my-zsh"
 # Basic environment settings
 export EDITOR=vim
 export KEYTIMEOUT=40
+HISTSIZE=1000000
+SAVEHIST=1000000
 
 # PATH configuratioindex() {
-    ctags -Rbindkey -M vicmd "L" end-of-line
+#ctags -Rbindkey -M vicmd "L" end-of-line
 bindkey -M vicmd "H" beginning-of-line
 bindkey "^_" vi-undo-change                      # Ctrl+/
 bindkey -M vicmd "ciw" kill-word
@@ -14,9 +16,9 @@ bindkey -M vicmd "ciw" kill-word
 # Don't exit shell on Ctrl+D
 set -o ignoreeof
 
-# Visual indicator for vi mode
-function zle-line-init zle-keymap-select {cope -bvRb
-}
+## Visual indicator for vi mode
+#function zle-line-init zle-keymap-select {cope -bvRb
+#}
 
 # ZLE key bindings
 bindkey "[6~" history-beginning-search-forward   # Page Down
@@ -133,7 +135,7 @@ alias tmux="TERM=xterm-256color tmux"
 # Config file shortcuts
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
-alias vc="$EDITOR ~/dotfiles/.vimrc"
+alias vc="$EDITOR ~/dotfiles/neovim/init.lua"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="$EDITOR"
 # Alternative if you prefer neovim:
@@ -162,6 +164,12 @@ alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
 # Find utilities
 alias findBin="find -type f -executable -exec file -i \'{}\' \; | grep \'charset=binary\'"
 alias findExt='find . -type f | perl -ne "print \$1 if m/(\\.[^.\\/]+)\$/" | sort -u'
+
+# Directories
+alias dev="cd $HOME/Development"
+alias dt="cd $HOME/DevTools"
+
+
 # Enable vi mode
 bindkey -v
 
@@ -213,7 +221,8 @@ bindkey -M vicmd 'v' edit-command-line
 bindkey -M viins "jk" vi-cmd-mode
 
 # Auto-attach to tmux (only for interactive shells)
-if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
+#if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
+if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]]; then
     if tmux has-session -t Pasta 2>/dev/null; then
         if tmux has-session -t Salad 2>/dev/null; then
             tmux attach-session -d -t Pasta
@@ -229,3 +238,5 @@ fi
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
 fi
+
+. "$HOME/.local/bin/env"
