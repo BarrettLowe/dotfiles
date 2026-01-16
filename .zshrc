@@ -2,7 +2,7 @@
 export ZSH="$HOME/.oh-my-zsh"
 
 # Basic environment settings
-export EDITOR=vim
+export EDITOR=nvim
 export KEYTIMEOUT=40
 HISTSIZE=1000000
 SAVEHIST=1000000

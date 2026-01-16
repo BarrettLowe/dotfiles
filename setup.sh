@@ -89,7 +89,14 @@ if ! command -v clangd &> /dev/null; then
     print_success "clangd installed via apt"
 fi
 
-# Manual Neovim Install (Your preferred method)
+# Install python via apt for system header reliability
+if ! command -v python3 &> /dev/null; then
+    print_info "Installing python via apt..."
+    sudo apt update && sudo apt install -y python3
+    print_success "python3 installed via apt"
+fi
+
+# Manual Neovim Install
 if ! command -v nvim &> /dev/null; then
     print_info "Installing Neovim to /opt..."
     cd "$HOME/.build"
@@ -99,6 +106,19 @@ if ! command -v nvim &> /dev/null; then
     print_success "Neovim installed to /opt/nvim-linux-x86_64"
     # Set path for nvim
     export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
+    cd "$DOTFILES_DIR"
+fi
+
+# Manual TreeSitter Install
+if ! command -v tree-sitter &> /dev/null; then
+    print_info "Installing tree-sitter to DevTools"
+    mkdir -p "$HOME/.build/tree-sitter"
+    cd "$HOME/.build/tree-sitter"
+    curl -LO https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.3/tree-sitter-linux-x86.gz
+    gunzip tree-sitter-linux-x86.gz
+    cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter
+    chmod +x "$HOME/DevTools/tree-sitter
+    print_success "Installed tree-sitter"
     cd "$DOTFILES_DIR"
 fi
 
@@ -150,7 +170,7 @@ NVIM_VENV="$HOME/.local/share/nvim/uv-venv"
 if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
     uv venv "$NVIM_VENV"
-    "$NVIM_VENV/bin/pip" install pynvim
+    uv pip install pynvim --python "$NVIM_VENV/bin/python"
 fi
 
 # Step 5: Initializing Neovim Plugins
