@@ -78,7 +78,7 @@ create_symlink() {
 create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/neovim/init.lua" "$HOME/.config/nvim/init.lua"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
-create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.10k.zsh"
+create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
