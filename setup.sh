@@ -78,6 +78,7 @@ create_symlink() {
 create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/neovim/init.lua" "$HOME/.config/nvim/init.lua"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.10k.zsh"
 
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
@@ -180,7 +181,6 @@ print_success "Plugins synchronized"
 
 # Step 6: Setup Oh My Zsh theme
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
-ln -s "$HOME/dotfiles/.p10k.zsh $HOME/.p10k.zsh"
 
 
 # Final summary
