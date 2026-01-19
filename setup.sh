@@ -83,13 +83,6 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Install clangd via apt for system header reliability
-if ! command -v clangd &> /dev/null; then
-    print_info "Installing clangd via apt..."
-    sudo apt update && sudo apt install -y clangd
-    print_success "clangd installed via apt"
-fi
-
 # Install python via apt for system header reliability
 if ! command -v python3 &> /dev/null; then
     print_info "Installing python via apt..."
@@ -172,6 +165,7 @@ if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
     uv venv "$NVIM_VENV"
     uv pip install pynvim --python "$NVIM_VENV/bin/python"
+    uv tool install "cmake-language-server" --with "pygls<2.0.0" # cmake-language-server is not compatible with current pygls
 fi
 
 # Step 5: Initializing Neovim Plugins
