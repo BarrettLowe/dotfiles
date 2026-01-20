@@ -103,18 +103,18 @@ if ! command -v nvim &> /dev/null; then
     cd "$DOTFILES_DIR"
 fi
 
-# Manual TreeSitter Install
-if ! command -v tree-sitter &> /dev/null; then
-    print_info "Installing tree-sitter to DevTools"
-    mkdir -p "$HOME/.build/tree-sitter"
-    cd "$HOME/.build/tree-sitter"
-    curl -LO https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.3/tree-sitter-linux-x86.gz
-    gunzip tree-sitter-linux-x86.gz
-    cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter"
-    chmod +x "$HOME/DevTools/bin/tree-sitter"
-    print_success "Installed tree-sitter"
-    cd "$DOTFILES_DIR"
-fi
+# # Manual TreeSitter Install
+# if ! command -v tree-sitter &> /dev/null; then
+#     print_info "Installing tree-sitter to DevTools"
+#     mkdir -p "$HOME/.build/tree-sitter"
+#     cd "$HOME/.build/tree-sitter"
+#     curl -LO https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.3/tree-sitter-linux-x86.gz
+#     gunzip tree-sitter-linux-x86.gz
+#     cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter"
+#     chmod +x "$HOME/DevTools/bin/tree-sitter"
+#     print_success "Installed tree-sitter"
+#     cd "$DOTFILES_DIR"
+# fi
 
 # Helper for GH releases (rg, fd)
 install_gh_release() {
