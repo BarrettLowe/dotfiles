@@ -46,6 +46,7 @@ vim.opt.mat = 2
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.laststatus = 2
+vim.opt.signcolumn = "yes:2"
 
 -- Initialize plugins
 require("lazy").setup({
@@ -71,7 +72,7 @@ require("lazy").setup({
     { "Civitasv/cmake-tools.nvim", opts = {} },         -- CMake integration (Build/Debug/Test)
     { "linux-cultist/venv-selector.nvim", opts = {} },  -- Python virtual environment switcher
     
-    -- 3. Modern completion (2026 standard)
+    -- 3. Modern completion
     {
         "Saghen/blink.cmp",
         version = "*" , 
@@ -157,6 +158,7 @@ require("lazy").setup({
         "lewis6991/gitsigns.nvim",
         opts = {
             current_line_blame = true,
+            sign_priority = 100,
             on_attach = function(bufnr)
                 local gitsigns = require('gitsigns')
                 local function map(mode, l, r, opts)
@@ -187,14 +189,59 @@ require("lazy").setup({
     {
         'nvimdev/lspsaga.nvim',
         config = function()
-            require('lspsaga').setup({})
+            require('lspsaga').setup({
+            lightbulb = {
+                enable = false
+            }
+        })
         end,
         dependencies = {
             'nvim-treesitter/nvim-treesitter', -- optional
             'nvim-tree/nvim-web-devicons',     -- optional
         }
     },
-    { "rcarriga/nvim-dap-ui", dependencies = {"mfussenegger/nvim-dap", "nvim-neotest/nvim-nio"} }
+    { "rcarriga/nvim-dap-ui", dependencies = {"mfussenegger/nvim-dap", "nvim-neotest/nvim-nio"} },
+    { "tpope/vim-fugitive" },
+    {
+        "kylechui/nvim-surround",
+        version = "^3.0.0", -- Use for stability; omit to use `main` branch for the latest features
+        event = "VeryLazy",
+        config = function()
+            require("nvim-surround").setup({
+                -- Configuration here, or leave empty to use defaults
+            })
+        end
+    },
+    -- {
+    --     "coffebar/neovim-project",
+    --     opts = {
+    --         patterns = { ".git" },
+    --         projects = { -- define project roots
+    --             "~/projects/*",
+    --             "~/.config/*",
+    --             "/armgdn-seeker-sw/src/*"
+    --         },
+    --         picker = {
+    --             type = "telescope", -- one of "telescope", "fzf-lua", or "snacks"
+    --         }
+    --     },
+    --     init = function()
+    --         -- enable saving the state of plugins in the session
+    --         vim.opt.sessionoptions:append("globals") -- save global variables that start with an uppercase letter and contain at least one lowercase letter.
+    --     end,
+    --     dependencies = {
+    --         { "nvim-lua/plenary.nvim" },
+    --         -- optional picker
+    --         { "nvim-telescope/telescope.nvim", tag = "0.1.4" },
+    --         -- optional picker
+    --         { "ibhagwan/fzf-lua" },
+    --         -- optional picker
+    --         { "folke/snacks.nvim" },
+    --         { "Shatur/neovim-session-manager" },
+    --     },
+    --     lazy = false,
+    --     priority = 100,
+    -- },
 },
 })
 
@@ -256,7 +303,7 @@ vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>')
 
 -- 1. C++ (clangd) using the new native API
 vim.lsp.config('clangd', {
-  cmd = { "clangd", "--background-index", "--clang-tidy"},
+  cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu"},
   on_attach = on_attach,
   capabilities = require('blink.cmp').get_lsp_capabilities(),
 })
@@ -285,7 +332,7 @@ vim.lsp.config('cmake', {
 })
 
 -- Enable the configs
-vim.lsp.enable('clangd')
+-- vim.lsp.enable('clangd')
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('ruff')
 vim.lsp.enable('cmake')
@@ -394,7 +441,7 @@ vim.keymap.set('n', '<leader>ds', function()
 )
 vim.keymap.set('n', '<leader>ws', builtin.lsp_workspace_symbols, { desc = 'Workspace symbols' })
 
-vim.keymap.set('n', '<leader>gw', builtin.grep_string, { desc = 'Grep current Word' })
+vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Find (grep) current Word' })
 vim.keymap.set('n', '<leader>D', require('telescope.builtin').diagnostics, { desc = 'Show all Diagnostics' })
 
 require('telescope').setup{
@@ -427,7 +474,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
         map("n", "<leader>cg", "<cmd>CMakeGenerate!<cr>", opts)
         map("n", "<leader>cb", "<cmd>CMakeBuild<cr>", opts)
-        map("n", "<leader>ccb", "<cmd>CMakeBuild!<cr>", opts)
+        map("n", "<leader>cB", "<cmd>CMakeBuild!<cr>", opts)
         map("n", "<leader>ct", "<cmd>CMakeSelectBuildTarget<cr>", opts)
         map("n", "<leader>cl", "<cmd>CMakeSelectLaunchTarget<cr>", opts)
         map("n", "<leader>cd", "<cmd>CMakeDebug<cr>", opts)
@@ -490,7 +537,7 @@ dap.configurations.cpp = {
             return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. '/', 'file')
         end,
         cwd = '${workspaceFolder}',
-        stopOnEntry = true,
+        stopOnEntry = false,
         console = 'integratedTerminal'
     }
 }
