@@ -186,7 +186,10 @@ print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null
 print_success "Plugins synchronized"
 
-# Step 6: Setup Oh My Zsh theme
+# Step 6: Setup Oh My Zsh and themes
+if [ -d "$HOME/.oh-my-zsh" ] || [ -n "$ZSH" ]; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
 
