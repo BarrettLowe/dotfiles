@@ -59,6 +59,7 @@ require("lazy").setup({
         opts = {
             ensure_installed = {
                 "clangd",
+                "clang-format",
                 "debugpy",
                 "codelldb",
                 "tree-sitter-cli",
@@ -101,10 +102,28 @@ require("lazy").setup({
         config = function()
             -- The plural 'configs' works here because this branch has the legacy wrapper
             require('nvim-treesitter.configs').setup({
-                ensure_installed = { "c", "cpp", "python", "lua", "json", "jsonc", "bash" },
+                ensure_installed = { "c", "cpp", "python", "lua", "json", "jsonc", "bash", "yaml" },
                 highlight = { enable = true },
             })
         end
+    },
+    {
+        "nvim-treesitter/nvim-treesitter-textobjects",
+        branch = "main",
+        init = function()
+            -- Disable entire built-in ftplugin mappings to avoid conflicts.
+            -- See https://github.com/neovim/neovim/tree/master/runtime/ftplugin for built-in ftplugins.
+            vim.g.no_plugin_maps = true
+
+            -- Or, disable per filetype (add as you like)
+            -- vim.g.no_python_maps = true
+            -- vim.g.no_ruby_maps = true
+            -- vim.g.no_rust_maps = true
+            -- vim.g.no_go_maps = true
+        end,
+        config = function()
+            -- put your config here
+        end,
     },
     { "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
     { "folke/which-key.nvim", opts = {} },              -- Shows keybinding popups
@@ -212,6 +231,76 @@ require("lazy").setup({
             })
         end
     },
+    {
+        "olimorris/codecompanion.nvim",
+        version = "^18.0.0",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-treesitter/nvim-treesitter",
+        },
+        opts = { 
+            opts = {
+                log_level = "DEBUG"
+            },
+            adapters = {
+                http = {
+                    ollama_reasoning = function()
+                        return require("codecompanion.adapters").extend("ollama", {
+                            env = { url = "http://localhost:11434" },
+                            schema = {
+                                model = { default = "qwen2.5-coder:7b" },
+                                num_ctx = { default = 16384 },
+                            },
+                            parameters = {
+                                temperature = 0.2,
+                                num_predict = 1024,
+                            }
+                        })
+                    end,
+                    ollama_fast = function()
+                        return require("codecompanion.adapters").extend("ollama", {
+                            env = { url = "http://localhost:11434" },
+                            schema = {
+                                model = { default = "codegemma:2b-code" },
+                                parameters = {
+                                    temperature = 0,
+                                    num_predict = 1024,
+                                }
+                            }
+                        })
+                    end,
+                }
+            },
+            -- 'strategies' was renamed to 'interactions' in v18
+            strategies = {
+                chat = { adapter = "ollama_reasoning" },
+                inline = { adapter = "ollama_reasoning" },
+            },
+            -- Rule management is now handled via 'memory'
+            rules = {
+                { "~/dotfiles/AGENTS.md" }, -- Personal
+                "AGENTS.md", -- Project-specific
+            },
+            prompt_library = {
+                markdown = {
+                    dirs = {"~/dotfiles/neovim/ai/prompts"},
+                },
+            },
+        },
+    },
+    {
+        "zbirenbaum/copilot.lua",
+        cmd = "Copilot",
+        event = "InsertEnter",
+        config = function()
+            require("copilot").setup({
+                copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.22.0/bin/node",
+                -- Disable these so Copilot never suggests anything automatically
+                suggestion = { enabled = false },
+                panel = { enabled = false },
+            })
+        end,
+    }
     -- {
     --     "coffebar/neovim-project",
     --     opts = {
@@ -256,6 +345,53 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.treesitter.start(args.buf)
     end,
 })
+vim.keymap.set({ "n", "x", "o" }, "]m", function()
+  require("nvim-treesitter-textobjects.move").goto_next_start("@function.outer", "textobjects")
+end)
+vim.keymap.set({ "n", "x", "o" }, "]]", function()
+  require("nvim-treesitter-textobjects.move").goto_next_start("@class.outer", "textobjects")
+end)
+-- You can also pass a list to group multiple queries.
+vim.keymap.set({ "n", "x", "o" }, "]o", function()
+  require("nvim-treesitter-textobjects.move").goto_next_start({"@loop.inner", "@loop.outer"}, "textobjects")
+end)
+-- You can also use captures from other query groups like `locals.scm` or `folds.scm`
+vim.keymap.set({ "n", "x", "o" }, "]s", function()
+  require("nvim-treesitter-textobjects.move").goto_next_start("@local.scope", "locals")
+end)
+vim.keymap.set({ "n", "x", "o" }, "]z", function()
+  require("nvim-treesitter-textobjects.move").goto_next_start("@fold", "folds")
+end)
+
+vim.keymap.set({ "n", "x", "o" }, "]M", function()
+  require("nvim-treesitter-textobjects.move").goto_next_end("@function.outer", "textobjects")
+end)
+vim.keymap.set({ "n", "x", "o" }, "][", function()
+  require("nvim-treesitter-textobjects.move").goto_next_end("@class.outer", "textobjects")
+end)
+
+vim.keymap.set({ "n", "x", "o" }, "[m", function()
+  require("nvim-treesitter-textobjects.move").goto_previous_start("@function.outer", "textobjects")
+end)
+vim.keymap.set({ "n", "x", "o" }, "[[", function()
+  require("nvim-treesitter-textobjects.move").goto_previous_start("@class.outer", "textobjects")
+end)
+
+vim.keymap.set({ "n", "x", "o" }, "[M", function()
+  require("nvim-treesitter-textobjects.move").goto_previous_end("@function.outer", "textobjects")
+end)
+vim.keymap.set({ "n", "x", "o" }, "[]", function()
+  require("nvim-treesitter-textobjects.move").goto_previous_end("@class.outer", "textobjects")
+end)
+
+-- Go to either the start or the end, whichever is closer.
+-- Use if you want more granular movements
+vim.keymap.set({ "n", "x", "o" }, "]d", function()
+  require("nvim-treesitter-textobjects.move").goto_next("@conditional.outer", "textobjects")
+end)
+vim.keymap.set({ "n", "x", "o" }, "[d", function()
+  require("nvim-treesitter-textobjects.move").goto_previous("@conditional.outer", "textobjects")
+end)
 
 
 -- Function to switch header/source
@@ -498,6 +634,18 @@ vim.api.nvim_create_autocmd("FileType", {
     end
 })
 
+-- Codecompanion setup
+vim.keymap.set({"n", "v"}, "<leader>ai", "<cmd>CodeCompanion<cr>", {
+    desc = "CodeCompanion: Inline assistant (visual)", 
+    noremap = true,
+    silent = true,
+})
+vim.keymap.set({"n", "v"}, "<leader>ac", "<cmd>CodeCompanionChat Toggle<cr>", {
+    desc = "CodeCompanion: Toggle Chat Window", 
+    noremap = true,
+    silent = true,
+})
+
 
 ------------------------------------------------------------------------------------------
 ---DAP Configs
@@ -596,6 +744,21 @@ local debug_keys = {
   X = dap.terminate,
   C = function() dap.set_breakpoint(vim.fn.input("Condition: ")) end,
 }
+
+-- Close hover windows when we try to move the cursor
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "dap-float",
+  callback = function(args)
+    -- Close the window as soon as the cursor moves
+    vim.api.nvim_create_autocmd("CursorMoved", {
+      buffer = args.buf,
+      once = true, -- Only run once to avoid errors after closing
+      callback = function()
+        vim.api.nvim_win_close(0, true)
+      end,
+    })
+  end,
+})
 
 local global_restore = {}
 
