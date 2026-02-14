@@ -35,7 +35,10 @@ bindkey "^k" history-beginning-search-backward
 bindkey "[3~" delete-char                        # Delete
 bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
-[[ -d "/opt/nvim-linux-x86_64/bin" ]] && path=("/opt/nvim-linux-x86_64/bin" $path)
+# Dynamically add nvim to path if installed in /opt
+[[ -d "/opt/nvim-linux64/bin" ]] && path=("/opt/nvim-linux64/bin" $path)
+[[ -d "/opt/nvim-macos-arm64/bin" ]] && path=("/opt/nvim-macos-arm64/bin" $path)
+[[ -d "/opt/nvim-macos-x86_64/bin" ]] && path=("/opt/nvim-macos-x86_64/bin" $path)
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 [[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
 [[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
