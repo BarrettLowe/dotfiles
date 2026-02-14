@@ -109,10 +109,9 @@ Edit `~/.zshrc_local` and uncomment/modify settings based on your system:
 
 #### For Linux Systems (x86_64)
 ```bash
-# Uncomment and adjust library paths
+# Uncomment and adjust library paths (lib64 should be searched before lib)
 typeset -U LD_LIBRARY_PATH
-export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$HOME/DevTools/lib:$LD_LIBRARY_PATH"
 ```
 
 #### For Linux Systems (ARM/aarch64)
@@ -124,10 +123,9 @@ export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
 
 #### For macOS Intel (x86_64)
 ```bash
-# Use DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH
+# Use DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH (lib64 should be searched before lib)
 typeset -U DYLD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
-export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
 ```
 
 #### For macOS Apple Silicon (ARM)

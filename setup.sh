@@ -85,7 +85,8 @@ if mkdir -p "${LIB_DIRS[@]}" 2>/dev/null; then
     print_success "Created $HOME/DevTools structure"
 else
     print_error "Failed to create DevTools directories (permission denied?)"
-    add_todo "Manually create: mkdir -p ${LIB_DIRS[*]}"
+    # Show the actual directories that need to be created
+    add_todo "Manually create: mkdir -p $HOME/DevTools/bin $HOME/DevTools/lib$([ \"$ARCH\" = \"x86_64\" ] && echo \" $HOME/DevTools/lib64\" || echo \"\")"
 fi
 
 if mkdir -p "$HOME/.vim/undo" 2>/dev/null; then

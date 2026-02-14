@@ -17,8 +17,7 @@
 
 # For Linux systems (x86_64):
 # typeset -U LD_LIBRARY_PATH
-# export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
-# export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
+# export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$HOME/DevTools/lib:$LD_LIBRARY_PATH"
 
 # For Linux systems (ARM/aarch64):
 # typeset -U LD_LIBRARY_PATH
@@ -26,8 +25,7 @@
 
 # For macOS Intel (x86_64):
 # typeset -U DYLD_LIBRARY_PATH
-# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
-# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
 
 # For macOS Apple Silicon (arm64):
 # typeset -U DYLD_LIBRARY_PATH
