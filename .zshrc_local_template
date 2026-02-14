@@ -47,8 +47,13 @@
 # Perl Environment
 # -----------------------------------------------------------------------------
 # Uncomment if you use Perl modules in custom locations
-# Note: Use lib64 only on x86_64 systems; use lib on ARM systems
-# export PERL5LIB="$HOME/DevTools/lib/perl5:$PERL5LIB"
+# Architecture detection example:
+# ARCH=$(uname -m)
+# if [[ "$ARCH" == "x86_64" ]]; then
+#     export PERL5LIB="$HOME/DevTools/lib64/perl5:$PERL5LIB"
+# else
+#     export PERL5LIB="$HOME/DevTools/lib/perl5:$PERL5LIB"
+# fi
 
 # -----------------------------------------------------------------------------
 # Manual Pages
