@@ -43,7 +43,12 @@ case "$ARCH_TYPE" in
     x86_64|amd64)
         ARCH="x86_64"
         ;;
-    aarch64|arm64)
+    aarch64)
+        # Keep as aarch64 for Linux binary compatibility
+        ARCH="aarch64"
+        ;;
+    arm64)
+        # Keep as arm64 for macOS binary compatibility
         ARCH="arm64"
         ;;
     *)
@@ -145,7 +150,7 @@ if ! command -v nvim &> /dev/null; then
         if [ "$ARCH" = "x86_64" ]; then
             NVIM_FILENAME="nvim-linux-x86_64.tar.gz"
             NVIM_DIR="nvim-linux-x86_64"
-        else
+        elif [ "$ARCH" = "aarch64" ]; then
             NVIM_FILENAME="nvim-linux-arm64.tar.gz"
             NVIM_DIR="nvim-linux-arm64"
         fi
@@ -153,7 +158,7 @@ if ! command -v nvim &> /dev/null; then
         if [ "$ARCH" = "arm64" ]; then
             NVIM_FILENAME="nvim-macos-arm64.tar.gz"
             NVIM_DIR="nvim-macos-arm64"
-        else
+        elif [ "$ARCH" = "x86_64" ]; then
             NVIM_FILENAME="nvim-macos-x86_64.tar.gz"
             NVIM_DIR="nvim-macos-x86_64"
         fi
@@ -202,7 +207,7 @@ install_gh_release() {
     if [ "$OS" = "linux" ]; then
         if [ "$ARCH" = "x86_64" ]; then
             pattern="x86_64-unknown-linux-musl.tar.gz"
-        elif [ "$ARCH" = "arm64" ]; then
+        elif [ "$ARCH" = "aarch64" ]; then
             pattern="aarch64-unknown-linux-musl.tar.gz"
         fi
     elif [ "$OS" = "darwin" ]; then
@@ -211,6 +216,12 @@ install_gh_release() {
         elif [ "$ARCH" = "arm64" ]; then
             pattern="aarch64-apple-darwin.tar.gz"
         fi
+    fi
+    
+    # Validate that a pattern was constructed
+    if [[ -z "$pattern" ]]; then
+        print_error "Unable to determine binary pattern for OS=$OS, ARCH=$ARCH"
+        return 1
     fi
     
     local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" \
