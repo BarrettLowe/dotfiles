@@ -34,6 +34,45 @@ print_info() {
     echo -e "${BLUE}ℹ${NC} $1"
 }
 
+# Detect OS and Architecture
+OS_TYPE=$(uname -s)
+ARCH_TYPE=$(uname -m)
+
+# Normalize architecture names
+case "$ARCH_TYPE" in
+    x86_64|amd64)
+        ARCH="x86_64"
+        ;;
+    aarch64)
+        # Keep as aarch64 for Linux binary compatibility
+        ARCH="aarch64"
+        ;;
+    arm64)
+        # Keep as arm64 for macOS binary compatibility
+        ARCH="arm64"
+        ;;
+    *)
+        print_error "Unsupported architecture: $ARCH_TYPE"
+        exit 1
+        ;;
+esac
+
+# Set OS-specific variables
+case "$OS_TYPE" in
+    Linux)
+        OS="linux"
+        PKG_MANAGER="apt"
+        ;;
+    Darwin)
+        OS="darwin"
+        PKG_MANAGER="brew"
+        ;;
+    *)
+        print_error "Unsupported OS: $OS_TYPE"
+        exit 1
+        ;;
+esac
+
 # Track what needs to be done manually
 TODO_LIST=()
 
@@ -44,6 +83,7 @@ add_todo() {
 print_header "Headless Dotfiles Setup Script"
 echo "Strategy: Artifacts in ~/.build | Tools in ~/DevTools & /opt"
 echo "Targeting: CLI Dev Environment (Neovim/LSP/Tmux)"
+echo "Detected OS: $OS_TYPE ($OS) | Architecture: $ARCH_TYPE ($ARCH)"
 
 # Verify we're in the dotfiles directory
 if [ ! -f "$PWD/setup.sh" ]; then
@@ -83,14 +123,18 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Install python via apt for system header reliability
+# Install python via package manager
 if ! command -v python3 &> /dev/null; then
-    print_info "Installing python via apt..."
-    sudo apt update && sudo apt install -y python3 python3-venv
-    print_success "python3 installed via apt"
+    print_info "Installing python via $PKG_MANAGER..."
+    if [ "$PKG_MANAGER" = "apt" ]; then
+        sudo apt update && sudo apt install -y python3 python3-venv
+    elif [ "$PKG_MANAGER" = "brew" ]; then
+        brew install python3
+    fi
+    print_success "python3 installed via $PKG_MANAGER"
 fi
 
-if ! dpkg -s python3-venv &>/dev/null; then
+if [ "$PKG_MANAGER" = "apt" ] && ! dpkg -s python3-venv &>/dev/null; then
     print_info "Installing python3-venv via apt..."
     sudo apt update && sudo apt install -y python3-venv
     print_success "python3-venv installed via apt"
@@ -100,17 +144,46 @@ fi
 if ! command -v nvim &> /dev/null; then
     print_info "Installing Neovim to /opt..."
     cd "$HOME/.build"
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-    sudo rm -rf /opt/nvim-linux-x86_64
-    sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
-    print_success "Neovim installed to /opt/nvim-linux-x86_64"
+    
+    # Construct the correct download URL based on OS and architecture
+    if [ "$OS" = "linux" ]; then
+        if [ "$ARCH" = "x86_64" ]; then
+            NVIM_FILENAME="nvim-linux-x86_64.tar.gz"
+            NVIM_DIR="nvim-linux-x86_64"
+        elif [ "$ARCH" = "aarch64" ]; then
+            NVIM_FILENAME="nvim-linux-arm64.tar.gz"
+            NVIM_DIR="nvim-linux-arm64"
+        fi
+    elif [ "$OS" = "darwin" ]; then
+        if [ "$ARCH" = "arm64" ]; then
+            NVIM_FILENAME="nvim-macos-arm64.tar.gz"
+            NVIM_DIR="nvim-macos-arm64"
+        elif [ "$ARCH" = "x86_64" ]; then
+            NVIM_FILENAME="nvim-macos-x86_64.tar.gz"
+            NVIM_DIR="nvim-macos-x86_64"
+        fi
+    fi
+    
+    # Validate that Neovim filename was determined
+    if [[ -z "$NVIM_FILENAME" ]] || [[ -z "$NVIM_DIR" ]]; then
+        print_error "Unable to determine Neovim download for OS=$OS, ARCH=$ARCH"
+        cd "$DOTFILES_DIR"
+        return 1
+    fi
+    
+    NVIM_URL="https://github.com/neovim/neovim/releases/latest/download/$NVIM_FILENAME"
+    curl -LO "$NVIM_URL"
+    sudo rm -rf "/opt/$NVIM_DIR"
+    sudo tar -C /opt -xzf "$NVIM_FILENAME"
+    print_success "Neovim installed to /opt/$NVIM_DIR"
     # Set path for nvim
-    export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
+    export PATH="/opt/$NVIM_DIR/bin:$PATH"
     cd "$DOTFILES_DIR"
 fi
 
-# Install a clipboard so that the devcontainer can connect to the host
-if ! command -v wl-copy &> /dev/null; then
+# Install a clipboard tool for the devcontainer to connect to the host
+# wl-clipboard is Linux-specific; macOS has pbcopy/pbpaste built-in
+if [ "$OS" = "linux" ] && ! command -v wl-copy &> /dev/null; then
     print_info "Installing wl-clipboard via apt..."
     sudo apt update && sudo apt install -y wl-clipboard
     print_success "wl-clipboard installed via apt"
@@ -132,10 +205,32 @@ fi
 # Helper for GH releases (rg, fd)
 install_gh_release() {
     local repo=$1
-    local pattern=$2
-    local bin_name=$3
+    local bin_name=$2
     
     print_info "Finding latest release for $bin_name ($repo)..."
+    
+    # Construct pattern based on OS and architecture
+    local pattern=""
+    if [ "$OS" = "linux" ]; then
+        if [ "$ARCH" = "x86_64" ]; then
+            pattern="x86_64-unknown-linux-musl.tar.gz"
+        elif [ "$ARCH" = "aarch64" ]; then
+            pattern="aarch64-unknown-linux-musl.tar.gz"
+        fi
+    elif [ "$OS" = "darwin" ]; then
+        if [ "$ARCH" = "x86_64" ]; then
+            pattern="x86_64-apple-darwin.tar.gz"
+        elif [ "$ARCH" = "arm64" ]; then
+            pattern="aarch64-apple-darwin.tar.gz"
+        fi
+    fi
+    
+    # Validate that a pattern was constructed
+    if [[ -z "$pattern" ]]; then
+        print_error "Unable to determine binary pattern for OS=$OS, ARCH=$ARCH"
+        return 1
+    fi
+    
     local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" \
         | grep "browser_download_url" \
         | grep -E "$pattern" \
@@ -143,7 +238,7 @@ install_gh_release() {
         | cut -d '"' -f 4)
     
     if [[ -z "$url" ]]; then
-        print_error "Could not find download URL for $bin_name"
+        print_error "Could not find download URL for $bin_name with pattern: $pattern"
         return 1
     fi
 
@@ -160,8 +255,8 @@ install_gh_release() {
     print_success "$bin_name installed to ~/DevTools/bin"
 }
 
-[[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
-[[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
+[[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "rg"
+[[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "fd"
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"
@@ -207,5 +302,5 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"
-echo -e "Note: Neovim is in /opt/nvim-linux-x86_64/bin"
+echo -e "Note: Neovim is in /opt/nvim-*/bin"
 echo -e "Run 'source ~/.zshrc' to refresh PATH."
