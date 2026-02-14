@@ -142,8 +142,13 @@ if ! command -v nvim &> /dev/null; then
     
     # Construct the correct download URL based on OS and architecture
     if [ "$OS" = "linux" ]; then
-        NVIM_FILENAME="nvim-linux64.tar.gz"
-        NVIM_DIR="nvim-linux64"
+        if [ "$ARCH" = "x86_64" ]; then
+            NVIM_FILENAME="nvim-linux-x86_64.tar.gz"
+            NVIM_DIR="nvim-linux-x86_64"
+        else
+            NVIM_FILENAME="nvim-linux-arm64.tar.gz"
+            NVIM_DIR="nvim-linux-arm64"
+        fi
     elif [ "$OS" = "darwin" ]; then
         if [ "$ARCH" = "arm64" ]; then
             NVIM_FILENAME="nvim-macos-arm64.tar.gz"
