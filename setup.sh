@@ -61,11 +61,31 @@ print_success "Dotfiles directory: $DOTFILES_DIR"
 # Step 1: Create directory structure
 print_header "Step 1: Creating Directory Structure"
 
-if mkdir -p "$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/lib64" 2>/dev/null; then
+# Detect architecture to determine which library directories to create
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64|amd64)
+        # x86_64 systems typically use both lib and lib64
+        LIB_DIRS=("$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/lib64")
+        print_info "Detected x86_64 architecture - creating lib and lib64 directories"
+        ;;
+    aarch64|arm64)
+        # ARM systems typically use only lib
+        LIB_DIRS=("$HOME/DevTools/bin" "$HOME/DevTools/lib")
+        print_info "Detected ARM architecture - creating lib directory only"
+        ;;
+    *)
+        # For other architectures, default to lib only
+        LIB_DIRS=("$HOME/DevTools/bin" "$HOME/DevTools/lib")
+        print_info "Detected $ARCH architecture - creating lib directory only"
+        ;;
+esac
+
+if mkdir -p "${LIB_DIRS[@]}" 2>/dev/null; then
     print_success "Created $HOME/DevTools structure"
 else
     print_error "Failed to create DevTools directories (permission denied?)"
-    add_todo "Manually create: mkdir -p $HOME/DevTools/{bin,lib,lib64}"
+    add_todo "Manually create: mkdir -p ${LIB_DIRS[*]}"
 fi
 
 if mkdir -p "$HOME/.vim/undo" 2>/dev/null; then

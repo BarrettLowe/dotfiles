@@ -7,26 +7,50 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Library Paths (Linux-specific)
+# Library Paths (Architecture-aware)
 # -----------------------------------------------------------------------------
-# Uncomment and modify for custom library paths on Linux systems
+# The DevTools lib directories vary by architecture:
+# - x86_64: typically uses both lib and lib64
+# - ARM (Apple Silicon, aarch64): typically uses only lib
+#
+# Uncomment the appropriate section for your system:
+
+# For Linux systems (x86_64):
 # typeset -U LD_LIBRARY_PATH
 # export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
 # export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
 
-# -----------------------------------------------------------------------------
-# Library Paths (macOS-specific)
-# -----------------------------------------------------------------------------
-# Uncomment for macOS systems (uses DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH)
+# For Linux systems (ARM/aarch64):
+# typeset -U LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
+
+# For macOS Intel (x86_64):
 # typeset -U DYLD_LIBRARY_PATH
 # export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
 # export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+
+# For macOS Apple Silicon (arm64):
+# typeset -U DYLD_LIBRARY_PATH
+# export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+
+# Or use architecture detection to set paths automatically:
+# ARCH=$(uname -m)
+# if [[ "$OSTYPE" == "darwin"* ]]; then
+#     typeset -U DYLD_LIBRARY_PATH
+#     export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+#     [[ "$ARCH" == "x86_64" ]] && export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+# else
+#     typeset -U LD_LIBRARY_PATH
+#     export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
+#     [[ "$ARCH" == "x86_64" ]] && export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
+# fi
 
 # -----------------------------------------------------------------------------
 # Perl Environment
 # -----------------------------------------------------------------------------
 # Uncomment if you use Perl modules in custom locations
-# export PERL5LIB="$HOME/DevTools/lib64/perl5:$PERL5LIB"
+# Note: Use lib64 only on x86_64 systems; use lib on ARM systems
+# export PERL5LIB="$HOME/DevTools/lib/perl5:$PERL5LIB"
 
 # -----------------------------------------------------------------------------
 # Manual Pages
