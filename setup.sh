@@ -164,6 +164,13 @@ if ! command -v nvim &> /dev/null; then
         fi
     fi
     
+    # Validate that Neovim filename was determined
+    if [[ -z "$NVIM_FILENAME" ]] || [[ -z "$NVIM_DIR" ]]; then
+        print_error "Unable to determine Neovim download for OS=$OS, ARCH=$ARCH"
+        cd "$DOTFILES_DIR"
+        return 1
+    fi
+    
     NVIM_URL="https://github.com/neovim/neovim/releases/latest/download/$NVIM_FILENAME"
     curl -LO "$NVIM_URL"
     sudo rm -rf "/opt/$NVIM_DIR"
