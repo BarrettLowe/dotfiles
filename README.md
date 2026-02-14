@@ -84,6 +84,7 @@ The `setup.sh` script does the following:
 
 1. **Creates required directories**
    - `~/DevTools` - For custom binaries and tools
+   - Architecture-aware: Creates `lib` and `lib64` on x86_64 systems, only `lib` on ARM systems
 
 2. **Creates symlinks** for all configuration files from `~/dotfiles` to `~`
    - `.zshrc`

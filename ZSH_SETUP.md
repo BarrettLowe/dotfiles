@@ -107,7 +107,7 @@ Edit `~/.zshrc_local` and uncomment/modify settings based on your system:
 
 ### Common Settings to Configure:
 
-#### For Linux Systems
+#### For Linux Systems (x86_64)
 ```bash
 # Uncomment and adjust library paths
 typeset -U LD_LIBRARY_PATH
@@ -115,11 +115,41 @@ export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
 ```
 
-#### For macOS Systems
+#### For Linux Systems (ARM/aarch64)
 ```bash
-# Use DYLD_LIBRARY_PATH instead
+# ARM systems typically use only lib, not lib64
+typeset -U LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
+```
+
+#### For macOS Intel (x86_64)
+```bash
+# Use DYLD_LIBRARY_PATH instead of LD_LIBRARY_PATH
 typeset -U DYLD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+```
+
+#### For macOS Apple Silicon (ARM)
+```bash
+# Apple Silicon uses only lib directory
+typeset -U DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+```
+
+#### Architecture-Aware Configuration (Recommended)
+```bash
+# Automatically detect and configure paths based on your system
+ARCH=$(uname -m)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    typeset -U DYLD_LIBRARY_PATH
+    export DYLD_LIBRARY_PATH="$HOME/DevTools/lib:$DYLD_LIBRARY_PATH"
+    [[ "$ARCH" == "x86_64" ]] && export DYLD_LIBRARY_PATH="$HOME/DevTools/lib64:$DYLD_LIBRARY_PATH"
+else
+    typeset -U LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH="$HOME/DevTools/lib:$LD_LIBRARY_PATH"
+    [[ "$ARCH" == "x86_64" ]] && export LD_LIBRARY_PATH="$HOME/DevTools/lib64:$LD_LIBRARY_PATH"
+fi
 ```
 
 #### Custom Paths
