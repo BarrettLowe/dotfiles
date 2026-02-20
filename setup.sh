@@ -52,26 +52,19 @@ if [ ! -f "$PWD/setup.sh" ]; then
 fi
 
 DOTFILES_DIR="$PWD"
+export PATH="$HOME/.local/bin:$HOME/DevTools/bin:$PATH"
 
 # Step 1: Create directory structure
 print_header "Step 1: Creating Directory Structure"
-
-# Create build directory for downloads/source/scripts
 mkdir -p "$HOME/.build"
-
-# Create DevTools for local installations
-mkdir -p "$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/lib64" "$HOME/DevTools/share"
-
-# Standard config paths
+mkdir -p "$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/share"
 mkdir -p "$HOME/.config/nvim"
 mkdir -p "$HOME/.local/share/nvim"
 mkdir -p "$HOME/.local/bin"
-
 print_success "Created ~/.build and ~/DevTools structure"
 
 # Step 2: Create symlinks for dotfiles
 print_header "Step 2: Creating Symlinks"
-
 create_symlink() {
     local source="$1"
     local target="$2"
@@ -83,49 +76,64 @@ create_symlink() {
     print_success "Linked $(basename "$target")"
 }
 
-# Core CLI configs
 create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/neovim/init.lua" "$HOME/.config/nvim/init.lua"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
-# Step 3: Git configuration
-print_header "Step 3: Git Configuration"
-if [ ! -f "$HOME/.gitconfig" ]; then
-    cp "$DOTFILES_DIR/home.gitconfig" "$HOME/.gitconfig" 2>/dev/null || print_warning "No gitconfig template found."
-fi
+# Step 3: Toolchain Installation (Strategy: Build/Download -> DevTools)
+print_header "Step 3: Provisioning CLI Toolchain"
 
-# Step 4: Toolchain Validation
-print_header "Step 4: Checking CLI Toolchain"
-
-check_tool() {
-    if command -v "$1" &> /dev/null; then
-        print_success "$1 is installed"
-    else
-        print_warning "$1 is missing"
-        add_todo "Install $1 ($2)"
+# Helper for GH releases
+install_gh_release() {
+    local repo=$1
+    local pattern=$2
+    local bin_name=$3
+    
+    print_info "Installing $bin_name from $repo..."
+    # Get latest release download URL via curl/grep
+    local url=$(curl -s https://api.github.com/repos/$repo/releases/latest | grep "browser_download_url" | grep "$pattern" | cut -d '"' -f 4)
+    local filename=$(basename "$url")
+    
+    curl -LsSf "$url" -o "$HOME/.build/$filename"
+    
+    if [[ $filename == *.tar.gz ]]; then
+        tar -xzf "$HOME/.build/$filename" -C "$HOME/.build/"
+    elif [[ $filename == *.zip ]]; then
+        unzip -q "$HOME/.build/$filename" -d "$HOME/.build/"
     fi
+    
+    # Custom movement logic per tool
+    case $bin_name in
+        "nvim")
+            cp -r "$HOME/.build/nvim-linux64/"* "$HOME/DevTools/"
+            ;;
+        "rg")
+            find "$HOME/.build" -name "rg" -type f -exec cp {} "$HOME/DevTools/bin/" \;
+            ;;
+        "fd")
+            find "$HOME/.build" -name "fd" -type f -exec cp {} "$HOME/DevTools/bin/" \;
+            ;;
+        "clangd")
+            # clangd releases usually have a bin/ folder inside the zip
+            local clangd_dir=$(find "$HOME/.build" -name "clangd_*" -type d | head -n 1)
+            cp -r "$clangd_dir/"* "$HOME/DevTools/"
+            ;;
+    esac
+    print_success "$bin_name installed to ~/DevTools/bin"
 }
 
-check_tool "nvim" "Neovim 0.10+ required"
-check_tool "rg" "apt install ripgrep"
-check_tool "fd" "apt install fd-find"
-check_tool "g++" "apt install build-essential"
-check_tool "unzip" "Required for Mason"
-check_tool "curl" "Required for downloads"
+# Install missing tools
+[[ ! $(command -v nvim) ]] && install_gh_release "neovim/neovim" "nvim-linux64.tar.gz" "nvim"
+[[ ! $(command -v rg) ]]   && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
+[[ ! $(command -v fd) ]]   && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
+[[ ! $(command -v clangd) ]] && install_gh_release "clangd/clangd" "linux.zip" "clangd"
 
-# Step 5: Provisioning Neovim Python Provider (uv)
-print_header "Step 5: Neovim Python Provider (uv)"
-
-# Path update for current session
-export PATH="$HOME/.local/bin:$HOME/DevTools/bin:$PATH"
-
+# Step 4: Neovim Python Provider (uv)
+print_header "Step 4: Neovim Python Provider (uv)"
 if ! command -v uv &> /dev/null; then
-    print_info "Downloading uv installer to ~/.build..."
+    print_info "Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh -o "$HOME/.build/uv_install.sh"
     chmod +x "$HOME/.build/uv_install.sh"
-    
-    print_info "Executing uv installer..."
-    # uv installs to ~/.local/bin by default
     sh "$HOME/.build/uv_install.sh"
 fi
 
@@ -134,31 +142,14 @@ if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
     uv venv "$NVIM_VENV"
     "$NVIM_VENV/bin/pip" install pynvim
-    print_success "Neovim Python provider ready"
-else
-    print_success "Python provider venv already exists"
 fi
 
-# Step 6: Initializing Neovim Plugins
-print_header "Step 6: Headless Plugin Sync"
-print_info "Bootstrapping lazy.nvim and syncing..."
+# Step 5: Initializing Neovim Plugins
+print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null
-print_success "Neovim plugins synchronized"
-
-# Step 7: Local Overrides
-if [ ! -f "$HOME/.zshrc_local" ]; then
-    touch "$HOME/.zshrc_local"
-    print_success "Created empty ~/.zshrc_local"
-fi
+print_success "Plugins synchronized"
 
 # Final summary
 print_header "Setup Complete! 🎉"
-
-if [ ${#TODO_LIST[@]} -ne 0 ]; then
-    print_warning "Manual steps required:"
-    for todo in "${TODO_LIST[@]}"; do
-        echo -e "${YELLOW}- ${todo}${NC}"
-    done
-fi
-
-echo -e "\n${GREEN}Run 'source ~/.zshrc' to refresh your environment.${NC}"
+echo -e "${GREEN}Toolchain is now provisioned in ~/DevTools/bin${NC}"
+echo -e "Run 'source ~/.zshrc' to refresh PATH."
