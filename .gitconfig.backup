@@ -1,0 +1,15 @@
+[include] 
+    path = ~/.gitconfig.local
+[core]
+    excludesfile = ~/.gitignore
+    editor = vim
+[diff]
+    tool = vimdiff
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+    prompt = false
+[cola]
+	spellcheck = false
+[push]
+	default = simple
