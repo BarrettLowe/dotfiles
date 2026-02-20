@@ -178,6 +178,11 @@ print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null
 print_success "Plugins synchronized"
 
+# Step 6: Setup Oh My Zsh theme
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+ln -s "$HOME/dotfiles/.p10k.zsh $HOME/.p10k.zsh
+
+
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"
