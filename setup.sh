@@ -86,8 +86,14 @@ print_header "Step 3: Provisioning CLI Toolchain"
 # Install python via apt for system header reliability
 if ! command -v python3 &> /dev/null; then
     print_info "Installing python via apt..."
-    sudo apt update && sudo apt install -y python3
+    sudo apt update && sudo apt install -y python3 python3-venv
     print_success "python3 installed via apt"
+fi
+
+if ! dpkg -s python3-venv &>/dev/null; then
+    print_info "Installing python3-venv via apt..."
+    sudo apt update && sudo apt install -y python3-venv
+    print_success "python3-venv installed via apt"
 fi
 
 # Manual Neovim Install
@@ -101,6 +107,13 @@ if ! command -v nvim &> /dev/null; then
     # Set path for nvim
     export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
     cd "$DOTFILES_DIR"
+fi
+
+# Install a clipboard so that the devcontainer can connect to the host
+if ! command -v wl-copy &> /dev/null; then
+    print_info "Installing wl-clipboard via apt..."
+    sudo apt update && sudo apt install -y wl-clipboard
+    print_success "wl-clipboard installed via apt"
 fi
 
 # # Manual TreeSitter Install
