@@ -552,7 +552,13 @@ else
 
     vim.keymap.set('n', ']b', '<Cmd>BufferLineCycleNext<CR>', { desc = 'Next Buffer' })
     vim.keymap.set('n', '[b', '<Cmd>BufferLineCyclePrev<CR>', { desc = 'Previous Buffer' })
-    vim.keymap.set('n', '<leader>qq', ':close<CR>', { desc = 'Close Buffer' })
+    vim.keymap.set('n', '<leader>qq', function()
+        if vim.fn.winnr('$') > 1 then
+            vim.cmd('close')
+        else
+            vim.cmd('bd')
+        end
+    end
 
     -- Quickly edit init.lua
     vim.keymap.set('n', '<leader>vc', '<Cmd>edit $MYVIMRC<CR>', { desc = 'Edit MYVIMRC' })
