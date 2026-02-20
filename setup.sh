@@ -52,8 +52,6 @@ if [ ! -f "$PWD/setup.sh" ]; then
 fi
 
 DOTFILES_DIR="$PWD"
-# Update PATH for the current session to include /opt/nvim/bin and DevTools
-export PATH="/opt/nvim-linux-x86_64/bin:$HOME/.local/bin:$HOME/DevTools/bin:$PATH"
 
 # Step 1: Create directory structure
 print_header "Step 1: Creating Directory Structure"

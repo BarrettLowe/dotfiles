@@ -28,11 +28,15 @@ bindkey "^k" history-beginning-search-backward
 bindkey "[3~" delete-char                        # Delete
 bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
-[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
-[[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
-[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
-[[ -d "$HOME/anaconda3/bin" ]] && path=("$HOME/anaconda3/bin" $path)
-[[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
+local -a dev_paths=(
+    /opt/nvim-linux-x86_64/bin,
+    $HOME/.local/bin,
+    $HOME/DevTools/bin,
+    /usr/local/bin
+)
+for d in $dev_paths; do
+    [[ -d "$d" ]] && path=("$d" $path)
+done
 export PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
