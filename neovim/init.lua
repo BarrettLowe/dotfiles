@@ -54,6 +54,17 @@ require("lazy").setup({
 
     -- 1. LSP & Tool Management
     { "williamboman/mason.nvim", opts = {} },           -- Portable package manager
+    { "WhoIsSethDaniel/mason-tool-installer.nvim",
+        opts = {
+            ensure_installed = {
+                "clangd",
+                "debugpy",
+                "codelldb",
+                "tree-sitter-cli",
+                "cmake-language-server"
+            },
+        },
+    },
     { "neovim/nvim-lspconfig" },                        -- Core LSP configurations
     
     -- 2. C++ & Python Specifics
