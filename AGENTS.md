@@ -13,9 +13,10 @@ Last updated: February 2025
   - minimalism & low-maintenance tools
 - Things that annoy me: 
   - long introductions / preambles
-  - suggesting Notion / Obsidian plugins I already rejected
+  - suggesting Obsidian plugins I already rejected
   - assuming I'm on Windows
   - moralizing answers
+  - final summary documents
 
 ## My Most Used / Preferred Agents
 (these are the roles I recreate most often)

@@ -47,11 +47,25 @@ vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.laststatus = 2
 vim.opt.signcolumn = "yes:2"
+vim.opt.termguicolors = true
 
 
 -- Initialize plugins
 require("lazy").setup({
   spec = {
+    -- { "norcalli/nvim-colorizer.lua", config = function()
+    --         require('colorizer').setup()
+    --     end
+    -- },
+    { "uga-rosa/ccc.nvim", lazy = false, config = function()
+            require('ccc').setup({
+                highlighter = {
+                    auto_enable = true,
+                    lsp = true
+                }
+            })
+        end
+    },
     { "bluz71/vim-nightfly-colors", name = "nightfly", lazy = false, priority = 1000 },
 
     -- 1. LSP & Tool Management
@@ -295,19 +309,19 @@ require("lazy").setup({
             },
         },
     },
-    {
-        "zbirenbaum/copilot.lua",
-        cmd = "Copilot",
-        event = "InsertEnter",
-        config = function()
-            require("copilot").setup({
-                -- copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.22.0/bin/node",
-                -- Disable these so Copilot never suggests anything automatically
-                suggestion = { enabled = false },
-                panel = { enabled = false },
-            })
-        end,
-    },
+    -- {
+    --     "zbirenbaum/copilot.lua",
+    --     cmd = "Copilot",
+    --     event = "InsertEnter",
+    --     config = function()
+    --         require("copilot").setup({
+    --             -- copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.22.0/bin/node",
+    --             -- Disable these so Copilot never suggests anything automatically
+    --             suggestion = { enabled = false },
+    --             panel = { enabled = false },
+    --         })
+    --     end,
+    -- },
 },
 })
 
@@ -552,13 +566,7 @@ else
 
     vim.keymap.set('n', ']b', '<Cmd>BufferLineCycleNext<CR>', { desc = 'Next Buffer' })
     vim.keymap.set('n', '[b', '<Cmd>BufferLineCyclePrev<CR>', { desc = 'Previous Buffer' })
-    vim.keymap.set('n', '<leader>qq', function()
-        if vim.fn.winnr('$') > 1 then
-            vim.cmd('close')
-        else
-            vim.cmd('bd')
-        end
-    end
+    vim.keymap.set('n', '<leader>qq', ':close<CR>', { desc = 'Close Buffer' })
 
     -- Quickly edit init.lua
     vim.keymap.set('n', '<leader>vc', '<Cmd>edit $MYVIMRC<CR>', { desc = 'Edit MYVIMRC' })
