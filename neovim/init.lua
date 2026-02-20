@@ -300,7 +300,7 @@ require("lazy").setup({
         event = "InsertEnter",
         config = function()
             require("copilot").setup({
-                copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.22.0/bin/node",
+                -- copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.22.0/bin/node",
                 -- Disable these so Copilot never suggests anything automatically
                 suggestion = { enabled = false },
                 panel = { enabled = false },
