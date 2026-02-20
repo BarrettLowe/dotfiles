@@ -117,8 +117,8 @@ if ! command -v tree-sitter &> /dev/null; then
     cd "$HOME/.build/tree-sitter"
     curl -LO https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.3/tree-sitter-linux-x86.gz
     gunzip tree-sitter-linux-x86.gz
-    cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter
-    chmod +x "$HOME/DevTools/tree-sitter
+    cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter"
+    chmod +x "$HOME/DevTools/bin/tree-sitter"
     print_success "Installed tree-sitter"
     cd "$DOTFILES_DIR"
 fi
