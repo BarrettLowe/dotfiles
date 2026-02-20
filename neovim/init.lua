@@ -267,10 +267,16 @@ vim.lsp.config('ruff', {
   on_attach = on_attach,
 })
 
+vim.lsp.config('cmake', {
+    on_attach = on_attach,
+    capabilities = require('blink.cmp').get_lsp_capabilities(),
+})
+
 -- Enable the configs
 vim.lsp.enable('clangd')
 vim.lsp.enable('basedpyright')
 vim.lsp.enable('ruff')
+vim.lsp.enable('cmake')
 
 -- Allow directory specific init.lua setups
 vim.o.exrc = true
@@ -401,3 +407,19 @@ require('telescope').setup{
 -- Oil.vim setup
 vim.keymap.set('n', '-', "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = {"c", "h", "cpp", "hpp" },
+    callback = function()
+        local map = vim.keymap.set
+        local opts = { buffer = true}
+
+        map("n", "<leader>cg", "<cmd>CMakeGenerate!<cr>", opts)
+        map("n", "<leader>cb", "<cmd>CMakeBuild<cr>", opts)
+        map("n", "<leader>ccb", "<cmd>CMakeBuild!<cr>", opts)
+        map("n", "<leader>ct", "<cmd>CMakeSelectBuildTarget<cr>", opts)
+        map("n", "<leader>cl", "<cmd>CMakeSelectLaunchTarget<cr>", opts)
+        map("n", "<leader>cd", "<cmd>CMakeDebug<cr>", opts)
+        map("n", "<leader>cx", "<cmd>CMakeStop<cr>", opts)
+        map("n", "<leader>cr", "<cmd>CMakeRun<cr>", opts)
+    end
+})
