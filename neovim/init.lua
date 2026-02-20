@@ -302,11 +302,26 @@ end
 vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>')
 
 -- 1. C++ (clangd) using the new native API
+-- vim.lsp.config('clangd', {
+--   cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu"},
+--   on_attach = on_attach,
+--   capabilities = require('blink.cmp').get_lsp_capabilities(),
+-- })
 vim.lsp.config('clangd', {
+
   cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu"},
   on_attach = on_attach,
-  capabilities = require('blink.cmp').get_lsp_capabilities(),
+    root_markers = { ".clangd", "compile_commands.json", ".git" },
+
+    capabilities = {
+        require('blink.cmp').get_lsp_capabilities({
+            offsetEncoding = { "utf-16" },
+        })
+    },
+
 })
+
+vim.lsp.enable('clangd')
 
 -- 2. Python (basedpyright) using the new native API
 vim.lsp.config('basedpyright', {
