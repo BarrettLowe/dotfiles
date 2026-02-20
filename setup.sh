@@ -187,8 +187,19 @@ nvim --headless "+Lazy! sync" +qa 2>/dev/null
 print_success "Plugins synchronized"
 
 # Step 6: Setup Oh My Zsh and themes
-if [ -d "$HOME/.oh-my-zsh" ] || [ -n "$ZSH" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    echo "Keep calm and carry on: Oh My Zsh is already installed."
+else
+    echo "Installing Oh My Zsh..."
+    
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+    if [ $? -eq 0 ]; then
+        echo "✅ Oh My Zsh installed successfully."
+    else
+        echo "❌ Oh My Zsh installation failed."
+        exit 1
+    fi
 fi
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
