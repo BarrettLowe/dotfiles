@@ -99,6 +99,8 @@ if ! command -v nvim &> /dev/null; then
     sudo rm -rf /opt/nvim-linux-x86_64
     sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
     print_success "Neovim installed to /opt/nvim-linux-x86_64"
+    # Set path for nvim
+    export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
     cd "$DOTFILES_DIR"
 fi
 
