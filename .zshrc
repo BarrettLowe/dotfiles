@@ -245,20 +245,13 @@ if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
 fi
 
-. "$HOME/.local/bin/env"
+# . "$HOME/.local/bin/env"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 if [[ -n "$REMOTE_CONTAINERS" || -n "$DEVPOD" || -f /.dockerenv ]]; then
-    # 1. Ensure the 'context' element is visible locally
-    unset POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION
-    unset POWERLEVEL9K_CONTEXT_SUDO_CONTENT_EXPANSION
-
-    # 2. Set the template to just the hostname (or %n@%m for user@host)
-    typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%m'
-
-    # 3. Add the Docker icon ( ) as the visual identifier
-    # Note: This requires a "Nerd Font" to display correctly
-    typeset -g POWERLEVEL9K_CONTEXT_VISUAL_IDENTIFIER_EXPANSION=' '
+    # Show icon and hostname when in a remote container
+    typeset -g POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION=' %m'
+    unset POWERLEVEL9K_CONTEXT_DEFAULT_VISUAL_IDENTIFIER_EXPANSION
 fi
