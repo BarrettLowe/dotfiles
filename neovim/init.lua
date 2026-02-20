@@ -48,6 +48,7 @@ vim.opt.smartindent = true
 vim.opt.laststatus = 2
 vim.opt.signcolumn = "yes:2"
 
+
 -- Initialize plugins
 require("lazy").setup({
   spec = {
@@ -306,39 +307,38 @@ require("lazy").setup({
                 panel = { enabled = false },
             })
         end,
-    }
-    -- {
-    --     "coffebar/neovim-project",
-    --     opts = {
-    --         patterns = { ".git" },
-    --         projects = { -- define project roots
-    --             "~/projects/*",
-    --             "~/.config/*",
-    --             "/armgdn-seeker-sw/src/*"
-    --         },
-    --         picker = {
-    --             type = "telescope", -- one of "telescope", "fzf-lua", or "snacks"
-    --         }
-    --     },
-    --     init = function()
-    --         -- enable saving the state of plugins in the session
-    --         vim.opt.sessionoptions:append("globals") -- save global variables that start with an uppercase letter and contain at least one lowercase letter.
-    --     end,
-    --     dependencies = {
-    --         { "nvim-lua/plenary.nvim" },
-    --         -- optional picker
-    --         { "nvim-telescope/telescope.nvim", tag = "0.1.4" },
-    --         -- optional picker
-    --         { "ibhagwan/fzf-lua" },
-    --         -- optional picker
-    --         { "folke/snacks.nvim" },
-    --         { "Shatur/neovim-session-manager" },
-    --     },
-    --     lazy = false,
-    --     priority = 100,
-    -- },
+    },
 },
 })
+
+-- window movements
+local function smart_win_nav(dir)
+    local cur_win = vim.api.nvim_get_current_win()
+
+    -- Try standard move
+    vim.cmd('wincmd ' .. dir)
+
+    -- If window didn't change → we were at edge → create new split
+    if vim.api.nvim_get_current_win() == cur_win then
+        if dir == 'h' or dir == 'l' then
+            vim.cmd('vsplit')  -- vertical split for left/right
+        else
+            vim.cmd('split')   -- horizontal split for up/down
+        end
+
+        -- After creating, move into the new one (direction-aware)
+        if dir == 'h' then vim.cmd('wincmd h') end
+        if dir == 'l' then vim.cmd('wincmd l') end
+        if dir == 'j' then vim.cmd('wincmd j') end
+        if dir == 'k' then vim.cmd('wincmd k') end
+    end
+end
+-- Keymaps
+vim.keymap.set('n', '<C-h>', function() smart_win_nav('h') end, { silent = true })
+vim.keymap.set('n', '<C-j>', function() smart_win_nav('j') end, { silent = true })
+vim.keymap.set('n', '<C-k>', function() smart_win_nav('k') end, { silent = true })
+vim.keymap.set('n', '<C-l>', function() smart_win_nav('l') end, { silent = true })
+
 
 -- Autogroup to help prevent autocommand from being created twice on reload
 local main_group = vim.api.nvim_create_augroup('UserConfig', { clear = true })
@@ -552,7 +552,7 @@ else
 
     vim.keymap.set('n', ']b', '<Cmd>BufferLineCycleNext<CR>', { desc = 'Next Buffer' })
     vim.keymap.set('n', '[b', '<Cmd>BufferLineCyclePrev<CR>', { desc = 'Previous Buffer' })
-    vim.keymap.set('n', '<leader>qq', '<Cmd>bdelete<CR>', { desc = 'Close Buffer' })
+    vim.keymap.set('n', '<leader>qq', ':close<CR>', { desc = 'Close Buffer' })
 
     -- Quickly edit init.lua
     vim.keymap.set('n', '<leader>vc', '<Cmd>edit $MYVIMRC<CR>', { desc = 'Edit MYVIMRC' })
@@ -623,6 +623,7 @@ require('telescope').setup{
 -- Oil.vim setup
 vim.keymap.set('n', '-', "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
+-- CMAKE mappings
 vim.api.nvim_create_autocmd("FileType", {
     pattern = {"c", "h", "cpp", "hpp", "cmake"},
     callback = function()
@@ -651,6 +652,7 @@ vim.keymap.set({"n", "v"}, "<leader>ac", "<cmd>CodeCompanionChat Toggle<cr>", {
     noremap = true,
     silent = true,
 })
+
 
 
 ------------------------------------------------------------------------------------------
