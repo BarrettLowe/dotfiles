@@ -251,10 +251,10 @@ require("lazy").setup({
                                 model = { default = "qwen2.5-coder:7b" },
                                 num_ctx = { default = 16384 },
                             },
-                            parameters = {
-                                temperature = 0.2,
-                                num_predict = 1024,
-                            }
+                            -- parameters = {
+                            --     temperature = 0.2,
+                            --     num_predict = 1024,
+                            -- }
                         })
                     end,
                     ollama_fast = function()
@@ -278,8 +278,14 @@ require("lazy").setup({
             },
             -- Rule management is now handled via 'memory'
             rules = {
-                { "~/dotfiles/AGENTS.md" }, -- Personal
-                "AGENTS.md", -- Project-specific
+                default = {
+                    description = "Collection of common files",
+                    files = {
+                        "~/dotfiles/AGENTS.md", -- Personal
+                        "AGENTS.md", -- Project-specific
+                        "AGENT.md", -- Project-specific
+                    }
+                },
             },
             prompt_library = {
                 markdown = {
