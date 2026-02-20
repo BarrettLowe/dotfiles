@@ -182,7 +182,8 @@ require("lazy").setup({
             'nvim-treesitter/nvim-treesitter', -- optional
             'nvim-tree/nvim-web-devicons',     -- optional
         }
-    }
+    },
+    { "rcarriga/nvim-dap-ui", dependencies = {"mfussenegger/nvim-dap", "nvim-neotest/nvim-nio"} }
 },
 })
 
@@ -408,7 +409,7 @@ require('telescope').setup{
 vim.keymap.set('n', '-', "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
 vim.api.nvim_create_autocmd("FileType", {
-    pattern = {"c", "h", "cpp", "hpp" },
+    pattern = {"c", "h", "cpp", "hpp", "cmake"},
     callback = function()
         local map = vim.keymap.set
         local opts = { buffer = true}
@@ -423,3 +424,164 @@ vim.api.nvim_create_autocmd("FileType", {
         map("n", "<leader>cr", "<cmd>CMakeRun<cr>", opts)
     end
 })
+
+
+------------------------------------------------------------------------------------------
+---DAP Configs
+------------------------------------------------------------------------------------------
+local dap = require ('dap')
+local dapui = require('dapui')
+dapui.setup({
+    mappings = {
+        expand = { "l", "<2-LeftMouse>" },
+        open = "o",
+        remove = "d",
+        edit = "e",
+        repl = "r",
+        toggle = { "t", "<space>" }
+    }
+})
+
+dap.adapters.codelldb = {
+    type = 'server',
+    port = "${port}",
+    executable = {
+        command = vim.fn.stdpath("data") .. '/mason/bin/codelldb',
+        args = {"--port", "${port}"},
+    }
+}
+-- dap.adapters.codelldb = {
+--     type = "server",
+--     host = "127.0.0.1",
+--     port = 13000
+-- }
+
+dap.listeners.before.attach.dapui_config = function()
+    dapui.open()
+end
+dap.listeners.before.launch.dapui_config = function()
+    dapui.open()
+end
+-- dap.listeners.before.event_terminated.dapui_config = function()
+--     dapui.close()
+-- end
+dap.listeners.before.event_exited.dapui_config = function()
+    dapui.close()
+end
+
+
+dap.configurations.cpp = {
+    {
+        name = 'Launch file',
+        type = 'codelldb',
+        request = 'launch',
+        program = function()
+            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. '/', 'file')
+        end,
+        cwd = '${workspaceFolder}',
+        stopOnEntry = true,
+        console = 'integratedTerminal'
+    }
+}
+
+vim.keymap.set('n', '<space>', function() require('dap').toggle_breakpoint() end)
+vim.keymap.set('n', '<leader>du', function() require('dapui').toggle() end, { desc = "Debug: Toggle DAP UI"})
+vim.keymap.set('n', '<leader>de', function() require('dapui').eval() end, { desc = "Debug: Eval Variable"})
+vim.keymap.set('n', '<leader>dx', function() require('dapui').close() end, { desc = "Debug: Close UI"})
+
+vim.fn.sign_define('DapBreakpoint', { text='', texthl='DapBreakpoint', linehl='', numhl='' })
+vim.fn.sign_define('DapBreakpointCondition', { text='', texthl='DapBreakpoint', linehl='', numhl='' })
+vim.fn.sign_define('DapLogPoint', { text='', texthl='DapLogPoint', linehl='', numhl='' })
+
+
+-- Better handling for the callstack
+local function jump_and_center_from_stacks()
+  print("Special dap fn")
+  local dapui = require("dapui")
+  local current_win = vim.api.nvim_get_current_win()
+
+  -- 1. Trigger the standard DAP UI "open" action (jumps to the file)
+  dapui.open()
+
+  -- 2. Once jumped, center the line in the newly focused buffer
+  vim.cmd("normal! zz")
+
+  -- 3. Return the cursor to the original stacks window
+  vim.api.nvim_set_current_win(current_win)
+end
+
+
+local dap = require('dap')
+local api = vim.api
+
+local debug_keys = {
+  K = function() require('dap.ui.widgets').hover() end,
+  n = dap.step_over,
+  i = dap.step_into,
+  o = dap.step_out,
+  c = dap.continue,
+  X = dap.terminate,
+  C = function() dap.set_breakpoint(vim.fn.input("Condition: ")) end,
+}
+
+local global_restore = {}
+
+-- 1. Initialization: Set Globally
+dap.listeners.after['event_initialized']['me'] = function()
+  global_restore = {}
+  
+  -- Get all current global normal-mode mappings
+  local current_global_maps = api.nvim_get_keymap('n')
+
+  for lhs, callback in pairs(debug_keys) do
+    local original_map = nil
+    for _, map in pairs(current_global_maps) do
+      if map.lhs == lhs then
+        original_map = map
+        break
+      end
+    end
+
+    -- Save the original global state
+    global_restore[lhs] = original_map or false
+    
+    -- Set the new global mapping (no 'buffer = buf' here)
+    vim.keymap.set('n', lhs, callback, { silent = true, desc = "DAP: " .. lhs })
+
+  end
+  
+  vim.cmd('highlight StatusLine guibg=#5f0000')
+end
+
+-- 2. Termination: Restore Globally
+dap.listeners.after['event_terminated']['me'] = function()
+  for lhs, original_map in pairs(global_restore) do
+    -- Remove the global DAP mapping
+    api.nvim_del_keymap('n', lhs)
+
+    -- Restore original if it existed
+    if original_map then
+      api.nvim_set_keymap('n', lhs, original_map.rhs or "", {
+        silent = original_map.silent == 1,
+        callback = original_map.callback,
+        desc = original_map.desc,
+      })
+    end
+  end
+  global_restore = {}
+  vim.cmd('highlight StatusLine guibg=NONE')
+end
+
+-- vim.api.nvim_create_autocmd("FileType", {
+--     pattern = "dapui_stacks",
+--     callback = function(args)
+--         vim.keymap.set("n", "O", jump_and_center_from_stacks, {
+--             buffer = args.buf,
+--             desc = "DAP UI: Preview stack frame"
+--         })
+--     end
+-- })
+
+------------------------------------------------------------------------------------------
+---END DAP Configs
+------------------------------------------------------------------------------------------
