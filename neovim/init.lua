@@ -552,7 +552,7 @@ keymap('', 'H', '^')
 -- Leader shortcuts
 keymap('n', '<leader>s', ':wq<cr>')
 keymap('n', '<leader>w', ':w<cr>')
-keymap('n', '<leader>q<cr>', ':q<cr>')
+keymap('n', '<leader>q<cr>', ':qall<cr>')
 
 -- Insert mode movements
 local insert_opts = { silent = true }
@@ -631,9 +631,9 @@ vim.keymap.set('n', '<leader>fr', function() Snacks.picker.recent() end, { desc 
 vim.keymap.set('n', '<leader>fw', function() Snacks.picker.grep_word() end, { desc = 'Find Current Word' })
 vim.keymap.set('n', '<leader>fl', function() Snacks.picker.lines() end, { desc = 'Find Current Word' })
 vim.keymap.set('n', '<leader>D', function() Snacks.picker.diagnostics() end, { desc = 'Show all Diagnostics' })
-vim.keymap.set('n', '<leader>ds', function() Snacks.picker.lsp_document_symbols() end, { desc = 'Document symbols' })
+vim.keymap.set('n', '<leader>ds', function() Snacks.picker.lsp_symbols() end, { desc = 'Document symbols' })
 vim.keymap.set('n', '<leader>ws', function() Snacks.picker.lsp_workspace_symbols() end, { desc = 'Workspace symbols' })
-vim.keymap.set('n', "<leader>e", function() Snacks.explorer() end, {desc = "File Explorer" })
+vim.keymap.set('n', "<leader>fe", function() Snacks.explorer() end, {desc = "File Explorer" })
 vim.keymap.set('n', "<leader>ft", function() Snacks.picker.todo_comments() end, {desc = "Todo comments" })
 
 -- CMAKE mappings
