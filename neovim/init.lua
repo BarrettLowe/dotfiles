@@ -149,7 +149,7 @@ require("lazy").setup({
             sign_priority = 8, -- sign priority
             -- additional keywords recognized as todo comments
             keywords = {
-                BEL  = { icon = "", color = "personal"}
+                BEL  = { icon = "", color = "personal", alt = {}}
             },
             colors = {
                 personal = { "Personal", "#6f0880" }
@@ -309,7 +309,25 @@ require("lazy").setup({
             },
             -- 'strategies' was renamed to 'interactions' in v18
             strategies = {
-                chat = { adapter = "ollama_reasoning" },
+                chat = { 
+                    adapter = "ollama_reasoning",
+                    tools = {
+                        ["read_only"] = {
+                            description = "Read-only tools - no file modifications",
+                            prompt = "I'm giving you access to ${tools} to help you explore and understand the codebase",
+                            tools = {
+                                "file_search",
+                                "get_changed_files",
+                                "grep_search",
+                                "list_code_usages",
+                                "read_file",
+                            },
+                            opts = {
+                                collapse_tools = true,
+                            },
+                        },
+                    },
+                },
                 inline = { adapter = "ollama_reasoning" },
             },
             -- Rule management is now handled via 'memory'
@@ -327,7 +345,7 @@ require("lazy").setup({
                 markdown = {
                     dirs = {"~/dotfiles/neovim/ai/prompts"},
                 },
-            },
+            }, 
         },
     },
     -- {
