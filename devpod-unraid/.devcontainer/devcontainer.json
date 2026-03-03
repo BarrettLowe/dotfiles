@@ -1,0 +1,15 @@
+{
+  "name": "Unraid Full-Access Dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "remoteUser": "root",
+  "features": {},
+  "mounts": [
+    "source=/mnt,target=/unraid/mnt,type=bind,consistency=cached",
+    "source=/boot,target=/unraid/boot,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "echo '✅ Unraid workspace ready — /unraid/mnt/user is mounted'",
+  "forwardPorts": [],
+  "remoteEnv": {
+    "UNRAID_WORKSPACE": "true"
+  }
+}
