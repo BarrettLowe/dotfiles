@@ -84,9 +84,18 @@ require("lazy").setup({
         },
     },
     { "neovim/nvim-lspconfig" },                        -- Core LSP configurations
-    
-    -- C++ & Python Specifics
-    { "Civitasv/cmake-tools.nvim", opts = {} },         -- CMake integration (Build/Debug/Test)
+    -- CMake integration (Build/Debug/Test)
+    { "Civitasv/cmake-tools.nvim", opts = {
+        cmake_build_options = { "-j24" },
+        cmake_build_directory = function()
+            local osys = require("cmake-tools.osys")
+            if osys.iswin32 then
+                return "build\\${variant:buildType}"
+            end
+            return "build/${variant:buildType}"
+        end
+        }
+    },
     { "linux-cultist/venv-selector.nvim", opts = {} },  -- Python virtual environment switcher
     
     -- Modern completion
