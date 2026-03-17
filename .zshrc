@@ -245,8 +245,16 @@ fi
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
 fi
+if [[ -f "$HOME/.zshrc_private" ]]; then
+    source "$HOME/.zshrc_private"
+fi
 
 # . "$HOME/.local/bin/env"
+#
+# Only set this if we are in an SSH session and WAYLAND_DISPLAY isn't already set
+if [ -n "$SSH_CONNECTION" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+    export WAYLAND_DISPLAY=wayland-0
+fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -256,3 +264,8 @@ if [[ -n "$REMOTE_CONTAINERS" || -n "$DEVPOD" || -f /.dockerenv ]]; then
     typeset -g POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION=' %m'
     unset POWERLEVEL9K_CONTEXT_DEFAULT_VISUAL_IDENTIFIER_EXPANSION
 fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
