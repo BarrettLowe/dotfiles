@@ -273,6 +273,7 @@ require("lazy").setup({
         dependencies = {
             "nvim-lua/plenary.nvim",
             "nvim-treesitter/nvim-treesitter",
+            "ravitemer/codecompanion-history.nvim",
         },
         opts = { 
             opts = {
@@ -345,7 +346,15 @@ require("lazy").setup({
                 markdown = {
                     dirs = {"~/dotfiles/neovim/ai/prompts"},
                 },
-            }, 
+            },
+            extensions = {
+                history = {
+                    enabled = true,
+                    opts = {
+                        picker = "snacks",
+                    }
+                },
+            },
         },
     },
     -- {
@@ -391,6 +400,11 @@ vim.keymap.set('n', '<C-h>', function() smart_win_nav('h') end, { silent = true 
 vim.keymap.set('n', '<C-j>', function() smart_win_nav('j') end, { silent = true })
 vim.keymap.set('n', '<C-k>', function() smart_win_nav('k') end, { silent = true })
 vim.keymap.set('n', '<C-l>', function() smart_win_nav('l') end, { silent = true })
+-- Same but with arrows
+vim.keymap.set('n', '<C-Left>', function() smart_win_nav('h') end, { silent = true })
+vim.keymap.set('n', '<C-Down>', function() smart_win_nav('j') end, { silent = true })
+vim.keymap.set('n', '<C-Up>', function() smart_win_nav('k') end, { silent = true })
+vim.keymap.set('n', '<C-Right>', function() smart_win_nav('l') end, { silent = true })
 
 
 -- Autogroup to help prevent autocommand from being created twice on reload
