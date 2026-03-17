@@ -69,7 +69,7 @@ require("lazy").setup({
     },
     { "bluz71/vim-nightfly-colors", name = "nightfly", lazy = false, priority = 1000 },
 
-    -- 1. LSP & Tool Management
+    -- LSP & Tool Management
     { "williamboman/mason.nvim", opts = {} },           -- Portable package manager
     { "WhoIsSethDaniel/mason-tool-installer.nvim",
         opts = {
@@ -85,11 +85,11 @@ require("lazy").setup({
     },
     { "neovim/nvim-lspconfig" },                        -- Core LSP configurations
     
-    -- 2. C++ & Python Specifics
+    -- C++ & Python Specifics
     { "Civitasv/cmake-tools.nvim", opts = {} },         -- CMake integration (Build/Debug/Test)
     { "linux-cultist/venv-selector.nvim", opts = {} },  -- Python virtual environment switcher
     
-    -- 3. Modern completion
+    -- Modern completion
     {
         "Saghen/blink.cmp",
         version = "*" , 
@@ -110,7 +110,7 @@ require("lazy").setup({
         },
     },
 
-    -- 4. Syntax & UI
+    -- Syntax & UI
     {
         "nvim-treesitter/nvim-treesitter",
         branch = "master", -- This is the stable branch the community actually uses
@@ -141,13 +141,33 @@ require("lazy").setup({
             -- put your config here
         end,
     },
-    { "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
-    { "folke/which-key.nvim", opts = {} },              -- Shows keybinding popups
-
-    -- 5. File management
-    { "stevearc/oil.nvim", opts = {}, dependencies = { "nvim-tree/nvim-web-devicons" } },
-
-    -- 6. Bufferline
+    {
+        "folke/todo-comments.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        opts = {
+            signs = true, -- show icons in the signs column
+            sign_priority = 8, -- sign priority
+            -- additional keywords recognized as todo comments
+            keywords = {
+                BEL  = { icon = "", color = "personal"}
+            },
+            colors = {
+                personal = { "Personal", "#6f0880" }
+            },
+        }
+    },
+    {
+        "folke/snacks.nvim",
+        priority = 1000,
+        lazy = false,
+        opts = {
+            picker = { enabled = true },
+            explorer = { enabled = true }
+            -- add more modules if you want (see snacks.nvim docs)
+        },
+    },
+    { "folke/which-key.nvim", opts = {} },
+    -- Bufferline
     { 
         "akinsho/bufferline.nvim",
         version = "*",
@@ -171,7 +191,7 @@ require("lazy").setup({
         end
     },
 
-    -- 7. devcontainer.nvim
+    -- devcontainer.nvim
     {
         "esensar/nvim-dev-container",
         dependencies = 'nvim-treesitter/nvim-treesitter',
@@ -188,7 +208,7 @@ require("lazy").setup({
             }
         }
     },
-    -- 8. gitsigns.nvim
+    -- gitsigns.nvim
     {
         "lewis6991/gitsigns.nvim",
         opts = {
@@ -209,7 +229,7 @@ require("lazy").setup({
             end
         }
     },
-    -- 9. barbecue
+    -- barbecue
     {
         "utilyre/barbecue.nvim",
         name = "barbecue",
@@ -442,9 +462,6 @@ local on_attach = function(client, bufnr)
   end
 
   nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
-  nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-  nmap('grr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-  nmap('gri', require('telescope.builtin').lsp_implementations, '[G]oto [I]Implementations')
   -- nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
   -- nmap('K', '<cmd>Lspsaga hover_doc', 'Hover Documentation')
   nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
@@ -603,47 +620,21 @@ end
 -- Python Host
 vim.g.python3_host_prog = vim.fn.expand("~/.local/share/nvim/uv-venv/bin/python")
 
--- Telescope Setup
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files'})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep'})
-vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers'})
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags'})
-vim.keymap.set('n', '<leader>fr', builtin.resume, { desc = 'Resume last search' })
-vim.keymap.set('n', '<leader>ds', function()
-    builtin.lsp_document_symbols(
-        {
-            symbol_width = 50,
-        })
-    end,
-    { desc = 'Document symbols' }
-)
-vim.keymap.set('n', '<leader>ws', builtin.lsp_workspace_symbols, { desc = 'Workspace symbols' })
+-- Snacks/picker
+local Snacks = require("snacks")
 
-vim.keymap.set('n', '<leader>fw', builtin.grep_string, { desc = 'Find (grep) current Word' })
-vim.keymap.set('n', '<leader>D', require('telescope.builtin').diagnostics, { desc = 'Show all Diagnostics' })
-
-require('telescope').setup{
-    defaults = {
-        mappings = {
-            i = {
-                ['jk'] = 'close', -- Use same escape sequence in telescope too
-                ['<C-j>'] = require('telescope.actions').move_selection_next,
-                ['<C-k>'] = require('telescope.actions').move_selection_previous,
-                ['<C-f>'] = require('telescope.actions').preview_scrolling_down,
-                ['<C-b>'] = require('telescope.actions').preview_scrolling_up,
-            },
-            n = {
-                ['jk'] = 'close', -- Use same escape sequence in telescope too
-                ['<C-f>'] = require('telescope.actions').preview_scrolling_down,
-                ['<C-b>'] = require('telescope.actions').preview_scrolling_up,
-            }
-        }
-    }
-}
-
--- Oil.vim setup
-vim.keymap.set('n', '-', "<CMD>Oil<CR>", { desc = "Open parent directory" })
+vim.keymap.set('n', '<leader>ff', function() Snacks.picker.smart() end, { desc = 'Find Files' })
+vim.keymap.set('n', '<leader>fg', function() Snacks.picker.grep() end, { desc = 'Live Grep' })
+vim.keymap.set('n', '<leader>fb', function() Snacks.picker.buffers() end, { desc = 'Buffers' })
+vim.keymap.set('n', '<leader>fh', function() Snacks.picker.help() end, { desc = 'Help Tags' })
+vim.keymap.set('n', '<leader>fr', function() Snacks.picker.recent() end, { desc = 'Recent Files' })
+vim.keymap.set('n', '<leader>fw', function() Snacks.picker.grep_word() end, { desc = 'Find Current Word' })
+vim.keymap.set('n', '<leader>fl', function() Snacks.picker.lines() end, { desc = 'Find Current Word' })
+vim.keymap.set('n', '<leader>D', function() Snacks.picker.diagnostics() end, { desc = 'Show all Diagnostics' })
+vim.keymap.set('n', '<leader>ds', function() Snacks.picker.lsp_document_symbols() end, { desc = 'Document symbols' })
+vim.keymap.set('n', '<leader>ws', function() Snacks.picker.lsp_workspace_symbols() end, { desc = 'Workspace symbols' })
+vim.keymap.set('n', "<leader>e", function() Snacks.explorer() end, {desc = "File Explorer" })
+vim.keymap.set('n', "<leader>ft", function() Snacks.picker.todo_comments() end, {desc = "Todo comments" })
 
 -- CMAKE mappings
 vim.api.nvim_create_autocmd("FileType", {
