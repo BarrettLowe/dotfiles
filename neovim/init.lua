@@ -313,18 +313,20 @@ require("lazy").setup({
                 chat = { 
                     adapter = "ollama_reasoning",
                     tools = {
-                        ["read_only"] = {
-                            description = "Read-only tools - no file modifications",
-                            prompt = "I'm giving you access to ${tools} to help you explore and understand the codebase",
-                            tools = {
-                                "file_search",
-                                "get_changed_files",
-                                "grep_search",
-                                "list_code_usages",
-                                "read_file",
-                            },
-                            opts = {
-                                collapse_tools = true,
+                        groups = {
+                            ["read_only"] = {
+                                description = "Read-only tools - no file modifications",
+                                system_prompt = "I'm giving you access to ${tools} to help you explore and understand the codebase",
+                                tools = {
+                                    "file_search",
+                                    "get_changed_files",
+                                    "grep_search",
+                                    "list_code_usages",
+                                    "read_file",
+                                },
+                                opts = {
+                                    collapse_tools = false,
+                                },
                             },
                         },
                     },
