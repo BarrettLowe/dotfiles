@@ -78,8 +78,7 @@ require("lazy").setup({
                 "clang-format",
                 "debugpy",
                 "codelldb",
-                "tree-sitter-cli",
-                "cmake-language-server"
+                "tree-sitter-cli"
             },
         },
     },
@@ -118,6 +117,7 @@ require("lazy").setup({
             },
         },
     },
+    {"rafamadriz/friendly-snippets"},
 
     -- Syntax & UI
     {
