@@ -76,7 +76,7 @@ create_symlink() {
 }
 
 create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-create_symlink "$DOTFILES_DIR/neovim/init.lua" "$HOME/.config/nvim/init.lua"
+create_symlink "$DOTFILES_DIR/neovim" "$HOME/.config/nvim"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 
@@ -107,6 +107,13 @@ if ! command -v nvim &> /dev/null; then
     # Set path for nvim
     export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
     cd "$DOTFILES_DIR"
+fi
+
+# luarocks Install
+if ! dpkg -s luarocks &>/dev/null; then
+    print_info "Installing luarocks via apt..."
+    sudo apt update && sudo apt install -y luarocks
+    print_success "luarocks installed via apt"
 fi
 
 # Install a clipboard so that the devcontainer can connect to the host
