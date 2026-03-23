@@ -139,11 +139,14 @@ alias tmux="TERM=xterm-256color tmux"
 # fi
 
 # Config file shortcuts
+vc() {
+  (cd ~/dotfiles && $EDITOR neovim/init.lua)
+}
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
-alias vc="$EDITOR ~/dotfiles/neovim/init.lua"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="$EDITOR"
+alias dtf="cd ~/dotfiles"
 # Alternative if you prefer neovim:
 # alias vim="nvim"
 alias zrld="source ~/.zshrc"
