@@ -1,12 +1,21 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
 # Basic environment settings
-export EDITOR=vim
+export EDITOR=nvim
 export KEYTIMEOUT=40
+HISTSIZE=1000000
+SAVEHIST=1000000
 
 # PATH configuratioindex() {
-    ctags -Rbindkey -M vicmd "L" end-of-line
+#ctags -Rbindkey -M vicmd "L" end-of-line
 bindkey -M vicmd "H" beginning-of-line
 bindkey "^_" vi-undo-change                      # Ctrl+/
 bindkey -M vicmd "ciw" kill-word
@@ -14,9 +23,9 @@ bindkey -M vicmd "ciw" kill-word
 # Don't exit shell on Ctrl+D
 set -o ignoreeof
 
-# Visual indicator for vi mode
-function zle-line-init zle-keymap-select {cope -bvRb
-}
+## Visual indicator for vi mode
+#function zle-line-init zle-keymap-select {cope -bvRb
+#}
 
 # ZLE key bindings
 bindkey "[6~" history-beginning-search-forward   # Page Down
@@ -26,17 +35,16 @@ bindkey "^k" history-beginning-search-backward
 bindkey "[3~" delete-char                        # Delete
 bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
+[[ -d "/opt/nvim-linux-x86_64/bin" ]] && path=("/opt/nvim-linux-x86_64/bin" $path)
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 [[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
-[[ -d "$HOME/bin" ]] && path=("$HOME/bin" $path)
-[[ -d "$HOME/anaconda3/bin" ]] && path=("$HOME/anaconda3/bin" $path)
 [[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
 export PATH
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="half-life"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -131,11 +139,14 @@ alias tmux="TERM=xterm-256color tmux"
 # fi
 
 # Config file shortcuts
+vc() {
+  (cd ~/dotfiles && $EDITOR neovim/init.lua)
+}
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
-alias vc="$EDITOR ~/dotfiles/.vimrc"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
 alias v="$EDITOR"
+alias dtf="cd ~/dotfiles"
 # Alternative if you prefer neovim:
 # alias vim="nvim"
 alias zrld="source ~/.zshrc"
@@ -162,6 +173,13 @@ alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
 # Find utilities
 alias findBin="find -type f -executable -exec file -i \'{}\' \; | grep \'charset=binary\'"
 alias findExt='find . -type f | perl -ne "print \$1 if m/(\\.[^.\\/]+)\$/" | sort -u'
+
+# Directories
+alias dev="cd $HOME/Development"
+alias dt="cd $HOME/DevTools"
+alias cdot="cd $HOME/dotfiles"
+
+
 # Enable vi mode
 bindkey -v
 
@@ -213,7 +231,8 @@ bindkey -M vicmd 'v' edit-command-line
 bindkey -M viins "jk" vi-cmd-mode
 
 # Auto-attach to tmux (only for interactive shells)
-if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
+#if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
+if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]]; then
     if tmux has-session -t Pasta 2>/dev/null; then
         if tmux has-session -t Salad 2>/dev/null; then
             tmux attach-session -d -t Pasta
@@ -229,3 +248,27 @@ fi
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
 fi
+if [[ -f "$HOME/.zshrc_private" ]]; then
+    source "$HOME/.zshrc_private"
+fi
+
+# . "$HOME/.local/bin/env"
+#
+# Only set this if we are in an SSH session and WAYLAND_DISPLAY isn't already set
+if [ -n "$SSH_CONNECTION" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+    export WAYLAND_DISPLAY=wayland-0
+fi
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+if [[ -n "$REMOTE_CONTAINERS" || -n "$DEVPOD" || -f /.dockerenv ]]; then
+    # Show icon and hostname when in a remote container
+    typeset -g POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION=' %m'
+    unset POWERLEVEL9K_CONTEXT_DEFAULT_VISUAL_IDENTIFIER_EXPANSION
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
