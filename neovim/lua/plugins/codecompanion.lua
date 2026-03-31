@@ -7,6 +7,7 @@ return {
         "nvim-lua/plenary.nvim",
         "nvim-treesitter/nvim-treesitter",
         "ravitemer/codecompanion-history.nvim",
+        "cairijun/codecompanion-agentskills.nvim",
     },
     config = function()
         require("codecompanion").setup({
@@ -100,6 +101,14 @@ return {
                         picker = "snacks",
                     }
                 },
+                agentskills = {
+                    opts = {
+                        paths = {
+                            "~/dotfiles/ai/skills",  -- Single directory (non-recursive)
+                            { "~/.ai/skills", recursive = true },  -- Recursive search
+                        }
+                    }
+                }
             },
         })
         
