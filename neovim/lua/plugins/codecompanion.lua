@@ -3,7 +3,6 @@
 
 return {
     "olimorris/codecompanion.nvim",
-    version = "^18.0.0",
     dependencies = {
         "nvim-lua/plenary.nvim",
         "nvim-treesitter/nvim-treesitter",
@@ -16,32 +15,48 @@ return {
             },
             adapters = {
                 http = {
-                    ollama_reasoning = function()
-                        return require("codecompanion.adapters").extend("ollama", {
-                            env = { url = "http://localhost:11434" },
+                    -- ollama_reasoning = function()
+                    --     return require("codecompanion.adapters").extend("ollama", {
+                    --         -- env = { url = "http://localhost:11434" },
+                    --         env = { url = "http://127.0.0.1:1234" },
+                    --         schema = {
+                    --             -- model = { default = "qwen2.5-coder:7b" },
+                    --             model = { default = "qwen/qwen3.5-9b" },
+                    --             num_ctx = { default = 16384 },
+                    --         },
+                    --     })
+                    -- end,
+                    -- ollama_fast = function()
+                    --     return require("codecompanion.adapters").extend("ollama", {
+                    --         env = { url = "http://localhost:11434" },
+                    --         schema = {
+                    --             model = { default = "codegemma:2b-code" },
+                    --             parameters = {
+                    --                 temperature = 0,
+                    --                 num_predict = 1024,
+                    --             }
+                    --         }
+                    --     })
+                    -- end,
+                    lmstudio = function()
+                        return require("codecompanion.adapters").extend("openai_compatible", {
+                            name = "lmstudio",  -- friendly name
+                            env = { url = "http://localhost:1234" },  -- LM Studio default port
                             schema = {
-                                model = { default = "qwen2.5-coder:7b" },
-                                num_ctx = { default = 16384 },
+                                model = {
+                                    default = "",  -- leave empty; it will query /v1/models
+                                    num_ctx = { default = 16384 },
+                                },
+                                temperature = { default = 0.7 },
+                                -- no api_key needed (LM Studio ignores it)
                             },
-                        })
-                    end,
-                    ollama_fast = function()
-                        return require("codecompanion.adapters").extend("ollama", {
-                            env = { url = "http://localhost:11434" },
-                            schema = {
-                                model = { default = "codegemma:2b-code" },
-                                parameters = {
-                                    temperature = 0,
-                                    num_predict = 1024,
-                                }
-                            }
                         })
                     end,
                 }
             },
             strategies = {
                 chat = {
-                    adapter = "ollama_reasoning",
+                    adapter = "lmstudio",
                     tools = {
                         groups = {
                             ["read_only"] = {
