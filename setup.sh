@@ -79,6 +79,15 @@ create_symlink "$DOTFILES_DIR/neovim" "$HOME/.config/nvim"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 
+# Claude Code
+mkdir -p "$HOME/.claude"
+create_symlink "$DOTFILES_DIR/ai/AGENTS.md" "$HOME/CLAUDE.md"
+create_symlink "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
+
+# GitHub Copilot CLI
+mkdir -p "$HOME/.config/github-copilot"
+create_symlink "$DOTFILES_DIR/copilot/agents" "$HOME/.config/github-copilot/agents"
+
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 

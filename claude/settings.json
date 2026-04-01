@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "env": {},
+  "hooks": {},
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--prefix", "/tmp", "@upstash/context7-mcp@latest"],
+      "env": {}
+    }
+  }
+}

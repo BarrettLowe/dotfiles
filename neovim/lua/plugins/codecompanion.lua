@@ -83,9 +83,9 @@ return {
                 default = {
                     description = "Collection of common files",
                     files = {
-                        "~/dotfiles/AGENTS.md",
+                        "~/dotfiles/ai/AGENTS.md",
+                        "CLAUDE.md",
                         "AGENTS.md",
-                        "AGENT.md",
                     }
                 },
             },
@@ -104,8 +104,8 @@ return {
                 agentskills = {
                     opts = {
                         paths = {
-                            "~/dotfiles/ai/skills",  -- Single directory (non-recursive)
-                            { "~/.ai/skills", recursive = true },  -- Recursive search
+                            "~/dotfiles/claude/skills",  -- Claude Code skills
+                            { "~/.ai/skills", recursive = true },  -- Local overrides
                         }
                     }
                 }
