@@ -53,6 +53,9 @@ require("config.lsp")
 -- DAP configuration (debug adapters, UI, keymaps)
 require("config.dap")
 
+-- Custom git history command
+require("git_file_history").setup()
+
 -- ============================================================================
 -- COLORSCHEME
 -- ============================================================================
