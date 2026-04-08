@@ -232,7 +232,7 @@ bindkey -M viins "jk" vi-cmd-mode
 
 # Auto-attach to tmux (only for interactive shells)
 #if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
-if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]]; then
+if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]] && command -v tmux &>/dev/null; then
     if tmux has-session -t Pasta 2>/dev/null; then
         if tmux has-session -t Salad 2>/dev/null; then
             tmux attach-session -d -t Pasta
