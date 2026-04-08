@@ -266,9 +266,19 @@ if [[ -n "$REMOTE_CONTAINERS" || -n "$DEVPOD" || -f /.dockerenv ]]; then
     # Show icon and hostname when in a remote container
     typeset -g POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION=' %m'
     unset POWERLEVEL9K_CONTEXT_DEFAULT_VISUAL_IDENTIFIER_EXPANSION
+
+    # Export workspace ID to tmux so host bindings can detect which devpod we're in
+    if [[ -n "$DEVPOD_WORKSPACE_ID" && -n "$TMUX" ]]; then
+        tmux set-environment DEVPOD_WORKSPACE "$DEVPOD_WORKSPACE_ID"
+    fi
 fi
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/home/barrett-lowe/.lmstudio/bin"
+# End of LM Studio CLI section
 
