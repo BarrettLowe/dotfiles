@@ -266,11 +266,6 @@ if [[ -n "$REMOTE_CONTAINERS" || -n "$DEVPOD" || -f /.dockerenv ]]; then
     # Show icon and hostname when in a remote container
     typeset -g POWERLEVEL9K_CONTEXT_DEFAULT_CONTENT_EXPANSION=' %m'
     unset POWERLEVEL9K_CONTEXT_DEFAULT_VISUAL_IDENTIFIER_EXPANSION
-
-    # Export workspace ID to tmux so host bindings can detect which devpod we're in
-    if [[ -n "$DEVPOD_WORKSPACE_ID" && -n "$TMUX" ]]; then
-        tmux set-environment DEVPOD_WORKSPACE "$DEVPOD_WORKSPACE_ID"
-    fi
 fi
 
 export NVM_DIR="$HOME/.nvm"
