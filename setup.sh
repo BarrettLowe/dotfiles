@@ -197,6 +197,29 @@ if [ ! -d "$NVIM_VENV" ]; then
     uv tool install "cmake-language-server" --with "pygls<2.0.0" # cmake-language-server is not compatible with current pygls
 fi
 
+# Personal venv for importable packages
+PERSONAL_VENV="$HOME/.local/share/python/venv"
+if [ ! -d "$PERSONAL_VENV" ]; then
+    print_info "Creating personal venv at $PERSONAL_VENV..."
+    uv venv "$PERSONAL_VENV"
+fi
+if [ -s "$DOTFILES_DIR/python-packages.txt" ]; then
+    print_info "Installing personal Python packages..."
+    grep -v '^\s*#' "$DOTFILES_DIR/python-packages.txt" | grep -v '^\s*$' | \
+        xargs -r uv pip install --python "$PERSONAL_VENV/bin/python"
+    print_success "Personal packages installed"
+fi
+
+# Standalone tools
+if [ -s "$DOTFILES_DIR/python-tools.txt" ]; then
+    print_info "Installing Python tools..."
+    while IFS= read -r pkg; do
+        [[ -z "$pkg" || "$pkg" == \#* ]] && continue
+        uv tool install "$pkg"
+    done < "$DOTFILES_DIR/python-tools.txt"
+    print_success "Python tools installed"
+fi
+
 # Step 5: Initializing Neovim Plugins
 print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null

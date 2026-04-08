@@ -1,0 +1,2 @@
+# Python packages installed into the personal venv (~/.local/share/python/venv)
+# Use for importable libraries, not CLI tools

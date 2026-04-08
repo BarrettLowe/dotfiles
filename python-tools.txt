@@ -1,0 +1,3 @@
+# Standalone CLI tools installed via `uv tool install`
+# Each gets its own isolated environment
+graphifyy
