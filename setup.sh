@@ -83,6 +83,7 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 mkdir -p "$HOME/.claude"
 create_symlink "$DOTFILES_DIR/ai/AGENTS.md" "$HOME/CLAUDE.md"
 create_symlink "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
+create_symlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
 
 # GitHub Copilot CLI
 mkdir -p "$HOME/.config/github-copilot"
@@ -218,6 +219,40 @@ else
 fi
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
+
+# Step 7: Node.js via nvm and Claude Code CLI
+print_header "Step 7: Node.js and Claude Code CLI"
+
+# Install nvm
+if [ ! -d "$HOME/.nvm" ]; then
+    print_info "Installing nvm..."
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+    print_success "nvm installed"
+else
+    print_success "nvm already present"
+fi
+
+# Source nvm for this session
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Install Node.js LTS if not available
+if ! command -v node &>/dev/null; then
+    print_info "Installing Node.js LTS..."
+    nvm install --lts
+    print_success "Node.js $(node --version) installed"
+else
+    print_success "Node.js $(node --version) already present"
+fi
+
+# Install Claude Code CLI
+if ! command -v claude &>/dev/null; then
+    print_info "Installing Claude Code CLI..."
+    npm install -g @anthropic-ai/claude-code
+    print_success "Claude Code installed"
+else
+    print_success "Claude Code $(claude --version 2>/dev/null || echo '') already present"
+fi
 
 # Final summary
 print_header "Setup Complete! 🎉"
