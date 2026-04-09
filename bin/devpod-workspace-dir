@@ -25,7 +25,12 @@ if [ -n "$SRC" ]; then
     if [ -n "$DC_REL" ]; then
         DCJ="$SRC/$DC_REL"
     else
-        DCJ=$(find "$SRC" -maxdepth 3 -name "devcontainer.json" 2>/dev/null | head -1)
+        # devpod default is .devcontainer.json at the repo root
+        if [ -f "$SRC/.devcontainer.json" ]; then
+            DCJ="$SRC/.devcontainer.json"
+        else
+            DCJ=$(find "$SRC" -maxdepth 3 -name "devcontainer.json" 2>/dev/null | head -1)
+        fi
     fi
 fi
 
