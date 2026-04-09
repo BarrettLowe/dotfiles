@@ -1,0 +1,42 @@
+#!/bin/bash
+# devpod-workspace-dir <workspace-id>
+# Outputs the workspaceFolder path inside the devpod container.
+# Priority:
+#   1. workspaceFolder from devcontainer.json (most authoritative)
+#   2. /workspaces/<basename of source dir> (devpod default)
+#   3. /workspaces/<workspace-id> (last resort)
+
+WS="$1"
+[ -z "$WS" ] && { echo "/workspaces/$WS"; exit 0; }
+
+# Ask devpod for workspace metadata
+INFO=$(devpod list --output json 2>/dev/null | jq -r ".[] | select(.id == \"$WS\")" 2>/dev/null)
+
+SRC=$(printf '%s' "$INFO" | jq -r '.source.localFolder // empty' 2>/dev/null)
+
+# For git-based workspaces devpod clones into its own cache
+if [ -z "$SRC" ]; then
+    SRC=$(ls -d ~/.devpod/contexts/*/workspaces/"$WS"/source/ 2>/dev/null | head -1)
+fi
+
+# Locate devcontainer.json — use devContainerPath if devpod recorded it
+if [ -n "$SRC" ]; then
+    DC_REL=$(printf '%s' "$INFO" | jq -r '.devContainerPath // empty' 2>/dev/null)
+    if [ -n "$DC_REL" ]; then
+        DCJ="$SRC/$DC_REL"
+    else
+        DCJ=$(find "$SRC" -maxdepth 3 -name "devcontainer.json" 2>/dev/null | head -1)
+    fi
+fi
+
+# Parse workspaceFolder
+if [ -n "$DCJ" ] && [ -f "$DCJ" ]; then
+    WD=$(jq -r '.workspaceFolder // empty' "$DCJ" 2>/dev/null)
+fi
+
+# Fallback: devpod default mount path
+if [ -z "$WD" ] && [ -n "$SRC" ]; then
+    WD="/workspaces/$(basename "$SRC")"
+fi
+
+echo "${WD:-/workspaces/$WS}"
