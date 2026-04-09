@@ -1,0 +1,71 @@
+#!/bin/bash
+# devpod-attach [cwd]
+# Ensures a devpod tmux session exists for the given cwd and prints its name.
+# The caller is responsible for attaching. Uses a cache for fast reattach.
+
+CWD="${1:-$PWD}"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/devpod-sessions"
+
+# --- Fast path: check cache for an existing session ---
+if [ -f "$CACHE" ]; then
+  while IFS='=' read -r folder session; do
+    if [ "$CWD" = "$folder" ] || [[ "$CWD" == "$folder/"* ]]; then
+      if tmux has-session -t "$session" 2>/dev/null; then
+        echo "$session"
+        exit 0
+      fi
+    fi
+  done < "$CACHE"
+fi
+
+# --- Slow path: query devpod (only on first connect or after session dies) ---
+DEVPOD_JSON=$(devpod list --output json 2>/dev/null)
+
+WS=$(printf '%s' "$DEVPOD_JSON" | jq -r --arg cwd "$CWD" \
+  '.[] | select(.source.localFolder as $f | $cwd == $f or ($cwd | startswith($f + "/"))) | .id' \
+  | head -1)
+
+if [ -z "$WS" ]; then
+  WS=$(printf '%s' "$DEVPOD_JSON" | jq -r '.[].id' | fzf --prompt="devpod> ")
+fi
+
+[ -z "$WS" ] && exit 1
+
+# Resolve workspace dir inside container
+INFO=$(printf '%s' "$DEVPOD_JSON" | jq -r --arg ws "$WS" '.[] | select(.id == $ws)')
+SRC=$(printf '%s' "$INFO" | jq -r '.source.localFolder // empty')
+[ -z "$SRC" ] && SRC=$(ls -d ~/.devpod/contexts/*/workspaces/"$WS"/source/ 2>/dev/null | head -1)
+
+if [ -n "$SRC" ]; then
+  DC_REL=$(printf '%s' "$INFO" | jq -r '.devContainerPath // empty')
+  if [ -n "$DC_REL" ]; then
+    DCJ="$SRC/$DC_REL"
+  elif [ -f "$SRC/.devcontainer.json" ]; then
+    DCJ="$SRC/.devcontainer.json"
+  else
+    DCJ=$(find "$SRC" -maxdepth 3 -name "devcontainer.json" 2>/dev/null | head -1)
+  fi
+fi
+
+if [ -n "$DCJ" ] && [ -f "$DCJ" ]; then
+  WD=$(python3 -c "
+import re, json, sys
+s = open(sys.argv[1]).read()
+s = re.sub(r',(\s*[}\]])', r'\1', s)
+print(json.loads(s).get('workspaceFolder', ''))
+" "$DCJ" 2>/dev/null)
+fi
+
+[ -z "$WD" ] && [ -n "$SRC" ] && WD="/workspaces/$(basename "$SRC")"
+WD="${WD:-/workspaces/$WS}"
+
+SESSION="devpod-$(echo "$WS" | md5sum | cut -c1-8)"
+tmux has-session -t "$SESSION" 2>/dev/null || \
+  tmux new-session -d -s "$SESSION" "~/dotfiles/bin/devpod-claude $WS $WD"
+
+# Cache localFolder → session for fast reattach
+mkdir -p "$(dirname "$CACHE")"
+grep -v "^${SRC:-$CWD}=" "$CACHE" 2>/dev/null > "$CACHE.tmp" && mv "$CACHE.tmp" "$CACHE"
+echo "${SRC:-$CWD}=$SESSION" >> "$CACHE"
+
+echo "$SESSION"

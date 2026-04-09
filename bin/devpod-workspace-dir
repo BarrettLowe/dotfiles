@@ -34,9 +34,14 @@ if [ -n "$SRC" ]; then
     fi
 fi
 
-# Parse workspaceFolder
+# Parse workspaceFolder — strip trailing commas first (devcontainer.json often has them)
 if [ -n "$DCJ" ] && [ -f "$DCJ" ]; then
-    WD=$(jq -r '.workspaceFolder // empty' "$DCJ" 2>/dev/null)
+    WD=$(python3 -c "
+import re, json, sys
+s = open(sys.argv[1]).read()
+s = re.sub(r',(\s*[}\]])', r'\1', s)
+print(json.loads(s).get('workspaceFolder', ''))
+" "$DCJ" 2>/dev/null)
 fi
 
 # Fallback: devpod default mount path

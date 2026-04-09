@@ -1,0 +1,6 @@
+#!/bin/bash
+# devpod-claude <workspace-id> <workspace-dir>
+# SSHs into the devpod container and starts claude in the workspace directory.
+WS="$1"
+WD="$2"
+exec ssh -t "$WS.devpod" "zsh -i -c \"cd $WD; claude\""
