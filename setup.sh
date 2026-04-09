@@ -84,7 +84,7 @@ mkdir -p "$HOME/.claude"
 create_symlink "$DOTFILES_DIR/claude/CLAUDE_.md" "$HOME/.claude/CLAUDE.md"
 create_symlink "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
 create_symlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
-create_symlink "$DOTFILES_DIR/claude/agents" "$HOME/.config/claude/agents"
+create_symlink "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 
 # GitHub Copilot CLI
 mkdir -p "$HOME/.config/github-copilot"
