@@ -12,5 +12,9 @@
       "args": ["-y", "--prefix", "/tmp", "@upstash/context7-mcp@latest"],
       "env": {}
     }
+  },
+  "attribution": {
+      "commit": "",
+      "pr": ""
   }
 }
