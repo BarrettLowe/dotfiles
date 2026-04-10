@@ -260,14 +260,14 @@ fi
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# # Install Node.js LTS if not available
-# if ! command -v node &>/dev/null; then
-#     print_info "Installing Node.js LTS..."
-#     nvm install --lts
-#     print_success "Node.js $(node --version) installed"
-# else
-#     print_success "Node.js $(node --version) already present"
-# fi
+# Install Node.js LTS if not available
+if ! command -v node &>/dev/null; then
+    print_info "Installing Node.js LTS..."
+    nvm install --lts
+    print_success "Node.js $(node --version) installed"
+else
+    print_success "Node.js $(node --version) already present"
+fi
 
 # Install Claude Code CLI
 if ! command -v claude &>/dev/null; then
