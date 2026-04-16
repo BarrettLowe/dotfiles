@@ -90,47 +90,41 @@ create_symlink "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 mkdir -p "$HOME/.config/github-copilot"
 create_symlink "$DOTFILES_DIR/copilot/agents" "$HOME/.config/github-copilot/agents"
 
+# Foot terminal
+mkdir -p "$HOME/.config/foot"
+create_symlink "$DOTFILES_DIR/foot/foot.ini" "$HOME/.config/foot/foot.ini"
+# Seed theme-colors.ini from current ~/.theme (default: dark)
+_THEME=$(cat "$HOME/.theme" 2>/dev/null || echo "dark")
+ln -sf "$DOTFILES_DIR/foot/colors-$_THEME.ini" "$HOME/.config/foot/theme-colors.ini"
+print_success "Foot config linked (theme: $_THEME)"
+
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Install python via apt for system header reliability
-if ! command -v python3 &> /dev/null; then
-    print_info "Installing python via apt..."
-    sudo apt update && sudo apt install -y python3 python3-venv
-    print_success "python3 installed via apt"
-fi
+# Batch all apt installs into a single update + install
+APT_PKGS=()
+! command -v python3 &>/dev/null && APT_PKGS+=(python3)
+! dpkg -s python3-venv &>/dev/null && APT_PKGS+=(python3-venv)
+! dpkg -s luarocks &>/dev/null && APT_PKGS+=(luarocks)
+! command -v wl-copy &>/dev/null && APT_PKGS+=(wl-clipboard)
 
-if ! dpkg -s python3-venv &>/dev/null; then
-    print_info "Installing python3-venv via apt..."
-    sudo apt update && sudo apt install -y python3-venv
-    print_success "python3-venv installed via apt"
+if [[ ${#APT_PKGS[@]} -gt 0 ]]; then
+    print_info "Installing apt packages: ${APT_PKGS[*]}..."
+    sudo apt update && sudo apt install -y "${APT_PKGS[@]}"
+    print_success "apt packages installed"
 fi
 
 # Manual Neovim Install
 if ! command -v nvim &> /dev/null; then
     print_info "Installing Neovim to /opt..."
-    cd "$HOME/.build"
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-    sudo rm -rf /opt/nvim-linux-x86_64
-    sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+    (
+        cd "$HOME/.build"
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+        sudo rm -rf /opt/nvim-linux-x86_64
+        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+    )
     print_success "Neovim installed to /opt/nvim-linux-x86_64"
-    # Set path for nvim
     export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
-    cd "$DOTFILES_DIR"
-fi
-
-# luarocks Install
-if ! dpkg -s luarocks &>/dev/null; then
-    print_info "Installing luarocks via apt..."
-    sudo apt update && sudo apt install -y luarocks
-    print_success "luarocks installed via apt"
-fi
-
-# Install a clipboard so that the devcontainer can connect to the host
-if ! command -v wl-copy &> /dev/null; then
-    print_info "Installing wl-clipboard via apt..."
-    sudo apt update && sudo apt install -y wl-clipboard
-    print_success "wl-clipboard installed via apt"
 fi
 
 # # Manual TreeSitter Install
@@ -177,8 +171,9 @@ install_gh_release() {
     print_success "$bin_name installed to ~/DevTools/bin"
 }
 
-[[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"
-[[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"
+{ [[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"; } &
+{ [[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"; } &
+wait
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"
@@ -216,8 +211,9 @@ if [ -s "$DOTFILES_DIR/python-tools.txt" ]; then
     print_info "Installing Python tools..."
     while IFS= read -r pkg; do
         [[ -z "$pkg" || "$pkg" == \#* ]] && continue
-        uv tool install "$pkg"
+        uv tool install "$pkg" &
     done < "$DOTFILES_DIR/python-tools.txt"
+    wait
     print_success "Python tools installed"
 fi
 
@@ -241,7 +237,8 @@ else
         exit 1
     fi
 fi
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+[[ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]] && \
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
 
 # Step 7: Node.js via nvm and Claude Code CLI
