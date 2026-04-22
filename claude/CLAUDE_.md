@@ -48,6 +48,11 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
 | `test-generator` | Writing new unit tests, asked for test coverage, GoogleTest/Catch2 files |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
+| `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
+
+### Automatic: simplifier
+
+After any turn where you generate or substantively modify code (more than a trivial one-liner), **always run the `simplifier` agent** on the generated files before reporting the task complete. Pass the file paths as context. Do not run it for: documentation-only changes, config edits, single-line fixes, or when the user explicitly skips it.
 
 ---
 
