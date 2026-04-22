@@ -66,4 +66,11 @@ _Add a brief overview of your project architecture_
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+### Agent/Skill Routing Maintenance
+
+When a skill is converted to an agent (or a new agent is created):
+1. Add it to the **Agents** table in `claude/CLAUDE_.md`
+2. Remove it from the **Skills** table in `claude/CLAUDE_.md` if it was there
+3. Update the "When multiple could apply" section if any routing logic changes
+
+Skills live in `~/.claude/skills/<name>/SKILL.md`. Agents live in `~/.claude/agents/<name>.md`. Keep `claude/CLAUDE_.md` in sync with what's actually on disk — stale routing causes the wrong tool to get invoked.
