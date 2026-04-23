@@ -27,6 +27,7 @@
 - Clever code is encouraged, but **must be commented** — cleverness without explanation is a bug waiting to happen
 - Follow the **single responsibility principle** — one function/class/module does one thing
 - If intent is unclear, **ask before proceeding** — don't assume and barrel forward
+- When using a raw number for anything other than +/-1 in bounds checking **always** include a comment describing the number
 
 ---
 
@@ -68,6 +69,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
 | `/devcontainer` | devcontainer-init | Checking out a new OKSI project that needs a `.devcontainer.json` |
+| `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 
 ### When multiple could apply
 
