@@ -70,6 +70,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
 | `/devcontainer` | devcontainer-init | Checking out a new OKSI project that needs a `.devcontainer.json` |
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
+| `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
 
 ### When multiple could apply
 
