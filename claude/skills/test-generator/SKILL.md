@@ -57,6 +57,7 @@ protected:
 - Avoid testing `std::` behavior; test your code's use of it
 - If a class needs mocking, note the interface boundary and stop — don't introduce a mocking framework without approval
 - Match the existing framework; don't mix GTest and Catch2
+- **No production values in tests** — don't hardcode real endpoints, credentials, config values, or data that could change in production and silently break the test. Use fixed synthetic values, constants, or generated data instead.
 
 ## Output
 
