@@ -47,7 +47,7 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `architect` | Designing a new subsystem, reviewing existing module for structural debt, choosing between design approaches |
 | `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
-| `test-generator` | Writing new unit tests, asked for test coverage, GoogleTest/Catch2 files |
+| `tester` | Writing new tests, reviewing or cleaning up existing tests, GoogleTest/Catch2 files |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
 | `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
 
@@ -77,7 +77,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Code review *and* modernization needed → `/api` first (find what's wrong), `/modernize` second (fix the patterns)
 - New concurrent class → `/api` first (design the interface), `/conc` second (design the internals)
-- Writing a class *and* tests → write the class, then `test-generator` agent
+- Writing a class *and* tests → write the class, then `tester` skill
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
 
 
