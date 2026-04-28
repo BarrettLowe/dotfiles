@@ -58,7 +58,7 @@ keymap('', 'H', '^')
 
 keymap('n', '<leader>s', ':wq<cr>')
 keymap('n', '<leader>w', ':w<cr>')
-keymap('n', '<leader>q<cr>', ':qall<cr>')
+keymap('n', '<leader>qa', ':qall<cr>')
 
 -- ============================================================================
 -- INSERT MODE MOVEMENTS

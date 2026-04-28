@@ -38,6 +38,7 @@ typeset -U path
 [[ -d "/opt/nvim-linux-x86_64/bin" ]] && path=("/opt/nvim-linux-x86_64/bin" $path)
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 [[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
+[[ -d "$HOME/dotfiles/bin" ]] && path=("$HOME/dotfiles/bin" $path)
 [[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
 export PATH
 # Set name of the theme to load.
@@ -88,7 +89,10 @@ DISABLE_AUTO_UPDATE="false"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(themes tmux git)
+# Note: 'themes' plugin intentionally omitted — it registers a `theme` shell
+# function that shadows ~/dotfiles/bin/theme (our light/dark switcher).
+# p10k handles prompt theming; the oh-my-zsh themes plugin is not needed.
+plugins=(tmux git)
 
 # User configuration
 # Set DEFAULT_USER to hide username@hostname in prompt when you're the default user
@@ -166,6 +170,9 @@ alias fin='find -iname'
 # Git shortcuts
 alias gs='git status'
 alias gdd='git difftool -d'
+
+# Diff two files in neovim vimdiff
+alias vd='nvim -d'
 
 # ctags
 alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
