@@ -72,13 +72,14 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
 | `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR descriptions, issues, tasks, release notes |
+| `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
 
 ### When multiple could apply
 
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Code review *and* modernization needed → `/api` first (find what's wrong), `/modernize` second (fix the patterns)
 - New concurrent class → `/api` first (design the interface), `/conc` second (design the internals)
-- Writing a class *and* tests → write the class, then `tester` skill
+- Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `tester` skill
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
 
 
