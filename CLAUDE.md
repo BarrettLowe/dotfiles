@@ -1,6 +1,6 @@
-# Project Instructions for AI Agents
+# CLAUDE.md
 
-This file provides instructions and context for AI coding agents working on this project.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
@@ -50,19 +50,43 @@ bd close <id>         # Complete work
 <!-- END BEADS INTEGRATION -->
 
 
-## Build & Test
+## Setup
 
-_Add your build and test commands here_
+The primary entry point is `setup.sh`, which creates symlinks and installs tools:
 
 ```bash
-# Example:
-# npm install
-# npm test
+bash setup.sh        # symlinks dotfiles, installs Neovim + tools to ~/DevTools and /opt
 ```
 
-## Architecture Overview
+Key symlinks it creates:
+- `~/.zshrc` → `dotfiles/.zshrc`
+- `~/.config/nvim` → `dotfiles/neovim/`
+- `~/.tmux.conf` → `dotfiles/.tmux.conf`
+- `~/.p10k.zsh` → `dotfiles/.p10k.zsh`
 
-_Add a brief overview of your project architecture_
+Machine-specific settings go in `~/.zshrc_local` (not tracked). Copy from `.zshrc_local_template`.
+
+## Architecture
+
+```
+dotfiles/
+├── setup.sh              # Symlink creator + tool installer (artifacts → ~/.build, tools → ~/DevTools)
+├── .zshrc                # Portable zsh config; sources ~/.zshrc_local for machine-specific settings
+├── neovim/               # Neovim config → ~/.config/nvim
+│   ├── init.lua          # Bootstraps lazy.nvim, sets leader key (,)
+│   └── lua/
+│       ├── config/       # Core config: settings, keymaps, lsp, dap, autocmds
+│       └── plugins/      # One file per plugin (lazy.nvim spec)
+├── claude/               # Claude Code configuration
+│   ├── CLAUDE_.md        # Source of truth for ~/.claude/CLAUDE.md content
+│   ├── skills/           # Custom slash-command skills (one dir per skill with SKILL.md)
+│   ├── agents/           # Custom agent definitions (one .md per agent)
+│   └── rules/            # Path-matched auto-rules (C++, Python style conventions)
+├── bin/                  # Utility scripts: devpod-attach, devpod-claude, devpod-workspace-dir
+└── ai/                   # AGENTS.md for headless agent context
+```
+
+`claude/CLAUDE_.md` is the source of truth for global Claude settings — edit it, not `~/.claude/CLAUDE.md` directly, to keep changes tracked in git.
 
 ## Conventions & Patterns
 
