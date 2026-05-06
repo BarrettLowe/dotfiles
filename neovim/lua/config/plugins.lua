@@ -6,7 +6,7 @@ return {
   spec = {
     require("plugins.abolish"),
     require("plugins.ccc"),
-    require("plugins.nightfly"),
+    require("plugins.themes"),
     require("plugins.mason"),
     require("plugins.mason-tool-installer"),
     require("plugins.lspconfig"),

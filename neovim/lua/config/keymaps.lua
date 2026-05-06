@@ -61,26 +61,20 @@ keymap('n', '<leader>w', ':w<cr>')
 keymap('n', '<leader>qa', ':qall<cr>')
 
 -- ============================================================================
--- INSERT MODE MOVEMENTS
+-- INSERT MODE EDITING
 -- ============================================================================
 
-local insert_opts = { silent = true }
-keymap('i', '<C-j>', '<C-o>j', insert_opts)
-keymap('i', '<C-h>', '<C-o>h', insert_opts)
-keymap('i', '<C-k>', '<C-o>k', insert_opts)
-keymap('i', '<C-l>', '<C-o>l', insert_opts)
-keymap('i', '<C-w>', '<C-o>w', insert_opts)
-keymap('i', '<C-W>', '<C-o>W', insert_opts)
-keymap('i', '<C-b>', '<C-o>b', insert_opts)
-keymap('i', '<C-B>', '<C-o>B', insert_opts)
-keymap('i', '<C-e>', '<C-o>e', insert_opts)
-keymap('i', '<C-E>', '<C-o>E', insert_opts)
+-- Ctrl+Backspace → delete previous word (^H is what foot sends for Ctrl+Backspace)
+keymap('i', '<C-h>', '<C-w>')
 
 -- ============================================================================
 -- BUFFER & WINDOW MANAGEMENT (non-VSCode)
 -- ============================================================================
 
 if not vim.g.vscode then
+    -- Toggle between .hpp and .cpp (via clangd)
+    keymap('n', '<leader>of', '<Cmd>ClangdSwitchSourceHeader<CR>', { desc = 'Switch to other file (.hpp/.cpp)' })
+
     -- Auto-close brace pairs
     keymap('i', '{<CR>', '{<CR>}<ESC>O')
 

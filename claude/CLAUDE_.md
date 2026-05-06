@@ -45,11 +45,15 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | Agent | Route when… |
 |-------|-------------|
 | `architect` | Designing a new subsystem, reviewing existing module for structural debt, choosing between design approaches |
-| `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
-| `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
-| `tester` | Writing new tests, reviewing or cleaning up existing tests, GoogleTest/Catch2 files |
+| `bug-fixer` | Have a specific bug fix to apply — from a code review finding, `bug-investigator` output, or clear user instruction |
+| `bug-investigator` | Bug reported or test failing — diagnose root cause without touching source; returns a recommended fix |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
+| `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature |
+| `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
+| `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
 | `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
+| `test-generator` | Writing new C++ tests, reviewing or cleaning up existing tests, GoogleTest/Catch2 files |
+| `test-writer` | Writing tests in any other language (Python, etc.) — behavior-focused, happy path + edge cases |
 
 ### Automatic: simplifier
 
@@ -79,7 +83,8 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Code review *and* modernization needed → `/api` first (find what's wrong), `/modernize` second (fix the patterns)
 - New concurrent class → `/api` first (design the interface), `/conc` second (design the internals)
-- Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `tester` skill
+- Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
+- Exploring unfamiliar code → `codebase-explorer` for any repo; `gitnexus-exploring` skill when the repo is indexed in GitNexus (richer call graphs, cross-file tracing)
 
 

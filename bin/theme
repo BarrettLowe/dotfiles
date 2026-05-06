@@ -1,0 +1,106 @@
+#!/bin/bash
+# theme [light|dark] — toggle or set system theme
+# No argument = toggle current value.
+#
+# Current scope: foot terminal, tmux
+# TODO: nvim (requires --listen socket setup in init.lua)
+
+set -euo pipefail
+
+THEME_FILE="$HOME/.theme"
+FOOT_COLORS_DIR="$HOME/dotfiles/foot"
+FOOT_THEME_LINK="$HOME/.config/foot/theme-colors.ini"
+
+CURRENT=$(cat "$THEME_FILE" 2>/dev/null || echo "dark")
+
+case "${1:-}" in
+    light|dark) TARGET="$1" ;;
+    "")         TARGET=$([ "$CURRENT" = "dark" ] && echo "light" || echo "dark") ;;
+    *)          echo "Usage: theme [light|dark]" >&2; exit 1 ;;
+esac
+
+if [ "$TARGET" = "$CURRENT" ]; then
+    echo "Already $TARGET"
+    exit 0
+fi
+
+echo "$TARGET" > "$THEME_FILE"
+
+# --- Foot ---
+# Update foot.ini include for new windows
+ln -sf "$FOOT_COLORS_DIR/colors-$TARGET.ini" "$FOOT_THEME_LINK"
+
+# Apply colors to the running terminal via OSC (Operating System Command) escape
+# sequences. These are ANSI escape codes that instruct the terminal emulator to
+# change its own colors without restarting.
+#
+# OSC 10 = foreground color, OSC 11 = background color
+# OSC 4;N = palette slot N (0-7 normal, 8-15 bright)
+# Format: ESC ] <code> ; <value> ST   where ST = ESC \ or BEL (0x07)
+#
+# Inside tmux, raw escape sequences are swallowed by tmux and never reach the
+# terminal emulator. The DCS passthrough wrapper (ESC P tmux ; ... ESC \) tells
+# tmux to forward the inner sequence to the underlying terminal.
+# We use BEL as the inner OSC terminator to avoid having to double-escape ESC \
+# inside the DCS payload. Requires `set -g allow-passthrough on` in tmux.conf.
+_osc() {
+    if [ -n "${TMUX:-}" ]; then
+        printf "\033Ptmux;\033\033]%s\007\033\\" "$1"
+    else
+        printf "\033]%s\033\\" "$1"
+    fi
+}
+
+# c0-c7 = normal palette (black, red, green, yellow, blue, magenta, cyan, white)
+# b0-b7 = bright variants (same order)
+if [ "$TARGET" = "light" ]; then
+    bg=ffffff; fg=24292f
+    c0=24292f; c1=cf222e; c2=116329; c3=4d2d00; c4=0550ae; c5=8250df; c6=1b7c83; c7=6e7781
+    b0=57606a; b1=a40e26; b2=1a7f37; b3=633c01; b4=0969da; b5=6639ba; b6=1b7c83; b7=8c959f
+else
+    bg=011627; fg=acb4c2
+    c0=1d3b53; c1=fc514e; c2=a1cd5e; c3=e3d18a; c4=82aaff; c5=c792ea; c6=7fdbca; c7=a1aab8
+    b0=7c8f8f; b1=ff5874; b2=21c7a8; b3=ecc48d; b4=82aaff; b5=ae81ff; b6=7fdbca; b7=d6deeb
+fi
+
+_osc "11;#$bg"   # background
+_osc "10;#$fg"   # foreground
+_osc "4;0;#$c0";  _osc "4;1;#$c1";  _osc "4;2;#$c2";  _osc "4;3;#$c3"
+_osc "4;4;#$c4";  _osc "4;5;#$c5";  _osc "4;6;#$c6";  _osc "4;7;#$c7"
+_osc "4;8;#$b0";  _osc "4;9;#$b1";  _osc "4;10;#$b2"; _osc "4;11;#$b3"
+_osc "4;12;#$b4"; _osc "4;13;#$b5"; _osc "4;14;#$b6"; _osc "4;15;#$b7"
+
+# --- Tmux ---
+# set-option -g applies to the entire tmux server (all sessions at once).
+# These mirror the hardcoded dark defaults in .tmux.conf and override them live.
+# No config reload needed — set-option takes effect immediately.
+if [ -n "${TMUX:-}" ] || tmux info &>/dev/null 2>&1; then
+    if [ "$TARGET" = "light" ]; then
+        tmux set-option -g status-bg colour255       # near-white
+        tmux set-option -g status-fg colour232       # near-black
+        tmux set-option -g pane-active-border-style "fg=colour25"   # dark blue
+        tmux set-option -g pane-border-style        "fg=colour250"  # light grey
+    else
+        tmux set-option -g status-bg black
+        tmux set-option -g status-fg white
+        tmux set-option -g pane-active-border-style "fg=colour208,bg=colour238"  # orange on dark
+        tmux set-option -g pane-border-style        "fg=colour237"               # dark grey
+    fi
+fi
+
+# --- Nvim ---
+# Signal all running nvim instances via their RPC sockets.
+# init.lua calls serverstart() so each nvim creates a socket at
+# $XDG_RUNTIME_DIR/nvim-<pid>.sock on startup.
+#
+# --remote-expr runs a VimL expression server-side (mode-agnostic, unlike
+# --remote-send which injects keystrokes and breaks if nvim is in insert mode).
+NVIM_COLORSCHEME=$([ "$TARGET" = "light" ] && echo "github_light" || echo "nightfly")
+NVIM_RUNTIME="${XDG_RUNTIME_DIR:-/tmp}"
+for sock in "$NVIM_RUNTIME"/nvim-*.sock; do
+    [ -S "$sock" ] && nvim --server "$sock" \
+        --remote-expr "execute('colorscheme $NVIM_COLORSCHEME')" \
+        2>/dev/null &
+done
+
+echo "Theme: $CURRENT → $TARGET"

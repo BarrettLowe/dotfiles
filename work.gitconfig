@@ -1,8 +1,25 @@
 [user]
     name = Barrett Lowe
     email = barrett.lowe@oksi.ai
+    signingkey = 594D0155CADAC0B8
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+[safe]
+    directory = /home/barrett-lowe/Development/armgdn-seeker-sw/tmp/logger_repo
+    directory = /home/barrett-lowe/Development/armgdn-seeker-sw
+    directory = /home/barrett-lowe/Development/algorithm-utilities
+[core]
+    excludesfile = /home/barrett-lowe/.config/git/ignore
+[tag]
+    gpgsign = true
+[commit]
+    gpgsign = true
+[diff]
+	tool = nvimdiff
+[difftool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\"
+[difftool]
+	prompt = false

@@ -57,10 +57,35 @@ require("config.dap")
 require("git_file_history").setup()
 
 -- ============================================================================
+-- RPC SOCKET
+-- ============================================================================
+
+-- Start listening on a predictable socket so external processes (e.g.
+-- ~/dotfiles/bin/theme) can send commands to running nvim instances.
+-- Socket path: $XDG_RUNTIME_DIR/nvim-<pid>.sock
+-- Discovery: glob $XDG_RUNTIME_DIR/nvim-*.sock
+do
+    local runtime_dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
+    vim.fn.serverstart(runtime_dir .. "/nvim-" .. vim.fn.getpid() .. ".sock")
+end
+
+-- ============================================================================
 -- COLORSCHEME
 -- ============================================================================
 
 if not vim.g.vscode then
-    vim.cmd('colorscheme nightfly')
+    -- Read ~/.theme to pick the colorscheme. Falls back to dark if absent.
+    local theme = "dark"
+    local f = io.open(vim.fn.expand("~/.theme"), "r")
+    if f then
+        theme = f:read("*l") or "dark"
+        f:close()
+    end
+
+    if theme == "light" then
+        vim.cmd("colorscheme github_light")
+    else
+        vim.cmd("colorscheme nightfly")
+    end
 end
 

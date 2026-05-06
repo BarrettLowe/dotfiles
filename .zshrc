@@ -220,6 +220,7 @@ bindkey -M vicmd "L" end-of-line
 bindkey -M vicmd "H" beginning-of-line
 bindkey "" vi-undo-change
 bindkey -M vicmd "ciw" kill-word
+bindkey -M viins '^H' backward-kill-word        # Ctrl+Backspace
 
 set -o ignoreeof
 
