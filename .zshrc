@@ -184,6 +184,7 @@ alias findExt='find . -type f | perl -ne "print \$1 if m/(\\.[^.\\/]+)\$/" | sor
 
 # Directories
 alias dev="cd $HOME/Development"
+alias armgdn="cd $HOME/Development/ARMGDN"
 alias dt="cd $HOME/DevTools"
 alias cdot="cd $HOME/dotfiles"
 

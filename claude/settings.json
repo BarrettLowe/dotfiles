@@ -35,8 +35,19 @@
     ],
     "deny": []
   },
-  "model": "haiku",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [[ \"$PWD\" == \"$HOME/Development/ARMGDN\"* ]]; then cat \"$HOME/Development/ARMGDN/CLAUDE.md\"; fi'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Grep|Glob|Bash",
