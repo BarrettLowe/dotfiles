@@ -66,6 +66,20 @@ _Add a brief overview of your project architecture_
 
 ## Conventions & Patterns
 
+### Claude Config Changes
+
+After editing any of the following files, run `bash ~/dotfiles/claude/sync.sh`:
+
+- `~/dotfiles/claude/CLAUDE_.md`
+- `~/dotfiles/claude/skills/**`
+- `~/dotfiles/claude/agents/**`
+- `~/dotfiles/claude/rules/**`
+- `~/dotfiles/claude/commands/**`
+- `~/.local/claude/**`
+- `~/CLAUDE_MORE.md`
+
+This rebuilds `~/.claude/` from the shared dotfiles and any machine-local overrides. Neovim does this automatically on save; Claude must do it manually after edits.
+
 ### Agent/Skill Routing Maintenance
 
 When a skill is converted to an agent (or a new agent is created):
