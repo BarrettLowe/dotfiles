@@ -146,6 +146,7 @@ alias tmux="TERM=xterm-256color tmux"
 vc() {
   (cd ~/dotfiles && $EDITOR neovim/init.lua)
 }
+alias claude-sync="bash ~/dotfiles/claude/sync.sh"
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
