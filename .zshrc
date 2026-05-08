@@ -252,6 +252,9 @@ if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]] && command -v tmux &>/d
     fi
 fi
 
+# Sync Claude Code config: shared dotfiles + machine-local overrides
+[[ -f "$HOME/dotfiles/claude/sync.sh" ]] && bash "$HOME/dotfiles/claude/sync.sh"
+
 # Load local configurations (system-specific settings)
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"

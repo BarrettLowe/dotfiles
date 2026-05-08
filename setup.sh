@@ -81,11 +81,9 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 
 # Claude Code
 mkdir -p "$HOME/.claude"
-create_symlink "$DOTFILES_DIR/claude/CLAUDE_.md" "$HOME/.claude/CLAUDE.md"
-create_symlink "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
+bash "$DOTFILES_DIR/claude/sync.sh"
 create_symlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
-create_symlink "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
-create_symlink "$DOTFILES_DIR/claude/rules" "$HOME/.claude/rules"
+print_success "Claude Code config synced"
 
 # GitHub Copilot CLI
 mkdir -p "$HOME/.config/github-copilot"
