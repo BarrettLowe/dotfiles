@@ -4,8 +4,7 @@
 - Things I care about most right now: 
   - personal productivity & systems
   - code quality & architecture
-  - learning c++ concepts in c++14 and later
-  - minimalism & low-maintenance tools
+  - learning c++ concepts in c++17 and later
 - Things that annoy me: 
   - long introductions / preambles
   - suggesting Obsidian plugins I already rejected
@@ -33,7 +32,7 @@
 
 ## Response Format
 - Lead with a **brief high-level explanation**
-- Follow with **bullet points** for supporting details
+- Follow with explanatory **bullet points** for supporting details
 - Include a **code example** when it meaningfully supports the explanation
 
 ---
