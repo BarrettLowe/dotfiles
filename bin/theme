@@ -96,8 +96,8 @@ fi
 # --remote-expr runs a VimL expression server-side (mode-agnostic, unlike
 # --remote-send which injects keystrokes and breaks if nvim is in insert mode).
 NVIM_COLORSCHEME=$([ "$TARGET" = "light" ] && echo "github_light" || echo "nightfly")
-NVIM_RUNTIME="${XDG_RUNTIME_DIR:-/tmp}"
-for sock in "$NVIM_RUNTIME"/nvim-*.sock; do
+# Search both XDG_RUNTIME_DIR and /tmp — init.lua falls back to /tmp when XDG_RUNTIME_DIR is not writable.
+for sock in "${XDG_RUNTIME_DIR:-/tmp}"/nvim-*.sock /tmp/nvim-*.sock; do
     [ -S "$sock" ] && nvim --server "$sock" \
         --remote-expr "execute('colorscheme $NVIM_COLORSCHEME')" \
         2>/dev/null &

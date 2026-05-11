@@ -66,7 +66,13 @@ require("git_file_history").setup()
 -- Discovery: glob $XDG_RUNTIME_DIR/nvim-*.sock
 do
     local runtime_dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
-    vim.fn.serverstart(runtime_dir .. "/nvim-" .. vim.fn.getpid() .. ".sock")
+    local sock = runtime_dir .. "/nvim-" .. vim.fn.getpid() .. ".sock"
+    local ok = pcall(vim.fn.serverstart, sock)
+    if not ok then
+        -- XDG_RUNTIME_DIR not writable (e.g. wrong ownership on /run/user/<uid>); fall back to /tmp.
+        -- Fix: sudo chown $USER:$USER $XDG_RUNTIME_DIR && sudo chmod 700 $XDG_RUNTIME_DIR
+        pcall(vim.fn.serverstart, "/tmp/nvim-" .. vim.fn.getpid() .. ".sock")
+    end
 end
 
 -- ============================================================================

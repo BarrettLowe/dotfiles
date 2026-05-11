@@ -24,7 +24,6 @@ return {
     require("plugins.lspsaga"),
     require("plugins.fugitive"),
     require("plugins.gitsigns"),
-    require("plugins.dev-container"),
     require("plugins.surround"),
     require("plugins.dap-ui"),
     require("plugins.codecompanion"),
