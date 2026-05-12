@@ -30,6 +30,11 @@
 
 ---
 
+## Communication Style
+When producing reviews, status updates, or architectural feedback: lead with concrete prescriptive recommendations (with code/config examples), not diagnostic observations. Default to plain language; avoid jargon unless asked.
+
+---
+
 ## Response Format
 - Lead with a **brief high-level explanation**
 - Follow with explanatory **bullet points** for supporting details
@@ -54,6 +59,10 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `test-generator` | Writing new C++ tests, reviewing or cleaning up existing tests, GoogleTest/Catch2 files |
 | `test-writer` | Writing tests in any other language (Python, etc.) — behavior-focused, happy path + edge cases |
 
+### Architect output
+
+When the `architect` agent returns, relay its full output verbatim — do not summarize or paraphrase. The structured tags (`[SRP]`, `[COUPLING]`, `[ABSTRACTION]`, `[READABILITY]`, `[PATTERN]`) and the opening verdict line are the deliverable.
+
 ### Automatic: simplifier
 
 After any turn where you generate or substantively modify code (more than a trivial one-liner), **always run the `simplifier` agent** on the generated files before reporting the task complete. Pass the file paths as context. Do not run it for: documentation-only changes, config edits, single-line fixes, or when the user explicitly skips it.
@@ -71,11 +80,11 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/modernize` | modernizer | Code uses `typedef`, raw owning pointers, `NULL`, index loops, `std::bind`, or pre-C++14 patterns |
 | `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
-| `/devcontainer` | devcontainer-init | Checking out a new OKSI project that needs a `.devcontainer.json` |
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
 | `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR descriptions, issues, tasks, release notes |
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
+| `/graphify` | graphify | Mapping an unfamiliar codebase, building a knowledge graph from a /raw folder, or querying an existing `graphify-out/graph.json` for cross-document connections |
 
 ### When multiple could apply
 
@@ -84,6 +93,5 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - New concurrent class → `/api` first (design the interface), `/conc` second (design the internals)
 - Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
-- Exploring unfamiliar code → `codebase-explorer` for any repo; `gitnexus-exploring` skill when the repo is indexed in GitNexus (richer call graphs, cross-file tracing)
-
+- Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `codebase-explorer` agent for one-off lookups where a graph would be overkill
 

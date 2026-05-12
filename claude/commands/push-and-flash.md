@@ -1,8 +1,3 @@
----
-name: push-and-flash
-description: Push the current branch to GitHub, ensure a PR exists, wait for CI to build the firmware, download the hex artifact, and flash it to the split_melano keyboard in a loop until cancelled. Use in the SplitMelano repo when you want to test a keymap change on hardware.
----
-
 # push-and-flash
 
 Run `push-and-flash.sh` from the repo root in the background so Barrett can see live output. The script is self-contained and handles the full workflow.
