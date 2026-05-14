@@ -4,6 +4,10 @@
 # Optimized for Headless DevPods/Containers (Zsh + Tmux + Neovim)
 # Strategy: Downloads to ~/.build -> Installs to ~/DevTools (except nvim in /opt)
 
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    exec "$(dirname "$0")/setup-mac.sh" "$@"
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
