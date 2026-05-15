@@ -39,4 +39,7 @@ for type in skills agents rules commands; do
             [[ -e "$item" ]] && ln -sfn "$item" "$target_dir/$(basename "$item")"
         done
     fi
+
+    # Prune broken symlinks (sources that were deleted from dotfiles/local)
+    find "$target_dir" -maxdepth 1 -xtype l -delete
 done

@@ -220,6 +220,17 @@ if [ -s "$DOTFILES_DIR/python-tools.txt" ]; then
     print_success "Python tools installed"
 fi
 
+# Graphify: version-pinned separately so failures are visible (not swallowed by background loop)
+_GRAPHIFY_VER=$(cat "$DOTFILES_DIR/claude/skills/graphify/.graphify_version" 2>/dev/null)
+_GRAPHIFY_PKG="graphifyy${_GRAPHIFY_VER:+==$_GRAPHIFY_VER}"
+if ! command -v graphify &>/dev/null; then
+    print_info "Installing graphify${_GRAPHIFY_VER:+ v$_GRAPHIFY_VER}..."
+    uv tool install "$_GRAPHIFY_PKG"
+    print_success "graphify installed"
+else
+    print_success "graphify already present"
+fi
+
 # Step 5: Initializing Neovim Plugins
 print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null

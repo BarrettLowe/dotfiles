@@ -35,7 +35,6 @@ bindkey "^k" history-beginning-search-backward
 bindkey "[3~" delete-char                        # Delete
 bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
-[[ -d "/opt/nvim-linux-x86_64/bin" ]] && path=("/opt/nvim-linux-x86_64/bin" $path)
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 [[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
 [[ -d "$HOME/dotfiles/bin" ]] && path=("$HOME/dotfiles/bin" $path)
@@ -289,4 +288,7 @@ export NVM_DIR="$HOME/.nvm"
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/home/barrett-lowe/.lmstudio/bin"
 # End of LM Studio CLI section
+
+# Must be last — venv activation in .zshrc_local resets _OLD_VIRTUAL_PATH and drops earlier additions
+[[ -d "/opt/nvim-linux-x86_64/bin" ]] && export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 

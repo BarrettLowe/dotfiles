@@ -47,32 +47,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Grep|Glob|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/home/barrett-lowe/.claude/hooks/gitnexus/gitnexus-hook.cjs\"",
-            "timeout": 10,
-            "statusMessage": "Enriching with GitNexus graph context..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/home/barrett-lowe/.claude/hooks/gitnexus/gitnexus-hook.cjs\"",
-            "timeout": 10,
-            "statusMessage": "Checking GitNexus index freshness..."
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
@@ -82,7 +56,12 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true
   },
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
   "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
   "mcpServers": {
     "context7": {
       "type": "stdio",
@@ -95,5 +74,6 @@
       ],
       "env": {}
     }
-  }
+  },
+  "model": "sonnet"
 }
