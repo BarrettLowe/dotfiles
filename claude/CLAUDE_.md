@@ -51,6 +51,7 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `architect` | Designing a new subsystem, reviewing existing module for structural debt, choosing between design approaches |
 | `bug-fixer` | Have a specific bug fix to apply — from a code review finding, `bug-investigator` output, or clear user instruction |
 | `bug-investigator` | Bug reported or test failing — diagnose root cause without touching source; returns a recommended fix |
+| `feature-implementer` | Adding new capabilities, building a new module, or implementing a spec from scratch |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
 | `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
@@ -88,6 +89,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 
 ### When multiple could apply
 
+- **Feature vs. bug**: "implement X", "add Y", "build Z" → `feature-implementer`; "fix", "broken", "regression", known diagnosis → `bug-fixer`
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Code review *and* modernization needed → `/api` first (find what's wrong), `/modernize` second (fix the patterns)
 - New concurrent class → `/api` first (design the interface), `/conc` second (design the internals)
