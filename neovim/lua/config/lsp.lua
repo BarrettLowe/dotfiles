@@ -23,7 +23,7 @@ local function on_attach(client, bufnr)
 
     -- C++ specific: switch between header and source
     if client.name == "clangd" then
-        nmap('<leader>o', function()
+        nmap('<leader>of', function()
             local bufnr = vim.api.nvim_get_current_buf()
             local params = { uri = vim.uri_from_bufnr(bufnr) }
 

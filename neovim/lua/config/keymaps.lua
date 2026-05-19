@@ -72,9 +72,6 @@ keymap('i', '<C-h>', '<C-w>')
 -- ============================================================================
 
 if not vim.g.vscode then
-    -- Toggle between .hpp and .cpp (via clangd)
-    keymap('n', '<leader>of', '<Cmd>ClangdSwitchSourceHeader<CR>', { desc = 'Switch to other file (.hpp/.cpp)' })
-
     -- Auto-close brace pairs
     keymap('i', '{<CR>', '{<CR>}<ESC>O')
 
