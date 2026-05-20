@@ -35,6 +35,7 @@
     ],
     "deny": []
   },
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -75,5 +76,5 @@
       "env": {}
     }
   },
-  "model": "sonnet"
+  "effortLevel": "xhigh"
 }

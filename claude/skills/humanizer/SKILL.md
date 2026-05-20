@@ -3,11 +3,8 @@ name: humanizer
 version: 2.5.1
 description: |
   Remove signs of AI-generated writing from text. Use when editing or reviewing
-  text to make it sound more natural and human-written. Based on Wikipedia's
-  comprehensive "Signs of AI writing" guide. Detects and fixes patterns including:
-  inflated symbolism, promotional language, superficial -ing analyses, vague
-  attributions, em dash overuse, rule of three, AI vocabulary words, passive
-  voice, negative parallelisms, and filler phrases.
+  text that a human will read to make it sound more natural and human-written.
+  Examples: Commit messages, merge requests, documentation, lengthy comments, etc...
 license: MIT
 compatibility: claude-code opencode
 allowed-tools:
@@ -32,8 +29,7 @@ When given text to humanize:
 3. **Preserve meaning** - Keep the core message intact
 4. **Maintain voice** - Match the intended tone (formal, casual, technical, etc.)
 5. **Add soul** - Don't just remove bad patterns; inject actual personality
-6. **Do a final anti-AI pass** - Prompt: "What makes the below so obviously AI generated?" Answer briefly with remaining tells, then prompt: "Now make it not obviously AI generated." and revise
-
+6. **Output final** - Output the finalized text
 
 ## Voice Calibration (Optional)
 
@@ -486,7 +482,6 @@ Provide:
 1. Draft rewrite
 2. "What makes the below so obviously AI generated?" (brief bullets)
 3. Final rewrite
-4. A brief summary of changes made (optional, if helpful)
 
 
 ## Full Example
@@ -518,11 +513,6 @@ Provide:
 > The productivity claims are hard to verify. GitHub says Copilot users "accept 30% of suggestions," but acceptance is not correctness, and correctness is not value. The 2024 Uplevel study found no statistically significant difference in pull-request throughput between teams with and without AI assistants.
 >
 > None of this means the tools are useless. It means they are tools. They do not replace judgment, and they do not eliminate the need for tests. If you do not have tests, you cannot tell whether the suggestion is right.
-
-**What makes the below so obviously AI generated?**
-- The rhythm is still a bit too tidy (clean contrasts, evenly paced paragraphs).
-- The named people and study citations can read like plausible-but-made-up placeholders unless they're real and sourced.
-- The closer leans a touch slogan-y ("If you do not have tests...") rather than sounding like a person talking.
 
 **Now make it not obviously AI generated.**
 > AI coding assistants can make you faster at the boring parts. Not everything. Definitely not architecture.

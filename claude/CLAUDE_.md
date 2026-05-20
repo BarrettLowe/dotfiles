@@ -42,6 +42,18 @@ When producing reviews, status updates, or architectural feedback: lead with con
 
 ---
 
+## Commands (Claude Code)
+
+User-invoked slash commands. Type directly in the prompt. Claude executes the `.md` file — no Skill tool involved.
+
+| Command | What it does |
+|---------|-------------|
+| `/wtf` | Plain-English explanation of a file you just opened cold — what it's *for*, not how it works line by line |
+| `/explore` | Architectural narrative of a module — responsibilities, ownership, assumptions, connections |
+| `/map` | Subsystem dependency + dataflow topology → `map.html` (who calls what, shared state, implicit ordering) |
+
+---
+
 ## Agents (Claude Code)
 
 Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolated context — hand off a self-contained task and keep working. Best for multi-step, tool-heavy, or parallelizable work.
@@ -53,7 +65,8 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `bug-investigator` | Bug reported or test failing — diagnose root cause without touching source; returns a recommended fix |
 | `feature-implementer` | Adding new capabilities, building a new module, or implementing a spec from scratch |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
-| `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature |
+| `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
+| `dependency-mapper` | Backs `/map` — analyzes call topology, shared state, implicit ordering, and data flow for a specific subsystem |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
 | `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
 | `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
@@ -85,7 +98,8 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
 | `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR descriptions, issues, tasks, release notes |
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
-| `/graphify` | graphify | Mapping an unfamiliar codebase, building a knowledge graph from a /raw folder, or querying an existing `graphify-out/graph.json` for cross-document connections |
+| `/graphify` | graphify | Whole-codebase knowledge graph — persistent, queryable across sessions, community detection |
+| `/plan-html` | plan-html | Planning a task, feature, or goal — produces an interactive HTML file with phases, tasks, milestones, risks, and decisions-needed |
 
 ### When multiple could apply
 
@@ -96,4 +110,10 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
 - Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `codebase-explorer` agent for one-off lookups where a graph would be overkill
+- **Understanding unfamiliar code** — pick by scope and question:
+  - Single file, just opened: `/wtf` command ("what does this file do?")
+  - Module/directory, architectural role: `/explore` command ("what is this module's job in the system?")
+  - Subsystem dependency + dataflow topology: `/map` command → `map.html`
+  - Whole codebase, need to query it across sessions: `/graphify` skill
+  - Pre-change internal scan (Claude's own pre-work): `codebase-explorer` agent
 

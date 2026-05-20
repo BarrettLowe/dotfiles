@@ -180,6 +180,7 @@ alias mktags='ctags -R --sort=yes --fields=+iaS --extra=+q .'
 # Find utilities
 alias findBin="find -type f -executable -exec file -i \'{}\' \; | grep \'charset=binary\'"
 alias findExt='find . -type f | perl -ne "print \$1 if m/(\\.[^.\\/]+)\$/" | sort -u'
+alias lsr='ls -lt'
 
 # Directories
 alias dev="cd $HOME/Development"
