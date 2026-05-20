@@ -41,5 +41,5 @@ for type in skills agents rules commands; do
     fi
 
     # Prune broken symlinks (sources that were deleted from dotfiles/local)
-    find "$target_dir" -maxdepth 1 -xtype l -delete
+    find "$target_dir" -maxdepth 1 -type l -exec test ! -e {} \; -delete
 done

@@ -19,6 +19,7 @@ When invoked, you will receive: file path(s), a bug description, and explicit fi
 
 ## Scope rules
 
+- If the prompt is missing a file path, bug description, or fix instruction — stop immediately and respond: "Insufficient info: need [what's missing]. Redirect to bug-investigator if diagnosis is still needed."
 - Fix only what was specified
 - If you notice an adjacent bug while reading, note it in output — do not fix it
 - If the fix description is ambiguous, stop and report the ambiguity — do not guess

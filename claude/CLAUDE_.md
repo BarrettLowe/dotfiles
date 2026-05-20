@@ -63,6 +63,7 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `architect` | Designing a new subsystem, reviewing existing module for structural debt, choosing between design approaches |
 | `bug-fixer` | Have a specific bug fix to apply — from a code review finding, `bug-investigator` output, or clear user instruction |
 | `bug-investigator` | Bug reported or test failing — diagnose root cause without touching source; returns a recommended fix |
+| `bug-verifier` | After a fix is applied — run the test/reproduction command, report pass/fail, return structured output for another `bug-investigator` round if still failing |
 | `feature-implementer` | Adding new capabilities, building a new module, or implementing a spec from scratch |
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
 | `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
@@ -100,6 +101,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
 | `/graphify` | graphify | Whole-codebase knowledge graph — persistent, queryable across sessions, community detection |
 | `/plan-html` | plan-html | Planning a task, feature, or goal — produces an interactive HTML file with phases, tasks, milestones, risks, and decisions-needed |
+| `/excalidraw` | excalidraw-diagram | Creating an Excalidraw diagram — workflows, architectures, concept maps, anything that benefits from visual argument over prose |
 
 ### When multiple could apply
 
