@@ -42,6 +42,25 @@ When producing reviews, status updates, or architectural feedback: lead with con
 
 ---
 
+## How I Learn Code You Write
+
+I am a 10+ year engineer. I can read code. My specific blocker is **execution flow** — tracing what calls what, in what order, with what state changes. Static reading doesn't give me the temporal picture.
+
+**What convinces me a design is right (in order of weight):**
+- **Sequence diagrams** of the main flow — actors over time, showing call order. Lead with this.
+- **Quantitative comparison tables** — design pattern alternatives with viability scores, LOC counts, complexity, memory cost. Numbers, not adjectives.
+- **Rejected alternatives** — framed as a scored comparison, not as prose.
+- **Load-bearing code embedded inline** next to the explanation (3–6 lines).
+
+**How I actually retain it:**
+- **Teach-it-back.** Reading alone is insufficient. I don't know it until I've explained it back and been grilled on it. After any teaching artifact, expect me to type `quiz me` — then ask one question at a time (predict / recall reasoning / extend), grade strictly, no participation trophies.
+
+**Diagrams carry the load.** Prose is supplementary. Skip diagrams only when there's truly nothing to draw.
+
+This is why the `/teach` skill exists and why it auto-runs after code generation. See its routing entry below.
+
+---
+
 ## Commands (Claude Code)
 
 User-invoked slash commands. Type directly in the prompt. Claude executes the `.md` file — no Skill tool involved.
@@ -82,6 +101,12 @@ When the `architect` agent returns, relay its full output verbatim — do not su
 
 After any turn where you generate or substantively modify code (more than a trivial one-liner), **always run the `simplifier` agent** on the generated files before reporting the task complete. Pass the file paths as context. Do not run it for: documentation-only changes, config edits, single-line fixes, or when the user explicitly skips it.
 
+### Automatic: teach
+
+After simplifier completes (or after any turn where you generate or substantively modify code, if simplifier was skipped), **always run the `/teach` skill** on the same files. This generates `./teach.html` — leads with a sequence diagram of execution flow, then architecture decisions with rejected design patterns scored, comparison tables, load-bearing snippets, and predict-then-reveal scenarios. Run it AFTER simplifier so the HTML reflects the final code. The skill prints a "type 'quiz me' when ready" prompt; do not start the quiz unless Barrett asks. Skip for: documentation-only changes, config edits, trivial one-liners, or when Barrett explicitly says skip.
+
+When Barrett types `quiz me` (or `/teach quiz`), invoke `/teach` in quiz mode — read the existing `./teach.html`, parse its embedded BRIEF object, and grill him conversationally with one question at a time (predict / recall / extend). Be strict on grading — he wants to actually own the design, not get participation trophies.
+
 ---
 
 ## Skills (Claude Code)
@@ -102,6 +127,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/graphify` | graphify | Whole-codebase knowledge graph — persistent, queryable across sessions, community detection |
 | `/plan-html` | plan-html | Planning a task, feature, or goal — produces an interactive HTML file with phases, tasks, milestones, risks, and decisions-needed |
 | `/excalidraw` | excalidraw-diagram | Creating an Excalidraw diagram — workflows, architectures, concept maps, anything that benefits from visual argument over prose |
+| `/teach` | teach | Teaching brief for code (auto on new, manual on existing) → `teach.html`. Sequence diagram of execution flow first, then decisions with rejected design-patterns scored, comparison tables, load-bearing snippets, predict-then-reveal scenarios. Opt-in chat quiz on "quiz me". |
 
 ### When multiple could apply
 
