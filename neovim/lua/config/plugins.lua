@@ -19,7 +19,6 @@ return {
     require("plugins.todo-comments"),
     require("plugins.snacks"),
     require("plugins.which-key"),
-    require("plugins.bufferline"),
     require("plugins.barbecue"),
     require("plugins.lspsaga"),
     require("plugins.fugitive"),
@@ -27,6 +26,8 @@ return {
     require("plugins.surround"),
     require("plugins.dap-ui"),
     require("plugins.codecompanion"),
+    require("plugins.lualine"),
+    require("plugins.bufferline"),
   }
 }
 

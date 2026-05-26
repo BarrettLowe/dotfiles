@@ -61,15 +61,9 @@ This is why the `/teach` skill exists and why it auto-runs after code generation
 
 ---
 
-## Commands (Claude Code)
+## Artifacts
 
-User-invoked slash commands. Type directly in the prompt. Claude executes the `.md` file — no Skill tool involved.
-
-| Command | What it does |
-|---------|-------------|
-| `/wtf` | Plain-English explanation of a file you just opened cold — what it's *for*, not how it works line by line |
-| `/explore` | Architectural narrative of a module — responsibilities, ownership, assumptions, connections |
-| `/map` | Subsystem dependency + dataflow topology → `map.html` (who calls what, shared state, implicit ordering) |
+When making an artifact (whether by request or offering freely) place it in the .claude-artifacts directory at the root of the current project. Do not overwrite something that is already there but allow the user to request edits.
 
 ---
 

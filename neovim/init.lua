@@ -91,7 +91,7 @@ if not vim.g.vscode then
     if theme == "light" then
         vim.cmd("colorscheme github_light")
     else
-        vim.cmd("colorscheme nightfly")
+        vim.cmd("colorscheme kanagawa")
     end
 end
 

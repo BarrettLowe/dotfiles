@@ -16,4 +16,42 @@ return {
         lazy = false,
         priority = 999,
     },
+    {
+        "cocopon/iceberg.vim",
+        name = "iceberg",
+        lazy = false,
+        priority = 998,
+    },
+    {
+        "rebelot/kanagawa.nvim",
+        name = "kanagawa",
+        lazy = false,
+        priority = 997,
+        config = function()
+            require("kanagawa").setup({
+                compile = false,
+                undercurl = true,
+                commentStyle = { italic = true },
+                functionStyle = {},
+                keywordStyle = { italic = true },
+                statementStyle = { bold = true },
+                typeStyle = {},
+                transparent = false,
+                dimInactive = false,
+                terminalColors = true,
+                colors = {
+                    palette = {},
+                    theme = { wave = {}, lotus = {}, dragon = {}, all = {} },
+                },
+                overrides = function(colors)
+                    return {}
+                end,
+                theme = "wave",
+                background = {
+                    dark = "wave",
+                    light = "lotus",
+                },
+            })
+        end,
+    },
 }
