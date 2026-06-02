@@ -35,8 +35,19 @@
     ],
     "deny": []
   },
-  "model": "sonnet",
+  "model": "sonnet[1m]",
   "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x ~/.local/bin/claude-notify ] && ~/.local/bin/claude-notify"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",
@@ -45,6 +56,21 @@
             "type": "command",
             "command": "bash -c 'if [[ \"$PWD\" == \"$HOME/Development/ARMGDN\"* ]]; then cat \"$HOME/Development/ARMGDN/CLAUDE.md\"; fi'",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "[ -x ~/.local/bin/claude-register ] && ~/.local/bin/claude-register"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x ~/.local/bin/claude-clear ] && ~/.local/bin/claude-clear"
           }
         ]
       }
@@ -52,10 +78,12 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash /home/barrett-lowe/.claude/statusline-command.sh"
+    "command": "ccstatusline",
+    "padding": 0
   },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
   },
   "voice": {
     "enabled": true,
@@ -75,6 +103,5 @@
       ],
       "env": {}
     }
-  },
-  "effortLevel": "xhigh"
+  }
 }
