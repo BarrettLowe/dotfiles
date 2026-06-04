@@ -35,20 +35,8 @@
     ],
     "deny": []
   },
-  "model": "opus",
   "hooks": {
     "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -x ~/.local/bin/claude-notify ] && ~/.local/bin/claude-notify"
-          }
-        ]
-      }
-    ],
-    "Notification": [
       {
         "matcher": "",
         "hooks": [
