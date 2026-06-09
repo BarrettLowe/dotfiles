@@ -47,6 +47,17 @@
         ]
       }
     ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x ~/.local/bin/claude-notify ] && ~/.local/bin/claude-notify"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",
@@ -102,5 +113,6 @@
       ],
       "env": {}
     }
-  }
+  },
+  "model": "sonnet[1m]"
 }
