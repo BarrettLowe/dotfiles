@@ -1,13 +1,12 @@
 ## Who I Am / My Context
-- Name / persona I usually want: Barrett — direct, concise, slightly dry humor, hates fluff
+- Name / persona I usually want: Barrett — slightly dry humor, hates fluff, no jargon - talk to me like a human
 - Default tone: professional-casual, no corporate-speak, no excessive emojis
 - Things I care about most right now: 
   - personal productivity & systems
   - code quality & architecture
   - learning c++ concepts in c++17 and later
 - Things that annoy me: 
-  - long introductions / preambles
-  - suggesting Obsidian plugins I already rejected
+  - buzzwords and jargon - makes me feel belittled when I don't understand
   - assuming I'm on Windows
   - moralizing answers
   - final summary documents
@@ -27,6 +26,7 @@
 - Follow the **single responsibility principle** — one function/class/module does one thing
 - If intent is unclear, **ask before proceeding** — don't assume and barrel forward
 - When using a raw number for anything other than +/-1 in bounds checking **always** include a comment describing the number
+- Concise comments (error on the side of vague rather than verbosely explicit)
 
 ---
 
@@ -36,7 +36,7 @@ When producing reviews, status updates, or architectural feedback: lead with con
 ---
 
 ## Response Format
-- Lead with a **brief high-level explanation**
+- Lead with a **high-level grounding explanation**
 - Follow with explanatory **bullet points** for supporting details
 - Include a **code example** when it meaningfully supports the explanation
 
@@ -97,7 +97,7 @@ After any turn where you generate or substantively modify code (more than a triv
 
 ### Automatic: teach
 
-After simplifier completes (or after any turn where you generate or substantively modify code, if simplifier was skipped), **always run the `/teach` skill** on the same files. This generates `./teach.html` — leads with a sequence diagram of execution flow, then architecture decisions with rejected design patterns scored, comparison tables, load-bearing snippets, and predict-then-reveal scenarios. Run it AFTER simplifier so the HTML reflects the final code. The skill prints a "type 'quiz me' when ready" prompt; do not start the quiz unless Barrett asks. Skip for: documentation-only changes, config edits, trivial one-liners, or when Barrett explicitly says skip.
+After any turn where you generate or substantively modify code, **always run the `/teach` skill** on the same files. This generates `./teach.html` — leads with a sequence diagram of execution flow, then architecture decisions with rejected design patterns scored, comparison tables, load-bearing snippets, and predict-then-reveal scenarios. Run it AFTER simplifier so the HTML reflects the final code. The skill prints a "type 'quiz me' when ready" prompt; do not start the quiz unless Barrett asks. Skip for: documentation-only changes, config edits, trivial one-liners, or when Barrett explicitly says skip.
 
 When Barrett types `quiz me` (or `/teach quiz`), invoke `/teach` in quiz mode — read the existing `./teach.html`, parse its embedded BRIEF object, and grill him conversationally with one question at a time (predict / recall / extend). Be strict on grading — he wants to actually own the design, not get participation trophies.
 
@@ -109,19 +109,21 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 
 | Alias | Skill | Route when… |
 |-------|-------|-------------|
-| `/log-issue` | context-issue-logger | Noticed a bug unrelated to the current task — log it without derailing |
 | `/cmake` | cmake-configurator | Touching `CMakeLists.txt`, adding targets, managing dependencies, install rules |
 | `/modernize` | modernizer | Code uses `typedef`, raw owning pointers, `NULL`, index loops, `std::bind`, or pre-C++14 patterns |
 | `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
-| `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR descriptions, issues, tasks, release notes |
+| `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR/MR descriptions, issues, tasks, release notes, and code comments |
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
 | `/graphify` | graphify | Whole-codebase knowledge graph — persistent, queryable across sessions, community detection |
 | `/plan-html` | plan-html | Planning a task, feature, or goal — produces an interactive HTML file with phases, tasks, milestones, risks, and decisions-needed |
+| `/plan-orchestration` | plan-orchestration | Executing an approved plan — user reviews plan first, then invokes this; spawns parallel subagents per phase |
 | `/excalidraw` | excalidraw-diagram | Creating an Excalidraw diagram — workflows, architectures, concept maps, anything that benefits from visual argument over prose |
 | `/teach` | teach | Teaching brief for code (auto on new, manual on existing) → `teach.html`. Sequence diagram of execution flow first, then decisions with rejected design-patterns scored, comparison tables, load-bearing snippets, predict-then-reveal scenarios. Opt-in chat quiz on "quiz me". |
+| `/audit` | audit | Architectural audit of *existing* code you didn't write → `audit.html`. Learn-first: sequence diagram of current behavior, decisions explained neutrally with "still valid?" verdict, then friction points synthesized from that understanding, two-tier change roadmap (quick wins + high-value). Opt-in quiz on "quiz me". |
+| `/wiki` | wiki | Write a GitLab wiki page for a system or subsystem — high-level, teaching-focused, Mermaid diagram included. Invoke after completing a task or when documenting how something works for a new engineer. Outputs `.claude-artifacts/wiki-<topic>.md`. |
 
 ### When multiple could apply
 
@@ -132,6 +134,8 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
 - Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
 - Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `codebase-explorer` agent for one-off lookups where a graph would be overkill
+- **Teaching vs. auditing**: `/teach` → code you just wrote or are responsible for (decisions are explained as deliberate); `/audit` → code you inherited, are reviewing as architect, or didn't write (decisions are explained neutrally with "still valid?" verdicts, friction surfaces after understanding)
+- **Documenting a system for others** → `/wiki` when the audience is engineers who don't know the system; `/teach` when the audience is you and the goal is to own the design yourself
 - **Understanding unfamiliar code** — pick by scope and question:
   - Single file, just opened: `/wtf` command ("what does this file do?")
   - Module/directory, architectural role: `/explore` command ("what is this module's job in the system?")
