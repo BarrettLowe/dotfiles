@@ -116,9 +116,8 @@ one bullet per component or step, one sentence each, focused on what it does not
 In order:
 1. Explicit args (topic string or file paths) → use directly.
 2. Recent plan artifact → check `.claude-artifacts/plan.html` for context.
-3. Recent beads work → `bd list --status=in_progress` and `bd list --status=closed --limit=5`.
-4. Git state → `git diff --name-only HEAD` and `git log --oneline -5` to see what just changed.
-5. If still unclear, ask: "What system should I write a wiki page for?"
+3. Git state → `git diff --name-only HEAD` and `git log --oneline -5` to see what just changed.
+4. If still unclear, ask: "What system should I write a wiki page for?"
 
 ### Step 2 — Gather Context
 
