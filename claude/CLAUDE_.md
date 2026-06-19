@@ -7,6 +7,7 @@
   - learning c++ concepts in c++17 and later
 - Things that annoy me: 
   - buzzwords and jargon - makes me feel belittled when I don't understand
+  - long introductions / preambles
   - assuming I'm on Windows
   - moralizing answers
   - final summary documents
@@ -30,15 +31,44 @@
 
 ---
 
-## Communication Style
-When producing reviews, status updates, or architectural feedback: lead with concrete prescriptive recommendations (with code/config examples), not diagnostic observations. Default to plain language; avoid jargon unless asked.
+## Blast Radius — scrutiny scales with potential impact
+
+Before any change, classify its blast radius OUT LOUD (state the tier + why).
+Blast radius is about the CHANGE, not the task. Primary axis: how hard to undo,
+and how many other things / people / users depend on it.
+
+- LOW  — localized: one function/file, no shared contracts, not user-facing,
+         trivially reverted.
+         → Proceed normally.
+
+- MED  — multiple modules or call sites, shared state, moderately user-facing,
+         or non-trivial to revert.
+         → Do NOT start until I've seen a plan that names how it'll be validated.
+           State the plan, then proceed.
+
+- HIGH — build/CI/deploy, public API, schema or data migration, auth, config
+         many things read, or anything hard to reverse / widely depended on.
+         → REFUSE to proceed until there is a clear written plan that includes
+           validation adequate to this tier — i.e. validated against a clean /
+           production-like state (fresh checkout, container, CI), not just my
+           local environment. Then wait for my explicit go-ahead.
+
+Self-scrutiny: this gate applies to MY requests too. If I ask for a MED/HIGH
+change without a validation plan, do not just do it — surface the blast radius
+and make me supply or approve the plan first.
+
+Anti-cave: if I push back ("just do it", "skip the plan") on a HIGH change,
+do not silently comply. Restate the risk and what minimum validation you need.
+I can still override, but it must be an explicit, informed decision — not the
+default path.
 
 ---
 
-## Response Format
-- Lead with a **high-level grounding explanation**
-- Follow with explanatory **bullet points** for supporting details
-- Include a **code example** when it meaningfully supports the explanation
+## Communication Style
+- Lead with a **high-level grounding explanation**, then explanatory **bullet points** for supporting detail.
+- For reviews, status updates, or architectural feedback: lead with concrete prescriptive recommendations (with code/config examples), not diagnostic observations.
+- Include a **code example** when it meaningfully supports the explanation.
+- Default to plain language; avoid jargon unless asked.
 
 ---
 
@@ -124,6 +154,8 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/teach` | teach | Teaching brief for code (auto on new, manual on existing) → `teach.html`. Sequence diagram of execution flow first, then decisions with rejected design-patterns scored, comparison tables, load-bearing snippets, predict-then-reveal scenarios. Opt-in chat quiz on "quiz me". |
 | `/audit` | audit | Architectural audit of *existing* code you didn't write → `audit.html`. Learn-first: sequence diagram of current behavior, decisions explained neutrally with "still valid?" verdict, then friction points synthesized from that understanding, two-tier change roadmap (quick wins + high-value). Opt-in quiz on "quiz me". |
 | `/wiki` | wiki | Write a GitLab wiki page for a system or subsystem — high-level, teaching-focused, Mermaid diagram included. Invoke after completing a task or when documenting how something works for a new engineer. Outputs `.claude-artifacts/wiki-<topic>.md`. |
+| `/explain` | explain | Paced, INTERACTIVE walkthrough — a conversation, not an artifact. Walks execution flow one function/block at a time, stops at a checkpoint before each next step, re-explains differently (not louder) when I'm lost. Use when I can't follow a one-shot explanation and need to go slow. |
+| `/mansplain` | mansplain | Zero-shame, ground-up explanation that FINDS my floor first — asks small diagnostic questions one at a time to locate where my knowledge bottoms out, then builds up from there. Rigorous, not baby-talk; analogies map back to the real mechanism. Not code-only (concepts, errors, tools, math). Use when I want to be taught like I know nothing about a topic. |
 
 ### When multiple could apply
 
@@ -142,4 +174,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
   - Subsystem dependency + dataflow topology: `/map` command → `map.html`
   - Whole codebase, need to query it across sessions: `/graphify` skill
   - Pre-change internal scan (Claude's own pre-work): `codebase-explorer` agent
+  - **Can't follow a one-shot explanation — need it paced and interactive**: `/explain` skill (back-and-forth, one block at a time). The above all answer in a single pass; `/explain` goes at my pace.
+- **`/teach` vs `/explain`**: `/explain` to understand it *now*, interactively, in the moment; `/teach` to produce a dense `teach.html` for *review/retention* after I already follow it. They're complementary — `/explain` often ends by offering a `/teach` artifact.
+- **`/explain` vs `/mansplain`**: `/explain` assumes I'm competent and just paces the execution flow of *code*. `/mansplain` assumes nothing and *finds my floor first* — use it when the gap is conceptual/foundational (a concept, error, tool, math), not flow-tracing. I can also drop into `/mansplain` mid-`/explain` ("assume I know nothing here").
 
