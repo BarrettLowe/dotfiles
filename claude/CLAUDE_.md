@@ -111,6 +111,7 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
 | `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
 | `dependency-mapper` | Backs `/map` — analyzes call topology, shared state, implicit ordering, and data flow for a specific subsystem |
+| `orient-builder` | Backs `/orient` — ensures/refreshes the graphify graph and writes the `orient_<topic>.qf` quickfix trail, keeping graph noise out of the main session. Returns a compact digest. Can run standalone to drop a trail you walk yourself. Does NOT run the interactive quiz. |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
 | `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
 | `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
@@ -155,6 +156,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/audit` | audit | Architectural audit of *existing* code you didn't write → `audit.html`. Learn-first: sequence diagram of current behavior, decisions explained neutrally with "still valid?" verdict, then friction points synthesized from that understanding, two-tier change roadmap (quick wins + high-value). Opt-in quiz on "quiz me". |
 | `/wiki` | wiki | Write a GitLab wiki page for a system or subsystem — high-level, teaching-focused, Mermaid diagram included. Invoke after completing a task or when documenting how something works for a new engineer. Outputs `.claude-artifacts/wiki-<topic>.md`. |
 | `/explain` | explain | Paced, INTERACTIVE walkthrough — a conversation, not an artifact. Walks execution flow one function/block at a time, stops at a checkpoint before each next step, re-explains differently (not louder) when I'm lost. Use when I can't follow a one-shot explanation and need to go slow. |
+| `/orient` | orient | Orient me to an unfamiliar architecture (AI-written or inherited) WITHOUT reading it line by line. Stands on graphify's graph (communities + god-nodes + cited `source_location`), emits a Neovim quickfix trail `.claude-artifacts/orient_<topic>.qf` I walk with `:cnext`, and quizzes me predict-the-owner so it sticks by doing. Lens: what each class is responsible for (SRP) + what it owns. Static/architecture altitude. Use first thing on a module to answer "what's responsible for what, where do I look." |
 | `/mansplain` | mansplain | Zero-shame, ground-up explanation that FINDS my floor first — asks small diagnostic questions one at a time to locate where my knowledge bottoms out, then builds up from there. Rigorous, not baby-talk; analogies map back to the real mechanism. Not code-only (concepts, errors, tools, math). Use when I want to be taught like I know nothing about a topic. |
 
 ### When multiple could apply
@@ -175,6 +177,8 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
   - Whole codebase, need to query it across sessions: `/graphify` skill
   - Pre-change internal scan (Claude's own pre-work): `codebase-explorer` agent
   - **Can't follow a one-shot explanation — need it paced and interactive**: `/explain` skill (back-and-forth, one block at a time). The above all answer in a single pass; `/explain` goes at my pace.
+  - **"What's responsible for what, and where do I look?" — by DOING, not reading**: `/orient` skill. Leads with the architectural neighborhoods (from graphify), drops a Neovim quickfix trail I walk with `:cnext`, and quizzes me predict-the-owner. Use it first on an AI-written or inherited module; the lens is SRP/ownership, not execution flow.
+- **`/orient` vs `/graphify` vs `/explain`**: `/graphify` BUILDS the map and narrates it *at* me; `/orient` stands on that map but makes *me* produce the answers and walk it in my editor; `/explain` paces a single path's *execution flow* (temporal) once I want to trace one. `/orient` is structural (who owns what, at architecture altitude); reach for it when the gap is "I have no map of this module," then `/explain` to trace a specific path inside it.
 - **`/teach` vs `/explain`**: `/explain` to understand it *now*, interactively, in the moment; `/teach` to produce a dense `teach.html` for *review/retention* after I already follow it. They're complementary — `/explain` often ends by offering a `/teach` artifact.
 - **`/explain` vs `/mansplain`**: `/explain` assumes I'm competent and just paces the execution flow of *code*. `/mansplain` assumes nothing and *finds my floor first* — use it when the gap is conceptual/foundational (a concept, error, tool, math), not flow-tracing. I can also drop into `/mansplain` mid-`/explain` ("assume I know nothing here").
 
