@@ -36,28 +36,6 @@
     "deny": []
   },
   "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -x ~/.local/bin/claude-notify ] && ~/.local/bin/claude-notify"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -x ~/.local/bin/claude-notify ] && ~/.local/bin/claude-notify"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "matcher": "",
@@ -66,21 +44,6 @@
             "type": "command",
             "command": "bash -c 'if [[ \"$PWD\" == \"$HOME/Development/ARMGDN\"* ]]; then cat \"$HOME/Development/ARMGDN/CLAUDE.md\"; fi'",
             "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "[ -x ~/.local/bin/claude-register ] && ~/.local/bin/claude-register"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -x ~/.local/bin/claude-clear ] && ~/.local/bin/claude-clear"
           }
         ]
       }
@@ -114,5 +77,5 @@
       "env": {}
     }
   },
-  "model": "sonnet[1m]"
+  "tui": "fullscreen"
 }

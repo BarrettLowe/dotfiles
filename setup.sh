@@ -101,6 +101,13 @@ _THEME=$(cat "$HOME/.theme" 2>/dev/null || echo "dark")
 ln -sf "$DOTFILES_DIR/foot/colors-$_THEME.ini" "$HOME/.config/foot/theme-colors.ini"
 print_success "Foot config linked (theme: $_THEME)"
 
+# AGENTS.md -> claude/CLAUDE_.md (single source of truth for opencode + claude code)
+if [ ! -L "$DOTFILES_DIR/AGENTS.md" ]; then
+    rm -f "$DOTFILES_DIR/AGENTS.md"
+    ln -sf "claude/CLAUDE_.md" "$DOTFILES_DIR/AGENTS.md"
+    print_success "Linked AGENTS.md -> claude/CLAUDE_.md"
+fi
+
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
@@ -177,6 +184,15 @@ install_gh_release() {
 { [[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"; } &
 { [[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"; } &
 wait
+
+# Install beads (bd) - AI-native issue tracker
+if ! command -v bd &>/dev/null; then
+    print_info "Installing beads (bd)..."
+    curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+    print_success "beads installed"
+else
+    print_success "beads already present"
+fi
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"

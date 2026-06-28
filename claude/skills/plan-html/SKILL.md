@@ -82,6 +82,30 @@ If it exists, ask before overwriting: "`./.claude-artifacts/plan.html` already e
 
 ### Step 3 — Build the Plan
 
+#### Plan Philosophy — Tracer Bullets, Not Waterfall
+
+Structure phases as **vertical slices**, not horizontal layers.
+
+A waterfall plan looks like: Research → Design → Build → Test → Deploy.
+Feedback only arrives near the end. Assumptions bake in silently.
+
+A tracer bullet plan looks like:
+- **Phase 01**: Thin end-to-end slice — one capability, fully working → **first feedback here**
+- **Phase 02**: Expand scope of that working slice → **validated against reality**
+- **Phase 03**: Hardening, edge cases, polish → **known-good core stays stable**
+
+Each phase must end with something **observable** — a working demo, a passing integration
+test, a question answered by real data. The path to first feedback is the most important
+path in the plan.
+
+**Practical rules:**
+- Phase 01 must produce something you can run, show, or measure. No pure research phases
+  at the top — fold research into the spike that produces a prototype.
+- If a phase ends with only documents or decisions, it is a waterfall phase. Merge it into
+  the next phase or cut it.
+- `feedbackAt` is required: state the concrete question this phase answers.
+- `demo` is required: state exactly what you can show/run at the end.
+
 Think through the work carefully and produce a `PLAN` object with the shape below.
 **Every field marked required must be present.** Optional fields are honored when present
 and skipped otherwise.
@@ -104,20 +128,23 @@ const PLAN = {
   // ── Numbered milestones ──
   phases: [
     {
-      id: "research",                             // kebab-case, unique
+      id: "tracer-slice",                          // kebab-case, unique
       n: "01",                                    // serial display number
-      name: "Research",
+      name: "Tracer Bullet",
       when: "Week 1 · Mon–Tue",                   // optional
       accent: "clay",                             // clay | olive | slate | oat | rust
-      milestone: "Approach decided",
+      milestone: "End-to-end flow working",
+      feedbackAt: "Does the core flow hold up in a real environment?",  // required
+      demo: "POST a comment, see it fan-out to another open tab",        // required
       tasks: [
-        { id: "audit-volume",  label: "Audit current comment-like patterns",   size: 2 },
-        { id: "survey-libs",   label: "Survey 3 realtime libs",                size: 1, dependsOn: ["audit-volume"] },
+        { id: "schema-min",    label: "Minimal schema + migration",            size: 1 },
+        { id: "api-stub",      label: "tRPC mutation — no validation yet",     size: 1, dependsOn: ["schema-min"] },
+        { id: "ui-composer",   label: "Bare composer + render in place",       size: 2, dependsOn: ["api-stub"] },
         { id: "confirm-redis", label: "Confirm Redis in prod infra",           size: 1 }
       ],
-      notes: "Bias toward libs already in the dependency graph."   // optional paragraph
+      notes: "Ship the thinnest slice that proves the architecture. No error handling, no pagination."   // optional paragraph
     }
-    // 2–5 phases total
+    // 2–5 phases total; each must have feedbackAt + demo
   ],
 
   // ── Dataflow (optional) ──
@@ -173,6 +200,10 @@ const PLAN = {
 - [ ] Risks: every entry has `sev` and `mitigation`
 - [ ] Decisions: every entry has `decideWith` (1–3 stakeholders) and a `context` paragraph
 - [ ] Total tasks ≥ 6
+- [ ] **Phase 01 ends with something runnable/observable** — not a document or a decision
+- [ ] **Every phase has `feedbackAt` and `demo`** — if you can't fill these in, the phase is waterfall
+- [ ] **First feedback arrives before 40% of total effort is spent** — sum sizes to verify
+- [ ] **No pure research/design phases** — fold them into the phase that produces the artifact
 
 ### Step 4 — Generate the HTML
 
@@ -344,14 +375,18 @@ section.sec { margin-top: 64px; }
 <article class="mile" data-accent="clay">
   <div class="n">01</div>
   <div class="body">
-    <div class="row"><h3>Research</h3><span class="when">Week 1 · Mon–Tue</span></div>
+    <div class="row"><h3>Tracer Bullet</h3><span class="when">Week 1 · Mon–Tue</span></div>
     <ul class="tasks">
-      <li><input type="checkbox"> Audit comment-like patterns <span class="size">2d</span></li>
-      <li><input type="checkbox"> Survey 3 realtime libs <span class="size">1d</span>
-          <a class="dep" href="#audit-volume">↗ depends</a></li>
+      <li><input type="checkbox"> Minimal schema + migration <span class="size">1d</span></li>
+      <li><input type="checkbox"> tRPC mutation — no validation yet <span class="size">1d</span>
+          <a class="dep" href="#schema-min">↗ depends</a></li>
     </ul>
-    <div class="ms">🏁 Approach decided</div>
-    <p class="notes">Bias toward libs already in the dependency graph.</p>
+    <div class="ms">🏁 End-to-end flow working</div>
+    <div class="feedback-block">
+      <div class="fb-q">◆ Does the core flow hold up in a real environment?</div>
+      <div class="fb-demo">Demo: POST a comment, see it fan-out to another open tab</div>
+    </div>
+    <p class="notes">Ship the thinnest slice that proves the architecture. No error handling, no pagination.</p>
   </div>
 </article>
 ```
@@ -380,17 +415,40 @@ article.mile[data-accent="rust"]  { border-left-color: var(--error); }
 .mile .dep:hover { color: var(--accent); }
 .mile .ms { margin-top: 14px; font-size: 13px; color: var(--ok);
             font-family: var(--mono); }
+.mile .feedback-block { margin-top: 10px; padding: 10px 12px;
+                        background: var(--bg); border-radius: 5px;
+                        border: 1px solid var(--border);
+                        border-left: 2px solid var(--link); }
+.mile .fb-q { font-family: var(--mono); font-size: 12px; color: var(--link);
+              letter-spacing: 0.03em; margin-bottom: 4px; }
+.mile .fb-demo { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .mile .notes { margin: 12px 0 0; font-size: 14px; color: var(--text-soft); }
 input[type="checkbox"]:checked + * { text-decoration: line-through; opacity: 0.45; }
 ```
 
 **5. Critical-path sticky note**
+
+Emit **two** sticky notes side by side (or stacked on narrow layouts):
+- The standard critical path (longest chain by summed `size`)
+- The **path to first feedback** (shortest chain that reaches a phase with `demo`)
+
 ```html
+<div class="sticky-row">
 <aside class="sticky">
   <div class="tag">✦ CRITICAL PATH</div>
-  <div class="path">audit → survey → choose-algo → draft-iface → build-mw → wire-config</div>
-  <div class="dur">12 days · 6 tasks</div>
+  <div class="path">schema-min → api-stub → ui-composer → build-mw → wire-config</div>
+  <div class="dur">12 days · 5 tasks</div>
 </aside>
+<aside class="sticky sticky-feedback">
+  <div class="tag">⟳ FIRST FEEDBACK</div>
+  <div class="path">schema-min → api-stub → ui-composer</div>
+  <div class="dur">4 days · 3 tasks — then: POST a comment, see it fan-out</div>
+</aside>
+</div>
+```
+```css
+.sticky-row { display: flex; gap: 20px; flex-wrap: wrap; margin: 24px 0; }
+.sticky-row .sticky { margin: 0; }
 ```
 ```css
 aside.sticky { background: var(--surface-alt); padding: 16px 20px; border-radius: 6px;

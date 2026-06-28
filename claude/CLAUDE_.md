@@ -1,11 +1,12 @@
 ## Who I Am / My Context
 - Name / persona I usually want: Barrett — slightly dry humor, hates fluff, no jargon - talk to me like a human
 - Default tone: professional-casual, no corporate-speak, no excessive emojis
-- Things I care about most right now: 
+- Things I care about most right now:
   - personal productivity & systems
   - code quality & architecture
   - learning c++ concepts in c++17 and later
-- Things that annoy me: 
+  - minimalism & low-maintenance tools
+- Things that annoy me:
   - buzzwords and jargon - makes me feel belittled when I don't understand
   - long introductions / preambles
   - assuming I'm on Windows
@@ -140,6 +141,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 
 | Alias | Skill | Route when… |
 |-------|-------|-------------|
+| `/plan` | beads-planner | Decomposing a long-running feature or refactor into a beads dependency graph |
 | `/cmake` | cmake-configurator | Touching `CMakeLists.txt`, adding targets, managing dependencies, install rules |
 | `/modernize` | modernizer | Code uses `typedef`, raw owning pointers, `NULL`, index loops, `std::bind`, or pre-C++14 patterns |
 | `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
@@ -148,6 +150,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
 | `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR/MR descriptions, issues, tasks, release notes, and code comments |
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
+| `/flutter` | flutter-style | Writing or reviewing Flutter/Dart — Riverpod, go_router, very_good_analysis, mobile+web conventions |
 | `/graphify` | graphify | Whole-codebase knowledge graph — persistent, queryable across sessions, community detection |
 | `/plan-html` | plan-html | Planning a task, feature, or goal — produces an interactive HTML file with phases, tasks, milestones, risks, and decisions-needed |
 | `/plan-orchestration` | plan-orchestration | Executing an approved plan — user reviews plan first, then invokes this; spawns parallel subagents per phase |
@@ -182,3 +185,121 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - **`/teach` vs `/explain`**: `/explain` to understand it *now*, interactively, in the moment; `/teach` to produce a dense `teach.html` for *review/retention* after I already follow it. They're complementary — `/explain` often ends by offering a `/teach` artifact.
 - **`/explain` vs `/mansplain`**: `/explain` assumes I'm competent and just paces the execution flow of *code*. `/mansplain` assumes nothing and *finds my floor first* — use it when the gap is conceptual/foundational (a concept, error, tool, math), not flow-tracing. I can also drop into `/mansplain` mid-`/explain` ("assume I know nothing here").
 
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for all task tracking. Run `bd prime` for full workflow context and commands.
+
+### Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work atomically
+bd close <id>         # Complete work
+bd dolt push          # Push beads data to remote
+```
+
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+### Session Completion
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd dolt push
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
+
+---
+
+## Non-Interactive Shell Commands
+
+**ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
+
+Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode on some systems, causing the agent to hang indefinitely waiting for y/n input.
+
+**Use these forms instead:**
+```bash
+# Force overwrite without prompting
+cp -f source dest           # NOT: cp source dest
+mv -f source dest           # NOT: mv source dest
+rm -f file                  # NOT: rm file
+
+# For recursive operations
+rm -rf directory            # NOT: rm -r directory
+cp -rf source dest          # NOT: cp -r source dest
+```
+
+**Other commands that may prompt:**
+- `scp` - use `-o BatchMode=yes` for non-interactive
+- `ssh` - use `-o BatchMode=yes` to fail instead of prompting
+- `apt-get` - use `-y` flag
+- `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+
+### Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
+```
+
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+## Session Completion
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd dolt push
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
+<!-- END BEADS INTEGRATION -->
