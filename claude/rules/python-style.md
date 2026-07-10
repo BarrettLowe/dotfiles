@@ -5,6 +5,11 @@ paths: ["**/*.py"]
 
 # Python Style Conventions
 
+## General
+Utilize object oriented patterns to their maximum functionality. Avoid free functions unless a the functionality in a class truly nothing. 
+
+- Avoid advanced features like metaclasses - these tend to be hard do read and understand
+
 ## Type Annotations
 
 - Annotate everything: parameters, return types, class attributes.

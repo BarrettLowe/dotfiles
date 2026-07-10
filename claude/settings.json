@@ -35,6 +35,7 @@
     ],
     "deny": []
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -58,10 +59,13 @@
     "frontend-design@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
+  "effortLevel": "high",
+  "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
+  "skipWorkflowUsageWarning": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "mcpServers": {
@@ -76,6 +80,5 @@
       ],
       "env": {}
     }
-  },
-  "tui": "fullscreen"
+  }
 }

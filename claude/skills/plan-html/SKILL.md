@@ -10,6 +10,7 @@ description: |
   sticky-note callouts. Outputs ./.claude-artifacts/plan.html.
 license: MIT
 compatibility: claude-code
+model: opus
 allowed-tools:
   - Read
   - Write
@@ -31,6 +32,7 @@ dashboard.
   auto-routing tools.
 - **Component vocabulary is fixed** (see below). Don't invent new visual treatments.
   Compose from the catalog.
+- ALWAYS include the branch and sha from where this plan was made (if in a git repo)
 
 ## Usage
 

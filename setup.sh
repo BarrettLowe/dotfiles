@@ -251,6 +251,11 @@ fi
 print_header "Step 5: Headless Plugin Sync"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null
 print_success "Plugins synchronized"
+# Compile markdown parsers explicitly — Lazy sync runs :TSUpdate for the plugin
+# but does not install missing parser binaries. Without these, Neovim 0.10+'s
+# built-in injection pipeline hits a nil node on every .md buffer open.
+nvim --headless "+TSInstall! markdown markdown_inline" +qa 2>/dev/null
+print_success "Treesitter markdown parsers compiled"
 
 # Step 6: Setup Oh My Zsh and themes
 if [ -d "$HOME/.oh-my-zsh" ]; then

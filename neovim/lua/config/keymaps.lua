@@ -51,6 +51,7 @@ keymap('n', 'n', 'nzz')
 keymap('n', 'N', 'Nzz')
 keymap('', 'L', '$')
 keymap('', 'H', '^')
+keymap('n', '\\', ',')  -- restore reverse-repeat for f/F/t/T (, is leader)
 
 -- ============================================================================
 -- LEADER SHORTCUTS

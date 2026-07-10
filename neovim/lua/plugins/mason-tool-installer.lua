@@ -7,6 +7,8 @@ return {
         ensure_installed = {
             "clangd",
             "clang-format",
+            "basedpyright",
+            "ruff",
             "debugpy",
             "codelldb",
             "tree-sitter-cli"
