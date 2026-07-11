@@ -124,6 +124,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 
 | Alias | Skill | Route when… |
 |-------|-------|-------------|
+| `/arch` | architecture-design | Designing a new architecture for a feature or refactor |
 | `/cmake` | cmake-configurator | Touching `CMakeLists.txt`, adding targets, managing dependencies, install rules |
 | `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
