@@ -48,6 +48,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); while IFS= read -r path; do [ -z \"$path\" ] && continue; case \"$path\" in \\#*) continue ;; esac; case \"$input\" in *\"$path\"*) echo \"Blocked directory: $path\" >&2; exit 2 ;; esac; done < $HOME/dotfiles/claude/blocked-dirs.txt; exit 0",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -59,7 +71,7 @@
     "frontend-design@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
@@ -69,16 +81,5 @@
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "mcpServers": {
-    "context7": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "--prefix",
-        "/tmp",
-        "@upstash/context7-mcp@latest"
-      ],
-      "env": {}
-    }
   }
 }

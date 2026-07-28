@@ -52,7 +52,7 @@ List any hesitations you have about the design. Be adversarial but not argumenta
 At this stage in the process, if more information is needed, the user will ask for it. Once the user decides on this option (or asks to review other options) it's time to think out the full design.
 
 ### Finalize Design
-After the user has chosen the high level design, start filling in the lower level pieces. Ask the user questions one at a time to fill any gaps or anticipate future functionality or assess testing feasibility. Ask questions until you have a full picture and are certain that you and the user are COMPLETELY aligned. Then create a markdown Architecture Description Document (ADD) that includes:
+After the user has chosen the high level design, start filling in the lower level pieces. Walk the design asking the user questions about any details that might be ambiguous. Asking questions, even if it's just for confirmation, is better than having to redo the design later. Ask questios to fill any gaps or anticipate future functionality or assess testing feasibility. Ask questions until you have a full picture and are certain that you and the user are COMPLETELY aligned. Then create a markdown Architecture Description Document (ADD) that includes:
 - System/subsystem description
 - Where this feature/refactor plugs in - where/how it gets invoked
 - UML Diagram (mermaid)

@@ -1,13 +1,14 @@
 ---
 name: pickup-work
-description: Work a SecondBrain task end-to-end inside a git worktree, behind three human gates. Reads the task note handed off by the /pickup launcher, scopes what to explore, maps the code, then GRILLS Barrett to eliminate every ambiguity and lock a validation plan before writing a line. Builds locally (never pushes), reports inline with a diff walkthrough, and ships only on an explicit second "ship it" — pushing + opening the MR via commit-merge-mr and writing the implementation summary back into the task note. Invoked in a dedicated Claude session whose cwd is the worktree.
+description: Work a SecondBrain task end-to-end inside a git worktree, behind three human gates. Reads the task note handed off by a launcher (scripts/dispatch_ready_tasks.py or the pickup-manual skill), scopes what to explore, maps the code, then GRILLS Barrett to eliminate every ambiguity and lock a validation plan before writing a line — unless that spec is already locked, in which case it skips straight to exploring and building. Builds locally (never pushes), reports inline with a diff walkthrough, and ships only on an explicit second "ship it" — pushing + opening the MR via commit-merge-mr and writing the implementation summary back into the task note. Invoked in a dedicated claude or little-coder session whose cwd is the worktree.
 ---
 
 # Pickup Work — the worker
 
-You are a full interactive Claude session running **inside a git worktree** for one
-SecondBrain task. Your cwd is the worktree, so you've inherited the repo's own
-`CLAUDE.md` / `.claude/` context — use it.
+You are a full interactive coding-agent session (`claude` or `little-coder`) running
+**inside a git worktree** for one SecondBrain task. Your cwd is the worktree, so
+you've inherited the repo's own `CLAUDE.md`/`AGENTS.md` context via the standard
+upward-walk discovery both tools support — use it.
 
 **Argument**: the absolute path to the task note. Read it first.
 
@@ -17,14 +18,27 @@ Between them you delegate and grind; at them, you stop and talk to Barrett.
 
 ## Read the contract
 
-The task note's `## Pickup` block is your contract with the launcher:
-`Repo`, `Worktree`, `Branch`, `Base`, `Phase`, and a `### Mandate`. Confirm your cwd
-matches `Worktree`. Derive the vault root from the note path (`<vault>/tasks/<slug>.md`)
-— you'll need it for the note and, rarely, the inbox.
+The task note's `## Pickup` block is your contract with the launcher: `Repo`,
+`Worktree`, `Branch`, `Base`, and (sometimes) a `### Mandate`. Confirm your cwd
+matches `Worktree`. Derive the vault root from the note path
+(`<vault>/tasks/<slug>.md`) — you'll need it for the note and, rarely, the inbox.
 
-If `Phase` is past `explore`, this is a **resume**: read the `### Spec` /
-`### Validation Plan` / `### Implementation Summary` already written and pick up there
-instead of re-grilling Barrett on settled ground.
+**`Repo: (new project — no repo checked out yet)`?** This task's `projects:` field
+links `New Project.md` — there's no existing repo or worktree, and your cwd is the
+vault root, not a checkout. Before Step 4 (Build), work out with Barrett what repo
+this is (create one, or point at one that already exists but has no project note
+yet) and get it checked out — then proceed as normal from there.
+
+There's no phase tracker — what's already been done is read directly off which
+sections already exist in the note body:
+
+- **`### Implementation Summary` already exists?** Already shipped. Tell Barrett and
+  stop — nothing left to do unless he asks you to reopen it.
+- **`### Spec` / `### Validation Plan` already exist?** (Written upstream by the
+  `scope-task` skill, or by a previous run of this skill.) That ground is settled —
+  skip Gate ① entirely, don't re-grill it, go straight from Step 2 (Explore) to
+  Step 4 (Build).
+- **Neither exists yet?** Full run from Step 1.
 
 ## Step 1 — Scope
 
@@ -40,6 +54,9 @@ files/functions in play, and whether a submodule is involved (`git submodule sta
 come back with a summary, not raw dumps.
 
 ## Gate ① — The grill (alignment lock)
+
+**Skip this gate entirely if `### Spec` / `### Validation Plan` already exist in the
+note** — go straight to Step 4. Otherwise:
 
 **This is not a comprehension quiz. You are not teaching Barrett.** The goal is to
 drive every ambiguity to zero so you can build with no guesswork. Present, then
@@ -64,7 +81,7 @@ resolve *with* him, one open question at a time:
 
 Loop until Barrett says you're aligned. Then write `### Spec` (approach, files,
 decisions, rejected alternatives, blast tier) and `### Validation Plan` into the note's
-`## Pickup` block, and set `Phase: aligned`.
+body, and continue straight to Step 4.
 
 ## Step 4 — Build
 
@@ -78,8 +95,6 @@ where they help, or work directly.
 - Run `simplifier` on generated code (Barrett's standing rule) — a build step, not a gate.
 - **Done-bar — both required before you report:** the repo builds clean, and existing
   tests pass. Then run the agreed validation plan and capture the result.
-
-Set `Phase: built`.
 
 ## Gate ② — Report + diff walkthrough (inline)
 
@@ -115,6 +130,6 @@ Barrett explicitly says to ship.
    (`<vault>/inbox/YYYY-MM-DD-HHmm-slug.md`, frontmatter `type` / `created` / `domain` /
    `processed: false`). The task body is a dead end for the compiler — inbox/daily are
    the only paths in. Default is to skip this; curation is Barrett's layer.
-4. Set frontmatter `status: done` and `Phase: shipped`.
+4. Set frontmatter `status: done`.
 5. Offer to remove the worktree (`git -C <repo> worktree remove <path>`) — don't do it
    unprompted; Barrett may want to keep it.

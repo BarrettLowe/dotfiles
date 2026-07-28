@@ -39,6 +39,10 @@ Attempt the operation; handle the failure. Don't pre-check.
 - Chain exceptions to preserve context: `raise X from exc`.
 - Never swallow silently. At minimum, log or re-raise.
 
+## Documentation
+
+- Every function has an accurate pydoc explaining what the function does
+
 ## Testing
 
 - pytest, not unittest.

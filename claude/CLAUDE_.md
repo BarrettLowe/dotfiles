@@ -1,19 +1,20 @@
-## Who I Am / My Context
-- Name / persona I usually want: Barrett — slightly dry humor, hates fluff, no jargon - talk to me like a human
-- Default tone: professional-casual, no corporate-speak, no excessive emojis
-- Things I care about most right now:
-  - personal productivity & systems
-  - code quality & architecture
-  - learning c++ concepts in c++17 and later
-  - minimalism & low-maintenance tools
-- Things that annoy me:
-  - buzzwords and jargon - makes me feel belittled when I don't understand
+## General
+- prefer dry humor, no fluff, no jargon - talk to me like a human
+- Default tone: casual, no corporate-speak, no excessive emojis
+- Preferences
+  - when using more advanced c++ concepts, explain them
+  - when explaining system, start high level and drill down
+  - explain sequences using bullet points
+  - don't use arrows in text without telling what the arrow means
+- Avoid
+  - buzzwords and jargon
+    - bad: The two seams don't coincide
+    - good: Those two components don't have the same interface
   - long introductions / preambles
-  - assuming I'm on Windows
   - moralizing answers
   - final summary documents
-  - git commits indicating that an agent made it
-  - long git commit messages - I like them brief
+  - long git commit messages
+  - building with `nproc` - always use `nproc-1` to keep the machine from locking up
 
 ---
 
@@ -25,12 +26,13 @@
 ---
 
 ## Code Style
-- Readable code is ideal
-- Explicit varaible names that describe the data
+- Readable code preferred - a explanation that is long means the code is not readable or is messy
+- Use explicit varaible names that describe the data and help the code read like someone would talk
 - Clever code (less readable) is acceptable, but **must be commented** — cleverness without explanation is a bug waiting to happen
 - Follow the **single responsibility principle** — one function/class/module does one thing
 - When using a raw number for anything other than +/-1 in bounds checking **always** include a comment describing the number
-- Concise comments (error on the side of vague rather than verbosely explicit)
+- Comments - encouraged at key moments (ie when a particular line is important to something not evident in the surrounding code.)
+    - Example: `seemingly_plain_var = do_processing(incoming_var); // seemingly_plain_var is actually critical here because it actually gets read by the loop above`
 
 ---
 
@@ -75,10 +77,6 @@ default path.
 ### Example
 Start high level, then drill down. Eg "The system is managed by 3 nodes that communicate through one messenger. Those nodes publish messages into shared queues that the messenger routes into input queues (one per consumer node). So, for 3 nodes, there is 1 input messenger queue and 3 output queues. The queues are all owned by the messenger, not the nodes. **Then delve into the nodes** Each node is responsible for one topic of operation. Nodes inherit from an abstract class and the meat of the functionality occurs in the Operation() function. Within that function, each node must..."
 
-### General
-
-I am a 10+ year engineer. I can read code. My specific blocker is **execution flow** — tracing what calls what, in what order, with what state changes. Static reading doesn't give me the temporal picture. I think very sequentially and you should explain things through that lens.
-
 ---
 
 ## Artifacts
@@ -101,6 +99,7 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `code-reviewer` | Reviewing staged or recently changed code before committing |
 | `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
 | `dependency-mapper` | Backs `/map` — analyzes call topology, shared state, implicit ordering, and data flow for a specific subsystem |
+| `log-searcher` | Hunting for something specific or abstract inside log files — read/grep only, keeps log noise out of your context |
 | `orient-builder` | Backs `/orient` — ensures/refreshes the graphify graph and writes the `orient_<topic>.qf` quickfix trail, keeping graph noise out of the main session. Returns a compact digest. Can run standalone to drop a trail you walk yourself. Does NOT run the interactive quiz. |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
 | `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
@@ -126,7 +125,6 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 |-------|-------|-------------|
 | `/arch` | architecture-design | Designing a new architecture for a feature or refactor |
 | `/cmake` | cmake-configurator | Touching `CMakeLists.txt`, adding targets, managing dependencies, install rules |
-| `/api` | api-critic | Reviewing a `.hpp` public interface before merge, designing a library API |
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
@@ -148,7 +146,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 - **Feature vs. bug**: "implement X", "add Y", "build Z" → `feature-implementer`; "fix", "broken", "regression", known diagnosis → `bug-fixer`
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
-- Structural design question → `architect` agent; then `/conc` or `/api` for the specific interface/threading details
+- Structural design question → `architect` agent; then `/conc` for threading-specific details
 - Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `codebase-explorer` agent for one-off lookups where a graph would be overkill
 - **Understanding unfamiliar code** — pick by scope and question:
   - Single file, just opened: `/wtf` command ("what does this file do?")
