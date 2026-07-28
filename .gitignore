@@ -6,3 +6,6 @@ tags
 .dolt/
 *.db
 .beads-credential-key
+
+# Machine-local Claude directory blocklist
+claude/blocked-dirs.txt
