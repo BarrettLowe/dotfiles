@@ -65,6 +65,12 @@ mkdir -p "$HOME/.local/share/nvim"
 mkdir -p "$HOME/.local/bin"
 print_success "Created local directory structure"
 
+# Put every tool location this script installs into onto PATH up front. This
+# makes the idempotency checks below (`command -v nvim`, etc.) correct even
+# in a bare `bash setup.sh` invocation that never sourced ~/.zshrc -- e.g. a
+# second run, a fresh RUN layer in a Dockerfile, or a non-interactive shell.
+export PATH="$HOME/DevTools/nvim-linux-x86_64/bin:$HOME/DevTools/bin:$HOME/.local/bin:$PATH"
+
 # Step 2: Create symlinks for dotfiles
 print_header "Step 2: Creating Symlinks"
 create_symlink() {
@@ -111,43 +117,28 @@ fi
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Bootstrap Homebrew into ~/DevTools (no root required). This is the officially
-# supported "custom prefix" install method: clone brew itself. Kept around as a
-# non-root package manager for the long tail (and for the couple of packages
-# below that don't have a good static-binary story), but the big/hot-path
-# tools (neovim/rg/fd) are pulled as prebuilt GitHub-release binaries instead
-# of via brew: on Linux, brew has no bottle for every glibc, and falls back to
-# a from-source build (plus a confirmation prompt) that can take many minutes.
-HOMEBREW_PREFIX="$HOME/DevTools/homebrew"
-export HOMEBREW_NO_AUTO_UPDATE=1
-export HOMEBREW_NO_ANALYTICS=1
-export HOMEBREW_NO_ENV_HINTS=1
-export NONINTERACTIVE=1
-if ! command -v brew &>/dev/null; then
-    if [[ -x "$HOMEBREW_PREFIX/bin/brew" ]]; then
-        print_info "Homebrew found at $HOMEBREW_PREFIX but not on PATH yet"
-    else
-        print_info "Installing Homebrew to $HOMEBREW_PREFIX..."
-        mkdir -p "$HOMEBREW_PREFIX"
-        git clone --depth=1 https://github.com/Homebrew/brew "$HOMEBREW_PREFIX"
-        print_success "Homebrew installed to $HOMEBREW_PREFIX"
-    fi
-    eval "$("$HOMEBREW_PREFIX/bin/brew" shellenv)"
+# Batch all apt installs into a single update + install. No Homebrew here:
+# this script now targets root-friendly contexts (a dedicated toolchain Docker
+# image, devpods running as root) where apt is simpler and faster than brew's
+# Ruby-driven dependency resolution / occasional from-source fallback. Use
+# sudo only if we're not already root (and sudo exists) so this still works
+# unmodified inside a root-only container.
+if [[ $EUID -ne 0 ]] && command -v sudo &>/dev/null; then
+    APT_CMD=(sudo apt-get)
 else
-    eval "$(brew shellenv)"
+    APT_CMD=(apt-get)
 fi
 
-# Only the packages with no good static-binary source go through brew.
-BREW_PKGS=()
-! brew list luarocks &>/dev/null 2>&1 && BREW_PKGS+=(luarocks)
-! command -v wl-copy &>/dev/null && BREW_PKGS+=(wl-clipboard)
+APT_PKGS=()
+! command -v python3 &>/dev/null && APT_PKGS+=(python3)
+! dpkg -s python3-venv &>/dev/null 2>&1 && APT_PKGS+=(python3-venv)
+! dpkg -s luarocks &>/dev/null 2>&1 && APT_PKGS+=(luarocks)
+! command -v wl-copy &>/dev/null && APT_PKGS+=(wl-clipboard)
 
-if [[ ${#BREW_PKGS[@]} -gt 0 ]]; then
-    print_info "Installing brew packages: ${BREW_PKGS[*]}..."
-    brew install "${BREW_PKGS[@]}"
-    print_success "brew packages installed"
-else
-    print_success "All brew packages already present"
+if [[ ${#APT_PKGS[@]} -gt 0 ]]; then
+    print_info "Installing apt packages: ${APT_PKGS[*]}..."
+    "${APT_CMD[@]}" update && "${APT_CMD[@]}" install -y "${APT_PKGS[@]}"
+    print_success "apt packages installed"
 fi
 
 # Manual Neovim Install (static binary from GitHub releases)
@@ -209,15 +200,6 @@ if ! command -v uv &> /dev/null; then
 fi
 
 export PATH="$HOME/.local/bin:$PATH"
-
-# uv manages its own Python (also a static-binary pull, no system python3/apt
-# needed) — this keeps the whole toolchain root-free and off apt.
-if ! uv python list --only-installed 2>/dev/null | grep -q .; then
-    print_info "Installing Python via uv..."
-    uv python install
-    print_success "Python installed via uv"
-fi
-
 NVIM_VENV="$HOME/.local/share/nvim/uv-venv"
 if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
@@ -331,5 +313,5 @@ fi
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"
-echo -e "Note: Neovim/rg/fd are GitHub-release binaries in $HOME/DevTools; luarocks/wl-clipboard are managed by Homebrew in $HOME/DevTools/homebrew; Python is managed by uv"
+echo -e "Note: Neovim/rg/fd are GitHub-release binaries in $HOME/DevTools; python3/luarocks/wl-clipboard are apt packages"
 echo -e "Run 'source ~/.zshrc' to refresh PATH."
