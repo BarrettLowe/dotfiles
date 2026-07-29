@@ -40,6 +40,7 @@ typeset -U path
 [[ -d "$HOME/dotfiles/bin" ]] && path=("$HOME/dotfiles/bin" $path)
 [[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
 export PATH
+[[ -x "$HOME/DevTools/homebrew/bin/brew" ]] && eval "$("$HOME/DevTools/homebrew/bin/brew" shellenv)"
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -145,7 +146,7 @@ alias tmux="TERM=xterm-256color tmux"
 vc() {
   (cd ~/dotfiles && $EDITOR neovim/init.lua)
 }
-alias claude-sync="bash ~/dotfiles/claude/sync.sh"
+alias claude-sync="bash ~/dotfiles/ai/sync.sh"
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
@@ -255,7 +256,7 @@ if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$TMUX" ]] && command -v tmux &>/d
 fi
 
 # Sync Claude Code config: shared dotfiles + machine-local overrides
-[[ -f "$HOME/dotfiles/claude/sync.sh" ]] && bash "$HOME/dotfiles/claude/sync.sh"
+[[ -f "$HOME/dotfiles/ai/sync.sh" ]] && bash "$HOME/dotfiles/ai/sync.sh"
 
 # Load local configurations (system-specific settings)
 if [[ -f "$HOME/.zshrc_local" ]]; then

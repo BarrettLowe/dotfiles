@@ -77,38 +77,42 @@ dotfiles/
 │   └── lua/
 │       ├── config/       # Core config: settings, keymaps, lsp, dap, autocmds
 │       └── plugins/      # One file per plugin (lazy.nvim spec)
-├── claude/               # Claude Code configuration
+├── ai/                   # Shared AI harness configuration (Claude Code + pi agent)
 │   ├── CLAUDE_.md        # Source of truth for ~/.claude/CLAUDE.md content
 │   ├── skills/           # Custom slash-command skills (one dir per skill with SKILL.md)
 │   ├── agents/           # Custom agent definitions (one .md per agent)
-│   └── rules/            # Path-matched auto-rules (C++, Python style conventions)
-├── bin/                  # Utility scripts: devpod-attach, devpod-claude, devpod-workspace-dir
-└── ai/                   # AGENTS.md for headless agent context
+│   ├── rules/            # Path-matched auto-rules (C++, Python style conventions)
+│   ├── commands/         # Custom slash commands
+│   ├── settings.json     # Claude Code settings (permissions, hooks)
+│   ├── blocked-dirs.txt  # Hard-blocked paths for the PreToolUse hook
+│   ├── sync.sh           # Syncs ai/ (+ ~/.local/ai/ overrides) into each harness's config dir
+│   └── AGENTS.md         # Headless agent context (pre-existing, separate from CLAUDE_.md)
+└── bin/                  # Utility scripts: devpod-attach, devpod-claude, devpod-workspace-dir
 ```
 
-`claude/CLAUDE_.md` is the source of truth for global Claude settings — edit it, not `~/.claude/CLAUDE.md` directly, to keep changes tracked in git.
+`ai/CLAUDE_.md` is the source of truth for global Claude settings — edit it, not `~/.claude/CLAUDE.md` directly, to keep changes tracked in git.
 
 ## Conventions & Patterns
 
-### Claude Config Changes
+### AI Harness Config Changes
 
-After editing any of the following files, run `bash ~/dotfiles/claude/sync.sh`:
+After editing any of the following files, run `bash ~/dotfiles/ai/sync.sh`:
 
-- `~/dotfiles/claude/CLAUDE_.md`
-- `~/dotfiles/claude/skills/**`
-- `~/dotfiles/claude/agents/**`
-- `~/dotfiles/claude/rules/**`
-- `~/dotfiles/claude/commands/**`
-- `~/.local/claude/**`
+- `~/dotfiles/ai/CLAUDE_.md`
+- `~/dotfiles/ai/skills/**`
+- `~/dotfiles/ai/agents/**`
+- `~/dotfiles/ai/rules/**`
+- `~/dotfiles/ai/commands/**`
+- `~/.local/ai/**`
 - `~/CLAUDE_MORE.md`
 
-This rebuilds `~/.claude/` from the shared dotfiles and any machine-local overrides. Neovim does this automatically on save; Claude must do it manually after edits.
+This rebuilds `~/.claude/` and `~/.pi/agent/skills` from the shared dotfiles plus any machine-local overrides (`~/.local/ai/`). Only `skills/` is synced to pi agent — agents/rules/commands are Claude Code-specific for now. Neovim does this automatically on save; Claude must do it manually after edits.
 
 ### Agent/Skill Routing Maintenance
 
 When a skill is converted to an agent (or a new agent is created):
-1. Add it to the **Agents** table in `claude/CLAUDE_.md`
-2. Remove it from the **Skills** table in `claude/CLAUDE_.md` if it was there
+1. Add it to the **Agents** table in `ai/CLAUDE_.md`
+2. Remove it from the **Skills** table in `ai/CLAUDE_.md` if it was there
 3. Update the "When multiple could apply" section if any routing logic changes
 
-Skills live in `~/.claude/skills/<name>/SKILL.md`. Agents live in `~/.claude/agents/<name>.md`. Keep `claude/CLAUDE_.md` in sync with what's actually on disk — stale routing causes the wrong tool to get invoked.
+Skills live in `~/.claude/skills/<name>/SKILL.md`. Agents live in `~/.claude/agents/<name>.md`. Keep `ai/CLAUDE_.md` in sync with what's actually on disk — stale routing causes the wrong tool to get invoked.

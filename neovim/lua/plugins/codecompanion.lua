@@ -104,7 +104,7 @@ return {
                 agentskills = {
                     opts = {
                         paths = {
-                            "~/dotfiles/claude/skills",  -- Claude Code skills
+                            "~/dotfiles/ai/skills",  -- Claude Code skills
                             { "~/.ai/skills", recursive = true },  -- Local overrides
                         }
                     }

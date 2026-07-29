@@ -35,7 +35,7 @@
     ],
     "deny": []
   },
-  "model": "opus[1m]",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "input=$(cat); while IFS= read -r path; do [ -z \"$path\" ] && continue; case \"$path\" in \\#*) continue ;; esac; case \"$input\" in *\"$path\"*) echo \"Blocked directory: $path\" >&2; exit 2 ;; esac; done < $HOME/dotfiles/claude/blocked-dirs.txt; exit 0",
+            "command": "input=$(cat); while IFS= read -r path; do [ -z \"$path\" ] && continue; case \"$path\" in \\#*) continue ;; esac; case \"$input\" in *\"$path\"*) echo \"Blocked directory: $path\" >&2; exit 2 ;; esac; done < $HOME/dotfiles/ai/blocked-dirs.txt; exit 0",
             "timeout": 5
           }
         ]
@@ -71,7 +71,7 @@
     "frontend-design@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
@@ -80,6 +80,5 @@
   "skipWorkflowUsageWarning": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "mcpServers": {
-  }
+  "mcpServers": {}
 }

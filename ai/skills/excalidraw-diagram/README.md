@@ -5,7 +5,7 @@ Source: https://github.com/coleam00/excalidraw-diagram-skill — copied in manua
 ## First-time setup
 
 ```bash
-cd ~/.claude/skills/excalidraw-diagram/references
+cd <this-skill's-directory>/references
 uv sync
 uv run playwright install chromium
 ```

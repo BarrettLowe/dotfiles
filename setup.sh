@@ -83,11 +83,11 @@ create_symlink "$DOTFILES_DIR/neovim" "$HOME/.config/nvim"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 
-# Claude Code
+# Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
 mkdir -p "$HOME/.claude"
-bash "$DOTFILES_DIR/claude/sync.sh"
-create_symlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
-print_success "Claude Code config synced"
+bash "$DOTFILES_DIR/ai/sync.sh"
+create_symlink "$DOTFILES_DIR/ai/settings.json" "$HOME/.claude/settings.json"
+print_success "AI harness config synced"
 
 # GitHub Copilot CLI
 mkdir -p "$HOME/.config/github-copilot"
@@ -101,68 +101,82 @@ _THEME=$(cat "$HOME/.theme" 2>/dev/null || echo "dark")
 ln -sf "$DOTFILES_DIR/foot/colors-$_THEME.ini" "$HOME/.config/foot/theme-colors.ini"
 print_success "Foot config linked (theme: $_THEME)"
 
-# AGENTS.md -> claude/CLAUDE_.md (single source of truth for opencode + claude code)
+# AGENTS.md -> ai/CLAUDE_.md (single source of truth for opencode + claude code)
 if [ ! -L "$DOTFILES_DIR/AGENTS.md" ]; then
     rm -f "$DOTFILES_DIR/AGENTS.md"
-    ln -sf "claude/CLAUDE_.md" "$DOTFILES_DIR/AGENTS.md"
-    print_success "Linked AGENTS.md -> claude/CLAUDE_.md"
+    ln -sf "ai/CLAUDE_.md" "$DOTFILES_DIR/AGENTS.md"
+    print_success "Linked AGENTS.md -> ai/CLAUDE_.md"
 fi
 
 # Step 3: Toolchain Installation
 print_header "Step 3: Provisioning CLI Toolchain"
 
-# Batch all apt installs into a single update + install
-APT_PKGS=()
-! command -v python3 &>/dev/null && APT_PKGS+=(python3)
-! dpkg -s python3-venv &>/dev/null && APT_PKGS+=(python3-venv)
-! dpkg -s luarocks &>/dev/null && APT_PKGS+=(luarocks)
-! command -v wl-copy &>/dev/null && APT_PKGS+=(wl-clipboard)
-
-if [[ ${#APT_PKGS[@]} -gt 0 ]]; then
-    print_info "Installing apt packages: ${APT_PKGS[*]}..."
-    sudo apt update && sudo apt install -y "${APT_PKGS[@]}"
-    print_success "apt packages installed"
+# Bootstrap Homebrew into ~/DevTools (no root required). This is the officially
+# supported "custom prefix" install method: clone brew itself. Kept around as a
+# non-root package manager for the long tail (and for the couple of packages
+# below that don't have a good static-binary story), but the big/hot-path
+# tools (neovim/rg/fd) are pulled as prebuilt GitHub-release binaries instead
+# of via brew: on Linux, brew has no bottle for every glibc, and falls back to
+# a from-source build (plus a confirmation prompt) that can take many minutes.
+HOMEBREW_PREFIX="$HOME/DevTools/homebrew"
+export HOMEBREW_NO_AUTO_UPDATE=1
+export HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_ENV_HINTS=1
+export NONINTERACTIVE=1
+if ! command -v brew &>/dev/null; then
+    if [[ -x "$HOMEBREW_PREFIX/bin/brew" ]]; then
+        print_info "Homebrew found at $HOMEBREW_PREFIX but not on PATH yet"
+    else
+        print_info "Installing Homebrew to $HOMEBREW_PREFIX..."
+        mkdir -p "$HOMEBREW_PREFIX"
+        git clone --depth=1 https://github.com/Homebrew/brew "$HOMEBREW_PREFIX"
+        print_success "Homebrew installed to $HOMEBREW_PREFIX"
+    fi
+    eval "$("$HOMEBREW_PREFIX/bin/brew" shellenv)"
+else
+    eval "$(brew shellenv)"
 fi
 
-# Manual Neovim Install
+# Only the packages with no good static-binary source go through brew.
+BREW_PKGS=()
+! brew list luarocks &>/dev/null 2>&1 && BREW_PKGS+=(luarocks)
+! command -v wl-copy &>/dev/null && BREW_PKGS+=(wl-clipboard)
+
+if [[ ${#BREW_PKGS[@]} -gt 0 ]]; then
+    print_info "Installing brew packages: ${BREW_PKGS[*]}..."
+    brew install "${BREW_PKGS[@]}"
+    print_success "brew packages installed"
+else
+    print_success "All brew packages already present"
+fi
+
+# Manual Neovim Install (static binary from GitHub releases)
 if ! command -v nvim &> /dev/null; then
-    print_info "Installing Neovim to /opt..."
+    print_info "Installing Neovim to ~/DevTools..."
     (
         cd "$HOME/.build"
         curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-        sudo rm -rf /opt/nvim-linux-x86_64
-        sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+        mkdir -p $HOME/DevTools
+        rm -rf $HOME/DevTools/nvim-linux-x86_64
+        tar -C $HOME/DevTools -xzf nvim-linux-x86_64.tar.gz
     )
-    print_success "Neovim installed to /opt/nvim-linux-x86_64"
-    export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
+    print_success "Neovim installed to $HOME/DevTools/nvim-linux-x86_64"
+    export PATH="$HOME/DevTools/nvim-linux-x86_64/bin:$PATH"
 fi
-
-# # Manual TreeSitter Install
-# if ! command -v tree-sitter &> /dev/null; then
-#     print_info "Installing tree-sitter to DevTools"
-#     mkdir -p "$HOME/.build/tree-sitter"
-#     cd "$HOME/.build/tree-sitter"
-#     curl -LO https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.3/tree-sitter-linux-x86.gz
-#     gunzip tree-sitter-linux-x86.gz
-#     cp tree-sitter-linux-x86 "$HOME/DevTools/bin/tree-sitter"
-#     chmod +x "$HOME/DevTools/bin/tree-sitter"
-#     print_success "Installed tree-sitter"
-#     cd "$DOTFILES_DIR"
-# fi
 
 # Helper for GH releases (rg, fd)
 install_gh_release() {
     local repo=$1
     local pattern=$2
     local bin_name=$3
-    
+
     print_info "Finding latest release for $bin_name ($repo)..."
     local url=$(curl -s "https://api.github.com/repos/$repo/releases/latest" \
         | grep "browser_download_url" \
         | grep -E "$pattern" \
         | head -n 1 \
         | cut -d '"' -f 4)
-    
+
     if [[ -z "$url" ]]; then
         print_error "Could not find download URL for $bin_name"
         return 1
@@ -170,13 +184,13 @@ install_gh_release() {
 
     local filename=$(basename "$url")
     curl -LsSf "$url" -o "$HOME/.build/$filename"
-    
+
     if [[ $filename == *.tar.gz ]]; then
         tar -xzf "$HOME/.build/$filename" -C "$HOME/.build/"
     elif [[ $filename == *.zip ]]; then
         unzip -q -o "$HOME/.build/$filename" -d "$HOME/.build/"
     fi
-    
+
     find "$HOME/.build" -name "$bin_name" -type f -executable -exec cp {} "$HOME/DevTools/bin/" \;
     print_success "$bin_name installed to ~/DevTools/bin"
 }
@@ -184,15 +198,6 @@ install_gh_release() {
 { [[ ! $(command -v rg) ]] && install_gh_release "BurntSushi/ripgrep" "x86_64-unknown-linux-musl.tar.gz" "rg"; } &
 { [[ ! $(command -v fd) ]] && install_gh_release "sharkdp/fd" "x86_64-unknown-linux-musl.tar.gz" "fd"; } &
 wait
-
-# Install beads (bd) - AI-native issue tracker
-if ! command -v bd &>/dev/null; then
-    print_info "Installing beads (bd)..."
-    curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-    print_success "beads installed"
-else
-    print_success "beads already present"
-fi
 
 # Step 4: Neovim Python Provider (uv)
 print_header "Step 4: Neovim Python Provider (uv)"
@@ -204,6 +209,15 @@ if ! command -v uv &> /dev/null; then
 fi
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# uv manages its own Python (also a static-binary pull, no system python3/apt
+# needed) — this keeps the whole toolchain root-free and off apt.
+if ! uv python list --only-installed 2>/dev/null | grep -q .; then
+    print_info "Installing Python via uv..."
+    uv python install
+    print_success "Python installed via uv"
+fi
+
 NVIM_VENV="$HOME/.local/share/nvim/uv-venv"
 if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
@@ -237,7 +251,7 @@ if [ -s "$DOTFILES_DIR/python-tools.txt" ]; then
 fi
 
 # Graphify: version-pinned separately so failures are visible (not swallowed by background loop)
-_GRAPHIFY_VER=$(cat "$DOTFILES_DIR/claude/skills/graphify/.graphify_version" 2>/dev/null)
+_GRAPHIFY_VER=$(cat "$DOTFILES_DIR/ai/skills/graphify/.graphify_version" 2>/dev/null)
 _GRAPHIFY_PKG="graphifyy${_GRAPHIFY_VER:+==$_GRAPHIFY_VER}"
 if ! command -v graphify &>/dev/null; then
     print_info "Installing graphify${_GRAPHIFY_VER:+ v$_GRAPHIFY_VER}..."
@@ -301,17 +315,21 @@ else
     print_success "Node.js $(node --version) already present"
 fi
 
-# Install Claude Code CLI
-if ! command -v claude &>/dev/null; then
-    print_info "Installing Claude Code CLI..."
-    curl -fsSL https://claude.ai/install.sh | bash 
-    print_success "Claude Code installed"
+# Install Claude Code CLI (opt-in via --with-claude)
+if [[ " $* " == *" --with-claude "* ]]; then
+    if ! command -v claude &>/dev/null; then
+        print_info "Installing Claude Code CLI..."
+        curl -fsSL https://claude.ai/install.sh | bash 
+        print_success "Claude Code installed"
+    else
+        print_success "Claude Code $(claude --version 2>/dev/null || echo '') already present"
+    fi
 else
-    print_success "Claude Code $(claude --version 2>/dev/null || echo '') already present"
+    print_info "Skipping Claude Code CLI (pass --with-claude to install)"
 fi
 
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"
-echo -e "Note: Neovim is in /opt/nvim-linux-x86_64/bin"
+echo -e "Note: Neovim/rg/fd are GitHub-release binaries in $HOME/DevTools; luarocks/wl-clipboard are managed by Homebrew in $HOME/DevTools/homebrew; Python is managed by uv"
 echo -e "Run 'source ~/.zshrc' to refresh PATH."

@@ -1,0 +1,7 @@
+# Directories/paths Claude is hard-blocked from touching (Read/Edit/Write/Bash/etc).
+# One entry per line. Substring match against the full tool call - a bare name
+# (no path prefix) blocks every occurrence anywhere on the machine.
+armgdn-seeker-sw
+tracking-algorithms
+nav-ta
+# tse

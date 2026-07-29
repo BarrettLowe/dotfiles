@@ -5,4 +5,4 @@ tools: ["Read", "Grep", "Glob"]
 model: sonnet
 ---
 
-Read `~/.claude/rules/python-style.md`, then apply those conventions as a review pass on the files in context. Flag any violations and suggest fixes.
+Read `~/dotfiles/ai/rules/python-style.md`, then apply those conventions as a review pass on the files in context. Flag any violations and suggest fixes.

@@ -134,20 +134,20 @@ local home = vim.fn.expand("~")
 vim.api.nvim_create_autocmd("BufWritePost", {
     group = main_group,
     pattern = {
-        home .. "/dotfiles/claude/**",
-        home .. "/.local/claude/**",
+        home .. "/dotfiles/ai/**",
+        home .. "/.local/ai/**",
         home .. "/CLAUDE_MORE.md",
     },
     callback = function()
-        vim.fn.jobstart({ "bash", home .. "/dotfiles/claude/sync.sh" }, {
+        vim.fn.jobstart({ "bash", home .. "/dotfiles/ai/sync.sh" }, {
             on_exit = function(_, code)
                 local level = code == 0 and vim.log.levels.INFO or vim.log.levels.WARN
-                local msg = code == 0 and "Claude config synced" or ("Claude sync failed (exit " .. code .. ")")
+                local msg = code == 0 and "AI harness config synced" or ("AI harness sync failed (exit " .. code .. ")")
                 vim.notify(msg, level)
             end,
         })
     end,
-    desc = "Sync ~/.claude after saving shared or machine-local Claude config",
+    desc = "Sync ~/.claude and ~/.pi/agent/skills after saving shared or machine-local AI config",
 })
 
 -- ============================================================================
