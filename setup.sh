@@ -63,6 +63,7 @@ mkdir -p "$HOME/.build"
 mkdir -p "$HOME/DevTools/bin" "$HOME/DevTools/lib" "$HOME/DevTools/share"
 mkdir -p "$HOME/.local/share/nvim"
 mkdir -p "$HOME/.local/bin"
+mkdir -p "$HOME/.config"
 print_success "Created local directory structure"
 
 # Step 2: Create symlinks for dotfiles
