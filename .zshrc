@@ -37,10 +37,10 @@ bindkey -M viins "^?" backward-delete-char       # Backspaces if they exist
 typeset -U path
 [[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" $path)
 [[ -d "$HOME/DevTools/bin" ]] && path=("$HOME/DevTools/bin" $path)
+[[ -d "$HOME/DevTools/nvim-linux-x86_64/bin" ]] && path=("$HOME/DevTools/nvim-linux-x86_64/bin" $path)
 [[ -d "$HOME/dotfiles/bin" ]] && path=("$HOME/dotfiles/bin" $path)
 [[ -d "/usr/local/bin" ]] && path=("/usr/local/bin" $path)
 export PATH
-[[ -x "$HOME/DevTools/homebrew/bin/brew" ]] && eval "$("$HOME/DevTools/homebrew/bin/brew" shellenv)"
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each

@@ -65,12 +65,6 @@ mkdir -p "$HOME/.local/share/nvim"
 mkdir -p "$HOME/.local/bin"
 print_success "Created local directory structure"
 
-# Put every tool location this script installs into onto PATH up front. This
-# makes the idempotency checks below (`command -v nvim`, etc.) correct even
-# in a bare `bash setup.sh` invocation that never sourced ~/.zshrc -- e.g. a
-# second run, a fresh RUN layer in a Dockerfile, or a non-interactive shell.
-export PATH="$HOME/DevTools/nvim-linux-x86_64/bin:$HOME/DevTools/bin:$HOME/.local/bin:$PATH"
-
 # Step 2: Create symlinks for dotfiles
 print_header "Step 2: Creating Symlinks"
 create_symlink() {
@@ -152,7 +146,6 @@ if ! command -v nvim &> /dev/null; then
         tar -C $HOME/DevTools -xzf nvim-linux-x86_64.tar.gz
     )
     print_success "Neovim installed to $HOME/DevTools/nvim-linux-x86_64"
-    export PATH="$HOME/DevTools/nvim-linux-x86_64/bin:$PATH"
 fi
 
 # Helper for GH releases (rg, fd)
@@ -199,7 +192,6 @@ if ! command -v uv &> /dev/null; then
     sh "$HOME/.build/uv_install.sh"
 fi
 
-export PATH="$HOME/.local/bin:$PATH"
 NVIM_VENV="$HOME/.local/share/nvim/uv-venv"
 if [ ! -d "$NVIM_VENV" ]; then
     print_info "Creating provider venv at $NVIM_VENV..."
