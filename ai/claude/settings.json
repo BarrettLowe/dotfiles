@@ -71,7 +71,7 @@
     "frontend-design@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
-  "effortLevel": "high",
+  "effortLevel": "low",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,

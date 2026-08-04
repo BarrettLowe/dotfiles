@@ -87,7 +87,7 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 # Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
 mkdir -p "$HOME/.claude"
 bash "$DOTFILES_DIR/ai/sync.sh"
-create_symlink "$DOTFILES_DIR/ai/settings.json" "$HOME/.claude/settings.json"
+create_symlink "$DOTFILES_DIR/ai/claude/settings.json" "$HOME/.claude/settings.json"
 print_success "AI harness config synced"
 
 # GitHub Copilot CLI

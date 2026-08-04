@@ -13,7 +13,7 @@ Utilize object oriented patterns to their maximum functionality. Avoid free func
 ## Type Annotations
 
 - Annotate everything: parameters, return types, class attributes.
-- Use `from __future__ import annotations` at the top of every module.
+- Use `from __future__ import annotations` at the top of every module as needed
 - Prefer `X | None` over `Optional[X]`.
 - Prefer `list[X]`, `dict[K, V]`, `tuple[X, ...]` over `List`, `Dict`, `Tuple` from `typing`.
 

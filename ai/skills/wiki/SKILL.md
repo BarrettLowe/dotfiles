@@ -2,12 +2,11 @@
 name: wiki
 version: 1.0.0
 description: |
-  Write a GitLab wiki page in Barrett's style — high-level, teaching-focused,
+  Write a wiki page in — high-level, teaching-focused,
   no implementation details. Covers context/why it exists, an overview, and how
   it works with at least one Mermaid diagram. Output is a Markdown file ready to
-  paste into a GitLab wiki.
+  paste into a wiki.
 license: MIT
-compatibility: claude-code
 allowed-tools:
   - Read
   - Write
@@ -18,7 +17,7 @@ allowed-tools:
 
 # /wiki
 
-Write a GitLab wiki page that gives a new engineer enough context to ask the right questions.
+Write a wiki page that gives a new engineer enough context to ask the right questions.
 Not a reference doc, not a runbook — a whiteboard session on paper.
 
 ## Usage

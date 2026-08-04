@@ -57,7 +57,7 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 mkdir -p "$HOME/.claude"
 create_symlink "$DOTFILES_DIR/ai/CLAUDE_.md"   "$HOME/.claude/CLAUDE.md"
 create_symlink "$DOTFILES_DIR/ai/skills"       "$HOME/.claude/skills"
-create_symlink "$DOTFILES_DIR/ai/settings.json" "$HOME/.claude/settings.json"
+create_symlink "$DOTFILES_DIR/ai/claude/settings.json" "$HOME/.claude/settings.json"
 create_symlink "$DOTFILES_DIR/ai/agents"       "$HOME/.claude/agents"
 create_symlink "$DOTFILES_DIR/ai/rules"        "$HOME/.claude/rules"
 
