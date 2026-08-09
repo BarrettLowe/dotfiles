@@ -1,0 +1,6 @@
+{
+  "app.message.copy": [],
+  "app.thinking.toggle": ["ctrl+t"],
+  "app.models.save": [],
+  "app.models.clearAll": []
+}

@@ -6,14 +6,19 @@
 # Shared source:       ~/dotfiles/ai/{skills,agents,rules,commands}/
 # Machine-local:       ~/.local/ai/{skills,agents,rules,commands}/
 # Machine-local CLAUDE.md append: ~/CLAUDE_MORE.md
+# Machine-local pi AGENTS.md append: ~/AGENTS_MORE.md
 #
 # Skill allow-lists (one name per line, blank/#-comment lines ignored):
 #   ~/dotfiles/ai/claude/skills_list.txt -> which skills get linked into Claude Code
 #   ~/dotfiles/ai/pi/skills_list.txt     -> which skills get linked into pi agent
 #
+# pi agent's own config (not shared with Claude): ~/dotfiles/pi/{settings.json,
+# keybindings.json,agents,themes,extensions}. extensions/node_modules is
+# gitignored and reinstalled with npm on first sync.
+#
 # Harnesses synced:
 #   Claude Code -> ~/.claude/{skills,agents,rules,commands,CLAUDE.md}
-#   pi agent    -> ~/.pi/agent/skills
+#   pi agent    -> ~/.pi/agent/{AGENTS.md,skills,settings.json,keybindings.json,agents,themes,extensions}
 
 DOTFILES_AI="${DOTFILES_AI:-$HOME/dotfiles/ai}"
 LOCAL_AI="$HOME/.local/ai"
@@ -75,4 +80,31 @@ for type in agents rules commands; do
 done
 
 ## --- pi agent ---
-sync_dir "skills" "$HOME/.pi/agent/skills" "$DOTFILES_AI/pi/skills_list.txt"
+PI_AGENT_DIR="$HOME/.pi/agent"
+DOTFILES_PI="${DOTFILES_PI:-$HOME/dotfiles/pi}"
+
+sync_dir "skills" "$PI_AGENT_DIR/skills" "$DOTFILES_AI/pi/skills_list.txt"
+
+# AGENTS.md: pi's equivalent of Claude's CLAUDE.md (global instructions, loaded
+# every session). Shared base + optional machine-local append.
+[[ -L "$PI_AGENT_DIR/AGENTS.md" ]] && rm "$PI_AGENT_DIR/AGENTS.md"
+if [[ -f "$HOME/AGENTS_MORE.md" ]]; then
+    cat "$DOTFILES_AI/AGENTS.md" "$HOME/AGENTS_MORE.md" > "$PI_AGENT_DIR/AGENTS.md"
+else
+    cp "$DOTFILES_AI/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
+fi
+
+# Config files: settings + keybindings (single machine-wide source, no local override)
+ln -sfn "$DOTFILES_PI/settings.json" "$PI_AGENT_DIR/settings.json"
+ln -sfn "$DOTFILES_PI/keybindings.json" "$PI_AGENT_DIR/keybindings.json"
+
+# Whole-directory symlinks: agents (subagent personas), themes, extensions
+for dir in agents themes extensions; do
+    [[ -e "$PI_AGENT_DIR/$dir" && ! -L "$PI_AGENT_DIR/$dir" ]] && rm -rf "$PI_AGENT_DIR/$dir"
+    ln -sfn "$DOTFILES_PI/$dir" "$PI_AGENT_DIR/$dir"
+done
+
+# Extension deps aren't committed (see pi/extensions/.gitignore); install on first sync
+if [[ -f "$DOTFILES_PI/extensions/package.json" && ! -d "$DOTFILES_PI/extensions/node_modules" ]]; then
+    (cd "$DOTFILES_PI/extensions" && npm install --silent)
+fi

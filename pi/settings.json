@@ -1,0 +1,13 @@
+{
+  "quietStartup": true,
+  "lastChangelogVersion": "0.83.0",
+  "theme": "midnight-ocean",
+  "defaultProjectTrust": "ask",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-sonnet-5",
+  "defaultThinkingLevel": "medium",
+  "packages": [
+    "npm:pi-yaml-hooks"
+  ],
+  "hideThinkingBlock": false
+}

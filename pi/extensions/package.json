@@ -1,0 +1,8 @@
+{
+  "name": "pi-agent-extensions",
+  "private": true,
+  "description": "Local npm dependencies for ~/.pi/agent/extensions/*.ts. Not a pi package itself (no \"pi\" key) — just gives Node's module resolution a node_modules/ to find, per docs/extensions.md's \"package.json next to your extension\" pattern.",
+  "dependencies": {
+    "unbash": "^4.0.4"
+  }
+}

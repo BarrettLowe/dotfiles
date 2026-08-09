@@ -1,0 +1,31 @@
+# teams.yaml — team definitions for agent-team.ts
+#
+# Schema (see agent-team.ts's parseTeamsYaml — a minimal hand-rolled parser,
+# not a full YAML implementation):
+#
+#   <team-name>:
+#     - <agent-name>
+#     - <agent-name>
+#
+# Rules:
+# - Team name must end the line with ":" (no inline value).
+# - Members are indented "- name" lines.
+# - Each member name must match an agent's frontmatter `name:` field
+#   case-insensitively (not the filename).
+# - No nesting, no inline lists, no per-team metadata.
+#
+# NOTE: agent-team.ts only scans agent .md files from project-relative
+# directories (<cwd>/agents/, <cwd>/.claude/agents/, <cwd>/.pi/agents/) and
+# reads this file from <cwd>/.pi/agents/teams.yaml. Copy or symlink this file
+# and your agent .md files into a project's .pi/agents/ directory before
+# running `pi -e extensions/agent-team.ts` there.
+
+plan-build-review:
+  - planner
+  - builder
+  - reviewer
+
+scout-review-architect:
+  - scout
+  - reviewer
+  - architect
