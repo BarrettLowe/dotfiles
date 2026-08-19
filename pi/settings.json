@@ -1,7 +1,7 @@
 {
   "quietStartup": true,
-  "lastChangelogVersion": "0.83.0",
-  "theme": "midnight-ocean",
+  "lastChangelogVersion": "0.84.2",
+  "theme": "cyberpunk",
   "defaultProjectTrust": "ask",
   "defaultProvider": "anthropic",
   "defaultModel": "claude-sonnet-5",
@@ -9,5 +9,8 @@
   "packages": [
     "npm:pi-yaml-hooks"
   ],
-  "hideThinkingBlock": false
+  "hideThinkingBlock": false,
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
 }

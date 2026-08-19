@@ -54,6 +54,10 @@ const FALLBACK_MODEL = "openrouter/google/gemini-3.5-flash";
 // untruncated text saved next to the subagent's session file so the main
 // agent can read the rest on demand.
 const INLINE_RESULT_LIMIT = 4000;
+// Renders a token count as e.g. "30k" (or the raw number below 1000).
+function formatTokenCount(n: number): string {
+	return n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`;
+}
 const THINKING_OVERRIDES = ["low", "medium", "high", "xhigh"] as const;
 type ThinkingOverride = (typeof THINKING_OVERRIDES)[number];
 
@@ -106,8 +110,9 @@ interface SubState {
 	status: "running" | "done" | "error";
 	task: string;
 	textChunks: string[];
-	toolCount: number;
 	elapsed: number;
+	contextTokens: number;   // latest cumulative token usage reported by the subagent process
+	contextWindow: number;   // context window size of state.model, resolved once at spawn time
 	sessionFile: string;   // persistent JSONL session path — used by /subcont to resume
 	turnCount: number;     // increments each time /subcont continues this agent
 	model: string;
@@ -304,13 +309,18 @@ export default function (pi: ExtensionAPI) {
 							? theme.fg("dim", ` · [${state.personality}]`)
 							: "";
 
+						const usageLabel = state.contextWindow > 0
+							? `${formatTokenCount(state.contextTokens)}/${formatTokenCount(state.contextWindow)}`
+							: formatTokenCount(state.contextTokens);
+
 						lines.push(
 							theme.fg(statusColor, `${statusIcon} Subagent #${state.id}`) +
 							turnLabel +
 							personalityLabel +
 							theme.fg("dim", `  ${taskPreview}`) +
 							theme.fg("dim", `  (${Math.round(state.elapsed / 1000)}s)`) +
-							theme.fg("dim", ` | Tools: ${state.toolCount}`)
+							theme.fg("dim", ` | ${state.model || "…"}`) +
+							theme.fg("dim", ` | ${usageLabel}`)
 						);
 
 						const fullText = state.textChunks.join("");
@@ -342,13 +352,11 @@ export default function (pi: ExtensionAPI) {
 			const type = event.type;
 
 			if (type === "message_update") {
+				if (event.usage) state.contextTokens = event.usage.totalTokens ?? state.contextTokens;
 				const delta = event.assistantMessageEvent;
 				if (delta?.type === "text_delta") {
 					state.textChunks.push(delta.delta || "");
-					updateWidgets();
 				}
-			} else if (type === "tool_execution_start") {
-				state.toolCount++;
 				updateWidgets();
 			}
 		} catch {}
@@ -371,6 +379,14 @@ export default function (pi: ExtensionAPI) {
 		const thinking = options.thinking || pi.getThinkingLevel();
 		state.model = model;
 		state.thinking = thinking;
+
+		// Resolve the context window for the status line (e.g. "30k/66k"). The slash split
+		// only cuts on the first "/": provider ids never contain one, but model ids can
+		// (e.g. "openrouter/google/gemini-3.5-flash" -> provider "openrouter").
+		const slashIdx = model.indexOf("/");
+		const modelProvider = slashIdx === -1 ? model : model.slice(0, slashIdx);
+		const modelId = slashIdx === -1 ? "" : model.slice(slashIdx + 1);
+		state.contextWindow = ctx.modelRegistry?.find?.(modelProvider, modelId)?.contextWindow ?? 0;
 
 		// A personality picked at creation time sticks across /subcont turns unless
 		// explicitly overridden, so the same subagent keeps the same appended
@@ -515,8 +531,9 @@ export default function (pi: ExtensionAPI) {
 				status: "running",
 				task: args.task,
 				textChunks: [],
-				toolCount: 0,
 				elapsed: 0,
+				contextTokens: 0,
+				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
 				model: "",
@@ -654,8 +671,9 @@ export default function (pi: ExtensionAPI) {
 				status: "running",
 				task,
 				textChunks: [],
-				toolCount: 0,
 				elapsed: 0,
+				contextTokens: 0,
+				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
 				model: "",
@@ -796,8 +814,9 @@ export default function (pi: ExtensionAPI) {
 				status: "running",
 				task,
 				textChunks: [],
-				toolCount: 0,
 				elapsed: 0,
+				contextTokens: 0,
+				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
 				model: "",

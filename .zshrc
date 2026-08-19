@@ -147,6 +147,11 @@ vc() {
   (cd ~/dotfiles && $EDITOR neovim/init.lua)
 }
 alias claude-sync="bash ~/dotfiles/ai/sync.sh"
+
+# Pair programming mode: only the pair skill loaded, no other extensions/skills
+pipair() {
+  pi --no-extensions --no-skills --skill ~/dotfiles/ai/skills/pair "$@"
+}
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"

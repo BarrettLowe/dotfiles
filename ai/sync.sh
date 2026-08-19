@@ -13,12 +13,12 @@
 #   ~/dotfiles/ai/pi/skills_list.txt     -> which skills get linked into pi agent
 #
 # pi agent's own config (not shared with Claude): ~/dotfiles/pi/{settings.json,
-# keybindings.json,agents,themes,extensions}. extensions/node_modules is
+# keybindings.json,agents,themes,extensions,prompts}. extensions/node_modules is
 # gitignored and reinstalled with npm on first sync.
 #
 # Harnesses synced:
 #   Claude Code -> ~/.claude/{skills,agents,rules,commands,CLAUDE.md}
-#   pi agent    -> ~/.pi/agent/{AGENTS.md,skills,settings.json,keybindings.json,agents,themes,extensions}
+#   pi agent    -> ~/.pi/agent/{AGENTS.md,skills,settings.json,keybindings.json,agents,themes,extensions,prompts}
 
 DOTFILES_AI="${DOTFILES_AI:-$HOME/dotfiles/ai}"
 LOCAL_AI="$HOME/.local/ai"
@@ -98,8 +98,8 @@ fi
 ln -sfn "$DOTFILES_PI/settings.json" "$PI_AGENT_DIR/settings.json"
 ln -sfn "$DOTFILES_PI/keybindings.json" "$PI_AGENT_DIR/keybindings.json"
 
-# Whole-directory symlinks: agents (subagent personas), themes, extensions
-for dir in agents themes extensions; do
+# Whole-directory symlinks: agents (subagent personas), themes, extensions, prompts
+for dir in agents themes extensions prompts; do
     [[ -e "$PI_AGENT_DIR/$dir" && ! -L "$PI_AGENT_DIR/$dir" ]] && rm -rf "$PI_AGENT_DIR/$dir"
     ln -sfn "$DOTFILES_PI/$dir" "$PI_AGENT_DIR/$dir"
 done
