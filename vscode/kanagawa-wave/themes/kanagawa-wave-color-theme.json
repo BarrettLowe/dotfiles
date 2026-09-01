@@ -86,7 +86,62 @@
     "operatorOverload": "#c0a36e",
     "memberOperatorOverload": "#c0a36e",
     "newOperator": "#ff5d62",
-    "cliProperty": "#e6c384"
+    "cliProperty": "#e6c384",
+    "concept": {
+      "foreground": "#7aa89f",
+      "fontStyle": "italic"
+    },
+    "bracket": "#9cabca",
+    "unknown": "#727169",
+    "variable.globalScope": {
+      "foreground": "#ffa066",
+      "fontStyle": "italic"
+    },
+    "variable.fileScope": {
+      "foreground": "#c0a36e",
+      "fontStyle": "italic"
+    },
+    "variable.classScope": "#e6c384",
+    "variable.functionScope": "#dcd7ba",
+    "variable.static": {
+      "foreground": "#c0a36e",
+      "fontStyle": "italic"
+    },
+    "property.classScope": "#e6c384",
+    "property.static": {
+      "foreground": "#e6c384",
+      "fontStyle": "italic"
+    },
+    "type.deduced": {
+      "foreground": "#7aa89f",
+      "fontStyle": "italic"
+    },
+    "type.defaultLibrary": "#7aa89f",
+    "class.defaultLibrary": "#7aa89f",
+    "method.virtual": {
+      "foreground": "#7e9cd8",
+      "fontStyle": "italic"
+    },
+    "method.abstract": {
+      "foreground": "#7e9cd8",
+      "fontStyle": "italic"
+    },
+    "method.static": {
+      "foreground": "#7e9cd8",
+      "fontStyle": "italic"
+    },
+    "function.constructorOrDestructor": "#7aa89f",
+    "method.constructorOrDestructor": "#7aa89f",
+    "*.usedAsMutableReference": {
+      "fontStyle": "underline"
+    },
+    "*.usedAsMutablePointer": {
+      "fontStyle": "underline"
+    },
+    "*.dependentName": {
+      "foreground": "#938aa9",
+      "fontStyle": "italic"
+    }
   },
   "colors": {
     "focusBorder": "#54546d",
@@ -314,7 +369,14 @@
     "charts.green": "#98bb6c",
     "charts.purple": "#957fb8",
     "charts.foreground": "#dcd7ba",
-    "charts.lines": "#363646"
+    "charts.lines": "#363646",
+    "editorInlayHint.background": "#2a2a3700",
+    "editorInlayHint.foreground": "#54546d",
+    "editorInlayHint.typeBackground": "#2a2a3700",
+    "editorInlayHint.typeForeground": "#658594",
+    "editorInlayHint.parameterBackground": "#2a2a3700",
+    "editorInlayHint.parameterForeground": "#727169",
+    "editorGhostText.foreground": "#54546d"
   },
   "tokenColors": [
     {
@@ -843,6 +905,191 @@
       ],
       "settings": {
         "foreground": "#e6c384"
+      }
+    },
+    {
+      "name": "cmake: builtin command",
+      "scope": [
+        "support.function.cmake"
+      ],
+      "settings": {
+        "foreground": "#7fb4ca"
+      }
+    },
+    {
+      "name": "cmake: user function/macro",
+      "scope": [
+        "entity.name.function.cmake"
+      ],
+      "settings": {
+        "foreground": "#7e9cd8"
+      }
+    },
+    {
+      "name": "cmake: command keyword",
+      "scope": [
+        "support.function.commandProperty.cmake"
+      ],
+      "settings": {
+        "foreground": "#ff5d62"
+      }
+    },
+    {
+      "name": "cmake: target property",
+      "scope": [
+        "support.type.property.cmake"
+      ],
+      "settings": {
+        "foreground": "#e6c384"
+      }
+    },
+    {
+      "name": "cmake: builtin variable",
+      "scope": [
+        "support.type.variable.cmake"
+      ],
+      "settings": {
+        "foreground": "#ffa066"
+      }
+    },
+    {
+      "name": "cmake: variable",
+      "scope": [
+        "variable.other.cmake"
+      ],
+      "settings": {
+        "foreground": "#dcd7ba"
+      }
+    },
+    {
+      "name": "cmake: cache variable",
+      "scope": [
+        "variable.other.cache.cmake"
+      ],
+      "settings": {
+        "foreground": "#ffa066",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "cmake: env variable",
+      "scope": [
+        "variable.other.env.cmake"
+      ],
+      "settings": {
+        "foreground": "#e46876",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "cmake: parameter",
+      "scope": [
+        "variable.parameter.cmake"
+      ],
+      "settings": {
+        "foreground": "#c8c093",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "cmake: ${} punctuation",
+      "scope": [
+        "punctuation.section.variable.begin.cmake",
+        "punctuation.section.variable.end.cmake"
+      ],
+      "settings": {
+        "foreground": "#9cabca"
+      }
+    },
+    {
+      "name": "cmake: control flow",
+      "scope": [
+        "keyword.control.conditional.cmake",
+        "keyword.control.loop.cmake",
+        "keyword.control.return.cmake",
+        "keyword.control.command.cmake",
+        "keyword.other.cmake"
+      ],
+      "settings": {
+        "foreground": "#957fb8"
+      }
+    },
+    {
+      "name": "cmake: operator",
+      "scope": [
+        "keyword.operator.cmake"
+      ],
+      "settings": {
+        "foreground": "#c0a36e"
+      }
+    },
+    {
+      "name": "cmake: generator expression",
+      "scope": [
+        "keyword.other.generator-expression.cmake",
+        "punctuation.definition.generator-expression.begin.cmake",
+        "punctuation.definition.generator-expression.end.cmake"
+      ],
+      "settings": {
+        "foreground": "#d27e99"
+      }
+    },
+    {
+      "name": "cmake: quoted string",
+      "scope": [
+        "string.quoted.double.cmake"
+      ],
+      "settings": {
+        "foreground": "#98bb6c"
+      }
+    },
+    {
+      "name": "cmake: unquoted argument",
+      "scope": [
+        "string.unquoted.cmake"
+      ],
+      "settings": {
+        "foreground": "#c8c093"
+      }
+    },
+    {
+      "name": "cmake: boolean",
+      "scope": [
+        "constant.language.boolean.cmake",
+        "constant.language.cmake"
+      ],
+      "settings": {
+        "foreground": "#ffa066"
+      }
+    },
+    {
+      "name": "cmake: deprecated",
+      "scope": [
+        "invalid.deprecated.cmake"
+      ],
+      "settings": {
+        "foreground": "#c34043",
+        "fontStyle": "strikethrough"
+      }
+    },
+    {
+      "name": "cmakecache: variable",
+      "scope": [
+        "support.variable.cmakecache",
+        "variable.other.cmakecache"
+      ],
+      "settings": {
+        "foreground": "#e6c384"
+      }
+    },
+    {
+      "name": "cmakecache: value",
+      "scope": [
+        "string.unquoted.cmakecache",
+        "constant.language.cmakecache"
+      ],
+      "settings": {
+        "foreground": "#c8c093"
       }
     }
   ]
