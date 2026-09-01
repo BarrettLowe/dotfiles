@@ -1,0 +1,19 @@
+{
+  "name": "kanagawa-wave",
+  "displayName": "Kanagawa Wave",
+  "description": "Kanagawa Wave with per-token-type syntax highlighting. Matches the nvim, foot, tmux, sway, waybar and pi themes in barrett's dotfiles.",
+  "version": "1.0.0",
+  "publisher": "local",
+  "private": true,
+  "engines": { "vscode": "^1.70.0" },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Kanagawa Wave",
+        "uiTheme": "vs-dark",
+        "path": "./themes/kanagawa-wave-color-theme.json"
+      }
+    ]
+  }
+}

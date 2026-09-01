@@ -89,6 +89,11 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 create_symlink "$DOTFILES_DIR/sway" "$HOME/.config/sway"
 create_symlink "$DOTFILES_DIR/waybar" "$HOME/.config/waybar"
 
+# VS Code colour theme. Packaged and installed rather than symlinked — see the
+# comment in vscode/install.sh for why a symlink does not work. No-ops when
+# VS Code is not installed on this machine.
+bash "$DOTFILES_DIR/vscode/install.sh" || print_info "VS Code theme install skipped"
+
 # Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
 mkdir -p "$HOME/.claude"
 bash "$DOTFILES_DIR/ai/sync.sh"
