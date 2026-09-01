@@ -1,0 +1,357 @@
+exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+# exec seat0 xcursor_theme default 24
+seat * xcursor_theme Adwaita 24
+
+### Variables
+#
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+# Home row direction keys, like vim
+set $left h
+set $down j
+set $up k
+set $right l
+# Your preferred terminal emulator
+set $term foot
+# Your preferred application launcher
+# Note: pass the final command to swaymsg so that the resulting window can be opened
+# on the original workspace that the command was run on.
+#set $menu dmenu_path | wmenu | xargs swaymsg exec --
+set $menu wofi --show drun -i
+
+include /etc/sway/config-vars.d/*
+
+### Output configuration
+#
+# Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
+output * bg #16161d solid_color
+#
+# Example configuration:
+#
+#   output HDMI-A-1 resolution 1920x1080 position 1920,0
+#
+# You can get the names of your outputs by running: swaymsg -t get_outputs
+
+### Idle configuration
+#
+exec_always killall swayidle; swayidle -w \
+         timeout 300 'swaylock -f -c 000000' \
+         timeout 6000 'swaymsg "output * dpms off"' \
+         resume 'exec ~/.config/sway/scripts/restore-outputs.sh 1' \
+         lock 'swaylock -f -c 000000' \
+         before-sleep 'swaylock -f -c 000000'
+bindsym $mod+Control+BackSpace exec swaylock -c 000000
+# exec swayidle -w \
+#          timeout 300 'swaylock -f -c 000000' \
+#          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+#          before-sleep 'swaylock -f -c 000000'
+#
+# This will lock your screen after 300 seconds of inactivity, then turn off
+# your displays after another 300 seconds, and turn your screens back on when
+# resumed. It will also lock your screen before your computer goes to sleep.
+
+# Laptop lid open/close
+bindswitch --locked lid:on exec swaymsg "output eDP-1 disable"
+bindswitch --locked lid:off exec swaymsg "output eDP-1 enable"
+
+# Restore output state on startup/reload (brief delay lets outputs settle)
+exec_always "~/.config/sway/scripts/restore-outputs.sh 0"
+
+# Detect and apply timezone from IP geolocation on startup/reload
+exec_always "~/.config/sway/scripts/update-timezone.sh &"
+
+
+
+### Input configuration
+#
+# Example configuration:
+#
+#   input "2:14:SynPS/2_Synaptics_TouchPad" {
+#       dwt enabled
+#       tap enabled
+#       natural_scroll enabled
+#       middle_emulation enabled
+#   }
+#
+# You can get the names of your inputs by running: swaymsg -t get_inputs
+# Read `man 5 sway-input` for more information about this section.
+input "1739:53231:VEN_06CB:00_06CB:CFEF_Touchpad" {
+    tap enabled
+    natural_scroll enabled
+}
+
+### Key bindings
+#
+# Basics:
+#
+    # Start a terminal
+    bindsym $mod+Return exec $term
+
+    # Toggle claude TUI scratchpad (spawns on first launch)
+    bindsym $mod+grave exec ~/.local/bin/claude-tui-toggle
+
+    # Kill focused window
+    bindsym $mod+Shift+q kill
+
+    # Start your launcher
+    bindsym $mod+d exec $menu
+
+# Media control keys
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+bindsym --locked XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym --locked XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym --locked XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86MonBrightnessUp exec brightnessctl set +5%
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+
+bindsym XF86Calculator exec gnome-calculator
+
+    # Drag floating windows by holding down $mod and left mouse button.
+    # Resize them with right mouse button + $mod.
+    # Despite the name, also works for non-floating windows.
+    # Change normal to inverse to use left mouse button for resizing and right
+    # mouse button for dragging.
+    floating_modifier $mod normal
+
+    # Reload the configuration file
+    bindsym $mod+Shift+c reload
+
+    # Exit sway (logs you out of your Wayland session)
+    bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
+#
+# Moving around:
+#
+    # Move your focus around
+    bindsym $mod+$left focus left
+    bindsym $mod+$down focus down
+    bindsym $mod+$up focus up
+    bindsym $mod+$right focus right
+    # Or use $mod+[up|down|left|right]
+    bindsym $mod+Left focus left
+    bindsym $mod+Down focus down
+    bindsym $mod+Up focus up
+    bindsym $mod+Right focus right
+
+    # Move the focused window with the same, but add Shift
+    bindsym $mod+Shift+$left move left
+    bindsym $mod+Shift+$down move down
+    bindsym $mod+Shift+$up move up
+    bindsym $mod+Shift+$right move right
+    # Ditto, with arrow keys
+    bindsym $mod+Shift+Left move left
+    bindsym $mod+Shift+Down move down
+    bindsym $mod+Shift+Up move up
+    bindsym $mod+Shift+Right move right
+
+#
+# Workspaces:
+#
+
+    set $ws1 "1: Sp"
+    set $ws2 "2: Dev"
+    set $ws3 "3: Term"
+    set $ws4 "4: Web"
+    set $ws5 "5: Brain"
+    set $ws6 "6: Chat"
+    set $ws7 "7: Misc"
+    set $ws8 "8: Misc2"
+    set $ws9 "9: Media"
+    set $ws10 "10: Dev"
+    # Switch to workspace
+    bindsym $mod+1 workspace $ws1
+    bindsym $mod+2 workspace $ws2
+    bindsym $mod+3 workspace $ws3
+    bindsym $mod+4 workspace $ws4
+    bindsym $mod+5 workspace $ws5
+    bindsym $mod+6 workspace $ws6
+    bindsym $mod+7 workspace $ws7
+    bindsym $mod+8 workspace $ws8
+    bindsym $mod+9 workspace $ws9
+    bindsym $mod+0 workspace $ws10
+    # Move focused container to workspace
+    bindsym $mod+Shift+1 move container to workspace $ws1
+    bindsym $mod+Shift+2 move container to workspace $ws2
+    bindsym $mod+Shift+3 move container to workspace $ws3
+    bindsym $mod+Shift+4 move container to workspace $ws4
+    bindsym $mod+Shift+5 move container to workspace $ws5
+    bindsym $mod+Shift+6 move container to workspace $ws6
+    bindsym $mod+Shift+7 move container to workspace $ws7
+    bindsym $mod+Shift+8 move container to workspace $ws8
+    bindsym $mod+Shift+9 move container to workspace $ws9
+    bindsym $mod+Shift+0 move container to workspace $ws10
+
+    # Switch to workspace
+    bindsym $mod+KP_1 workspace $ws1
+    bindsym $mod+Shift+KP_1 move container to workspace $ws1
+    bindsym $mod+KP_2 workspace $ws2
+    bindsym $mod+Shift+KP_2 move container to workspace $ws2
+    bindsym $mod+KP_3 workspace $ws3
+    bindsym $mod+Shift+KP_3 move container to workspace $ws3
+    bindsym $mod+KP_4 workspace $ws4
+    bindsym $mod+Shift+KP_4 move container to workspace $ws4
+    bindsym $mod+KP_5 workspace $ws5
+    bindsym $mod+Shift+KP_5 move container to workspace $ws5
+    bindsym $mod+KP_6 workspace $ws6
+    bindsym $mod+Shift+KP_6 move container to workspace $ws6
+    bindsym $mod+KP_7 workspace $ws7
+    bindsym $mod+Shift+KP_7 move container to workspace $ws7
+    bindsym $mod+KP_8 workspace $ws8
+    bindsym $mod+Shift+KP_8 move container to workspace $ws8
+    bindsym $mod+KP_9 workspace $ws9
+    bindsym $mod+Shift+KP_9 move container to workspace $ws9
+    bindsym $mod+KP_0 workspace $ws10
+    bindsym $mod+Shift+KP_0 move container to workspace $ws10
+
+    # Note: workspaces can have any name you want, not just numbers.
+    # We just use 1-10 as the default.
+
+    # Move workspaces to other monitors
+    bindsym $mod+Control+Left move workspace to output left
+    bindsym $mod+Control+$left move workspace to output left
+    bindsym $mod+Control+Right move workspace to output right
+    bindsym $mod+Control+$right move workspace to output right
+#
+# Layout stuff:
+#
+    # You can "split" the current object of your focus with
+    # $mod+b or $mod+v, for horizontal and vertical splits
+    # respectively.
+    bindsym $mod+b splith
+    bindsym $mod+v splitv
+
+    # Switch the current container between different layout styles
+    bindsym $mod+s layout stacking
+    bindsym $mod+w layout tabbed
+    bindsym $mod+e layout toggle split
+
+    # Make the current focus fullscreen
+    bindsym $mod+f fullscreen
+
+    # Toggle the current focus between tiling and floating mode
+    bindsym $mod+Shift+space floating toggle
+
+    bindsym $mod+Shift+b exec blueman-manager
+    bindsym $mod+Shift+s exec pavucontrol
+
+    # Swap focus between the tiling area and the floating area
+    bindsym $mod+space focus mode_toggle
+
+    # Move focus to the parent container
+    bindsym $mod+a focus parent
+
+    # Select a region and copy it directly to the clipboard (no file saved)
+    bindsym $mod+P exec grimshot copy area
+    # Capture the focused window and copy it to the clipboard
+    bindsym $mod+Shift+P exec grimshot copy active && notify-send -t 2000 "Screenshot" "Window copied to clipboard"
+
+#
+# Scratchpad:
+#
+    # Sway has a "scratchpad", which is a bag of holding for windows.
+    # You can send windows there and get them back later.
+
+    # Move the currently focused window to the scratchpad
+    bindsym $mod+Shift+minus move scratchpad
+
+    # Show the next scratchpad window or hide the focused scratchpad window.
+    # If there are multiple scratchpad windows, this command cycles through them.
+    bindsym $mod+minus scratchpad show
+#
+# Resizing containers:
+#
+mode "resize" {
+    # left will shrink the containers width
+    # right will grow the containers width
+    # up will shrink the containers height
+    # down will grow the containers height
+    bindsym $left resize shrink width 10px
+    bindsym $down resize grow height 10px
+    bindsym $up resize shrink height 10px
+    bindsym $right resize grow width 10px
+
+    # Ditto, with arrow keys
+    bindsym Left resize shrink width 10px
+    bindsym Down resize grow height 10px
+    bindsym Up resize shrink height 10px
+    bindsym Right resize grow width 10px
+
+    # Return to default mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+#
+# Status Bar:
+#
+# Read `man 5 sway-bar` for more information about this section.
+#bar {
+#    position top
+#
+#    # When the status_command prints a new line to stdout, swaybar updates.
+#    # The default just shows the current date and time.
+#    status_command while date +'%Y-%m-%d %X'; do sleep 1; done
+#
+#    colors {
+#        statusline #ffffff
+#        background #323232
+#        inactive_workspace #32323200 #32323200 #5c5c5c
+#    }
+#}
+
+
+include /etc/sway/config.d/*
+
+gaps inner 6
+# gaps outer 2
+default_orientation horizontal
+
+# Remap capslock to ctrl for all keyboards
+input "type:keyboard" {
+    xkb_layout "us,graphite"
+    xkb_options ctrl:nocaps
+}
+
+# Toggle between US and Graphite layouts
+bindsym Alt+Shift+space input type:keyboard xkb_switch_layout next
+
+default_border pixel 2
+default_floating_border pixel 2
+
+# Hide the border when a workspace holds a single window; the focus indicator is
+# only useful when there is another window it could be pointing away from.
+smart_borders on
+
+# Kanagawa Wave palette — same source as the nvim colorscheme, foot, waybar and tmux.
+# sumiInk0 #16161d  sumiInk3 #1f1f28  sumiInk4 #2a2a37  sumiInk5 #363646
+# fujiWhite #dcd7ba  fujiGray #727169  crystalBlue #7e9cd8  autumnRed #c34043
+#
+# Structure: client.<class> <border> <bg> <text> <indicator> <child_border>
+# "indicator" marks the edge a new split would open on, so it is deliberately a
+# different hue from the border — otherwise you cannot see which way a split goes.
+client.focused          #7e9cd8 #2a2a37 #dcd7ba #e6c384 #7e9cd8
+client.focused_inactive #363646 #1f1f28 #c8c093 #363646 #363646
+client.unfocused        #2a2a37 #16161d #727169 #2a2a37 #2a2a37
+client.urgent           #c34043 #1f1f28 #dcd7ba #c34043 #c34043
+
+# focus_on_window_activation focus
+# for_window [app_id="microsoft-edge"] focus
+for_window [urgent=latest] focus
+
+# Target the "anonymous" Teams notification window
+for_window [shell="xdg_shell" app_id="^$" title="^$"] floating enable, move position 2800 50, sticky enable, no_focus
+
+# Claude TUI scratchpad — float, size, and park in scratchpad on spawn
+for_window [app_id="claude-tui"] {
+    floating enable
+    resize set 420 900
+}
+
+exec_always killall waybar; sleep 0.5 && waybar
+exec mako
+exec blueman-applet
+exec ~/.azotebg
+

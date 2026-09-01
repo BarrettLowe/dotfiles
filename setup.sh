@@ -75,7 +75,7 @@ create_symlink() {
         print_error "Source file does not exist: $source"
         return 1
     fi
-    ln -sf "$source" "$target"
+    ln -sfn "$source" "$target"
     print_success "Linked $(basename "$target")"
 }
 
@@ -83,6 +83,11 @@ create_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 create_symlink "$DOTFILES_DIR/neovim" "$HOME/.config/nvim"
 create_symlink "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
+
+# Wayland desktop: sway compositor + waybar status bar. Both are whole-directory
+# symlinks, so scripts/ and style.css come along with the config files.
+create_symlink "$DOTFILES_DIR/sway" "$HOME/.config/sway"
+create_symlink "$DOTFILES_DIR/waybar" "$HOME/.config/waybar"
 
 # Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
 mkdir -p "$HOME/.claude"

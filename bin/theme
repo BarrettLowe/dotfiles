@@ -2,7 +2,7 @@
 # theme [light|dark] — toggle or set system theme
 # No argument = toggle current value.
 #
-# Current scope: foot terminal, tmux
+# Current scope: foot terminal, tmux, nvim
 # TODO: nvim (requires --listen socket setup in init.lua)
 
 set -euo pipefail
@@ -58,9 +58,12 @@ if [ "$TARGET" = "light" ]; then
     c0=24292f; c1=cf222e; c2=116329; c3=4d2d00; c4=0550ae; c5=8250df; c6=1b7c83; c7=6e7781
     b0=57606a; b1=a40e26; b2=1a7f37; b3=633c01; b4=0969da; b5=6639ba; b6=1b7c83; b7=8c959f
 else
-    bg=011627; fg=acb4c2
-    c0=1d3b53; c1=fc514e; c2=a1cd5e; c3=e3d18a; c4=82aaff; c5=c792ea; c6=7fdbca; c7=a1aab8
-    b0=7c8f8f; b1=ff5874; b2=21c7a8; b3=ecc48d; b4=82aaff; b5=ae81ff; b6=7fdbca; b7=d6deeb
+    # Kanagawa Wave — must stay in sync with foot/colors-dark.ini, otherwise
+    # toggling the theme repaints the running terminal a different colour than
+    # a freshly-opened one.
+    bg=1f1f28; fg=dcd7ba
+    c0=090618; c1=c34043; c2=76946a; c3=c0a36e; c4=7e9cd8; c5=957fb8; c6=6a9589; c7=c8c093
+    b0=727169; b1=e82424; b2=98bb6c; b3=e6c384; b4=7fb4ca; b5=938aa9; b6=7aa89f; b7=d3c6aa
 fi
 
 _osc "11;#$bg"   # background
@@ -81,10 +84,10 @@ if [ -n "${TMUX:-}" ] || tmux info &>/dev/null 2>&1; then
         tmux set-option -g pane-active-border-style "fg=colour25"   # dark blue
         tmux set-option -g pane-border-style        "fg=colour250"  # light grey
     else
-        tmux set-option -g status-bg black
-        tmux set-option -g status-fg white
-        tmux set-option -g pane-active-border-style "fg=colour208,bg=colour238"  # orange on dark
-        tmux set-option -g pane-border-style        "fg=colour237"               # dark grey
+        tmux set-option -g status-bg "#1f1f28"                        # sumiInk3
+        tmux set-option -g status-fg "#727169"                        # fujiGray
+        tmux set-option -g pane-active-border-style "fg=#7e9cd8"      # crystalBlue
+        tmux set-option -g pane-border-style        "fg=#363646"      # sumiInk5
     fi
 fi
 
@@ -95,7 +98,7 @@ fi
 #
 # --remote-expr runs a VimL expression server-side (mode-agnostic, unlike
 # --remote-send which injects keystrokes and breaks if nvim is in insert mode).
-NVIM_COLORSCHEME=$([ "$TARGET" = "light" ] && echo "github_light" || echo "nightfly")
+NVIM_COLORSCHEME=$([ "$TARGET" = "light" ] && echo "github_light" || echo "kanagawa")
 # Search both XDG_RUNTIME_DIR and /tmp — init.lua falls back to /tmp when XDG_RUNTIME_DIR is not writable.
 for sock in "${XDG_RUNTIME_DIR:-/tmp}"/nvim-*.sock /tmp/nvim-*.sock; do
     [ -S "$sock" ] && nvim --server "$sock" \

@@ -1,0 +1,187 @@
+/* Kanagawa Wave — same palette as the nvim colorscheme, foot, sway and tmux.
+ * Layout intent: modules are FLAT (no pill backgrounds). Eleven pills side by
+ * side read as a wall of badges; colored text on a single continuous bar reads
+ * as one status line. Only the workspace indicator gets a background, because
+ * it is the one thing you need to find instantly. */
+
+/* Backgrounds, darkest to lightest */
+@define-color sumi_ink0  #16161d;
+@define-color sumi_ink3  #1f1f28;
+@define-color sumi_ink4  #2a2a37;
+@define-color sumi_ink5  #363646;
+
+/* Text */
+@define-color fuji_white  #dcd7ba;
+@define-color old_white   #c8c093;
+@define-color fuji_gray   #727169;
+
+/* Accents */
+@define-color crystal_blue #7e9cd8;
+@define-color spring_blue  #7fb4ca;
+@define-color wave_aqua    #7aa89f;
+@define-color spring_green #98bb6c;
+@define-color carp_yellow  #e6c384;
+@define-color ronin_yellow #ff9e3b;
+@define-color sakura_pink  #d27e99;
+@define-color oni_violet   #957fb8;
+@define-color autumn_red   #c34043;
+@define-color samurai_red  #e82424;
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Ubuntu Nerd Font", sans-serif;
+    font-size: 13px;
+    font-weight: normal;
+    /* GTK draws a 1px focus outline on buttons by default; it fights the
+     * underline used for the focused workspace. */
+    border: none;
+    box-shadow: none;
+    min-height: 0;
+}
+
+window#waybar {
+    /* Alpha matches foot's 0.95 so the bar and terminals sit at the same depth. */
+    background-color: rgba(31, 31, 40, 0.95);
+    color: @fuji_white;
+    border-bottom: 1px solid @sumi_ink5;
+}
+
+/* --- Workspaces --------------------------------------------------------- */
+
+#workspaces {
+    margin: 0 4px;
+}
+
+#workspaces button {
+    padding: 0 10px;
+    margin: 3px 2px;
+    border-radius: 6px;
+    color: @fuji_gray;
+    background-color: transparent;
+}
+
+#workspaces button:hover {
+    color: @old_white;
+    background-color: @sumi_ink4;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+    color: @sumi_ink0;
+    background-color: @crystal_blue;
+    font-weight: bold;
+}
+
+#workspaces button.urgent {
+    color: @fuji_white;
+    background-color: @autumn_red;
+}
+
+#mode {
+    padding: 0 10px;
+    color: @sumi_ink0;
+    background-color: @carp_yellow;
+    font-weight: bold;
+}
+
+/* --- Center ------------------------------------------------------------- */
+
+#window {
+    color: @old_white;
+    padding: 0 10px;
+}
+
+/* Dim the title bar area when no window is focused, so an empty workspace
+ * does not leave a stale-looking title behind. */
+window#waybar.empty #window {
+    color: @fuji_gray;
+}
+
+/* --- Status modules ----------------------------------------------------- */
+
+#custom-headset,
+#mpris,
+#idle_inhibitor,
+#pulseaudio,
+#network,
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#language,
+#battery,
+#clock,
+#tray {
+    padding: 0 10px;
+    background-color: transparent;
+}
+
+#custom-headset  { color: @sakura_pink; }
+#mpris           { color: @oni_violet; }
+#idle_inhibitor  { color: @fuji_gray; }
+#idle_inhibitor.activated { color: @carp_yellow; }
+#pulseaudio      { color: @wave_aqua; }
+#pulseaudio.muted { color: @fuji_gray; }
+#network         { color: @crystal_blue; }
+#network.disconnected { color: @autumn_red; }
+#cpu             { color: @spring_blue; }
+#memory          { color: @spring_green; }
+#temperature     { color: @wave_aqua; }
+#temperature.critical { color: @samurai_red; }
+#backlight       { color: @carp_yellow; }
+#language        { color: @fuji_gray; }
+#battery         { color: @spring_green; }
+#battery.charging, #battery.plugged { color: @wave_aqua; }
+#battery.warning:not(.charging)  { color: @ronin_yellow; }
+#battery.critical:not(.charging) { color: @samurai_red; font-weight: bold; }
+
+/* The clock is the right-hand anchor, so it gets the one accent background on
+ * this side of the bar. Everything else stays flat. */
+#clock {
+    color: @sumi_ink0;
+    background-color: @crystal_blue;
+    font-weight: bold;
+    padding: 0 12px;
+    margin: 3px 2px 3px 6px;
+    border-radius: 6px;
+}
+
+#tray {
+    padding: 0 8px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* --- Claude Code status ------------------------------------------------- */
+/* Hidden until the hook marks it .waiting, so it costs no width when idle. */
+
+#custom-claude {
+    opacity: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+#custom-claude.waiting {
+    opacity: 1;
+    min-width: unset;
+    padding: 0 10px;
+    color: @ronin_yellow;
+    font-weight: bold;
+}
+
+tooltip {
+    background-color: @sumi_ink0;
+    border: 1px solid @sumi_ink5;
+    border-radius: 6px;
+}
+
+tooltip label {
+    color: @fuji_white;
+    padding: 4px;
+}
