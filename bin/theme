@@ -91,18 +91,15 @@ if [ -n "${TMUX:-}" ] || tmux info &>/dev/null 2>&1; then
     tmux set-option -g pane-active-border-style "fg=#$_paneactive"
     tmux set-option -g pane-border-style        "fg=#$_pane"
 
-    # The rounded caps in .tmux.conf are drawn in the pill colour ON the bar
-    # colour, so the format strings have to be rebuilt whenever either changes —
-    # otherwise the caps stay the old background and show as blobs on the new bar.
-    # U+E0B6 / U+E0B4 are the half-circle glyphs; see .tmux.conf for the details.
-    _lcap=$'\ue0b6'
-    _rcap=$'\ue0b4'
-    _pill_open="#[fg=#$_pill,bg=#$_bar]$_lcap#[fg=#$_ink,bg=#$_pill,bold]"
-    _pill_close="#[fg=#$_pill,bg=#$_bar]$_rcap"
+    # The accent blocks in .tmux.conf hardcode both the block colour and the bar
+    # colour it sits on, so the format strings must be rebuilt whenever either
+    # changes — otherwise a toggle leaves the old bar colour inside the segments.
+    _pill_open="#[fg=#$_ink,bg=#$_pill,bold]"
+    _pill_close="#[fg=#$_dim,bg=#$_bar]"
 
     tmux set-option -g status-left  "$_pill_open #S $_pill_close"
     tmux set-option -g status-right "#[fg=#$_warm,bg=#$_bar] %d-%b-%y $_pill_open %H:%M $_pill_close"
-    tmux set-option -gw window-status-format "#[fg=#$_dim,bg=#$_bar]  #I:#W  "
+    tmux set-option -gw window-status-format "#[fg=#$_dim,bg=#$_bar] #I:#W "
     tmux set-option -gw window-status-current-format "$_pill_open #I:#W $_pill_close"
 fi
 
