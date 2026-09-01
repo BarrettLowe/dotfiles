@@ -88,11 +88,20 @@ create_symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 # symlinks, so scripts/ and style.css come along with the config files.
 create_symlink "$DOTFILES_DIR/sway" "$HOME/.config/sway"
 create_symlink "$DOTFILES_DIR/waybar" "$HOME/.config/waybar"
+create_symlink "$DOTFILES_DIR/mako" "$HOME/.config/mako"
 
 # VS Code colour theme. Packaged and installed rather than symlinked — see the
 # comment in vscode/install.sh for why a symlink does not work. No-ops when
 # VS Code is not installed on this machine.
 bash "$DOTFILES_DIR/vscode/install.sh" || print_info "VS Code theme install skipped"
+
+# VS Code user settings + keybindings. Note: VS Code writes settings.json by
+# replacing the file, which can turn these symlinks back into regular files.
+# If your settings stop tracking, re-run setup.sh.
+if [ -d "$HOME/.config/Code/User" ]; then
+    create_symlink "$DOTFILES_DIR/vscode/User/settings.json" "$HOME/.config/Code/User/settings.json"
+    create_symlink "$DOTFILES_DIR/vscode/User/keybindings.json" "$HOME/.config/Code/User/keybindings.json"
+fi
 
 # Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
 mkdir -p "$HOME/.claude"

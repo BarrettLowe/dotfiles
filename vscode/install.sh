@@ -16,9 +16,9 @@ if ! command -v code &>/dev/null; then
     exit 0
 fi
 
-npx --yes @vscode/vsce package \
+(cd "$EXT_DIR" && npx --yes @vscode/vsce package \
     --allow-missing-repository --skip-license \
-    --out "$VSIX" >/dev/null
+    --out "$VSIX" >/dev/null)
 
 code --install-extension "$VSIX" --force
 rm -rf "$(dirname "$VSIX")"

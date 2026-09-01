@@ -51,7 +51,42 @@
     "builtinType": "#7aa89f",
     "*.deprecated": {
       "fontStyle": "strikethrough"
-    }
+    },
+    "localVariable": "#dcd7ba",
+    "globalVariable": {
+      "foreground": "#ffa066",
+      "fontStyle": "italic"
+    },
+    "memberVariable": "#e6c384",
+    "staticMemberVariable": {
+      "foreground": "#e6c384",
+      "fontStyle": "italic"
+    },
+    "memberFunction": "#7e9cd8",
+    "staticMemberFunction": {
+      "foreground": "#7e9cd8",
+      "fontStyle": "italic"
+    },
+    "referenceType": "#7aa89f",
+    "valueType": "#7aa89f",
+    "templateType": {
+      "foreground": "#7aa89f",
+      "fontStyle": "italic"
+    },
+    "templateFunction": {
+      "foreground": "#7e9cd8",
+      "fontStyle": "italic"
+    },
+    "genericType": {
+      "foreground": "#938aa9",
+      "fontStyle": "italic"
+    },
+    "numberLiteral": "#d27e99",
+    "customLiteral": "#d27e99",
+    "operatorOverload": "#c0a36e",
+    "memberOperatorOverload": "#c0a36e",
+    "newOperator": "#ff5d62",
+    "cliProperty": "#e6c384"
   },
   "colors": {
     "focusBorder": "#54546d",

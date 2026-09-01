@@ -1,0 +1,26 @@
+{
+    "vscode-neovim.neovimExecutablePaths.linux": "/home/barrett-lowe/.local/bin/nvim",
+    "vscode-neovim.neovimInitVimPaths.linux": "/home/barrett-lowe/dotfiles/.vimrc",
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+    "chat.viewSessions.orientation": "stacked",
+    "github.copilot.chat.customOAIModels": {
+            "lmstudio": {
+                "name": "LM Studio",
+                "requiresAPIKey": false,
+                "url": "http://localhost:1234",
+                "toolCalling": true,
+                "vision": true,
+                "maxInputTokens": 21504,
+                "maxOutputTokens": 21504,
+            }
+        },
+        "gitlens.ai.model": "vscode",
+        "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+        "workbench.colorTheme": "Kanagawa Wave",
+        // Without this the window title bar is drawn by GTK, which paints it
+        // light regardless of the theme. "custom" lets VS Code colour it.
+        "window.titleBarStyle": "custom",
+        "C_Cpp.intelliSenseEngine": "disabled",
+}
