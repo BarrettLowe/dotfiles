@@ -1,7 +1,7 @@
 {
   "quietStartup": true,
   "lastChangelogVersion": "0.84.2",
-  "theme": "cyberpunk",
+  "theme": "kanagawa",
   "defaultProjectTrust": "ask",
   "defaultProvider": "anthropic",
   "defaultModel": "claude-sonnet-5",
