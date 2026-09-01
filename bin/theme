@@ -75,20 +75,35 @@ _osc "4;12;#$b4"; _osc "4;13;#$b5"; _osc "4;14;#$b6"; _osc "4;15;#$b7"
 
 # --- Tmux ---
 # set-option -g applies to the entire tmux server (all sessions at once).
-# These mirror the hardcoded dark defaults in .tmux.conf and override them live.
+# These mirror the dark defaults in .tmux.conf and override them live.
 # No config reload needed — set-option takes effect immediately.
 if [ -n "${TMUX:-}" ] || tmux info &>/dev/null 2>&1; then
     if [ "$TARGET" = "light" ]; then
-        tmux set-option -g status-bg colour255       # near-white
-        tmux set-option -g status-fg colour232       # near-black
-        tmux set-option -g pane-active-border-style "fg=colour25"   # dark blue
-        tmux set-option -g pane-border-style        "fg=colour250"  # light grey
+        _bar=eeeeee; _pill=0550ae; _ink=ffffff; _dim=57606a; _warm=4d2d00
+        _paneactive=0550ae; _pane=d0d7de
     else
-        tmux set-option -g status-bg "#1f1f28"                        # sumiInk3
-        tmux set-option -g status-fg "#727169"                        # fujiGray
-        tmux set-option -g pane-active-border-style "fg=#7e9cd8"      # crystalBlue
-        tmux set-option -g pane-border-style        "fg=#363646"      # sumiInk5
+        _bar=1f1f28; _pill=7e9cd8; _ink=16161d; _dim=727169; _warm=c8c093   # sumiInk3 / crystalBlue / sumiInk0 / fujiGray / oldWhite
+        _paneactive=7e9cd8; _pane=363646
     fi
+
+    tmux set-option -g status-bg "#$_bar"
+    tmux set-option -g status-fg "#$_dim"
+    tmux set-option -g pane-active-border-style "fg=#$_paneactive"
+    tmux set-option -g pane-border-style        "fg=#$_pane"
+
+    # The rounded caps in .tmux.conf are drawn in the pill colour ON the bar
+    # colour, so the format strings have to be rebuilt whenever either changes —
+    # otherwise the caps stay the old background and show as blobs on the new bar.
+    # U+E0B6 / U+E0B4 are the half-circle glyphs; see .tmux.conf for the details.
+    _lcap=$'\ue0b6'
+    _rcap=$'\ue0b4'
+    _pill_open="#[fg=#$_pill,bg=#$_bar]$_lcap#[fg=#$_ink,bg=#$_pill,bold]"
+    _pill_close="#[fg=#$_pill,bg=#$_bar]$_rcap"
+
+    tmux set-option -g status-left  "$_pill_open #S $_pill_close"
+    tmux set-option -g status-right "#[fg=#$_warm,bg=#$_bar] %d-%b-%y $_pill_open %H:%M $_pill_close"
+    tmux set-option -gw window-status-format "#[fg=#$_dim,bg=#$_bar]  #I:#W  "
+    tmux set-option -gw window-status-current-format "$_pill_open #I:#W $_pill_close"
 fi
 
 # --- Nvim ---
