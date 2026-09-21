@@ -2,7 +2,6 @@
 name: documenter
 description: Writes documentation for wikis, READMEs, or any medium an engineer on a team might need
 tools: read,grep,find,bash,write,edit
-model: sonnet
 color: purple
 ---
 

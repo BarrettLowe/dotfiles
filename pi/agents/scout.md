@@ -2,7 +2,6 @@
 name: scout
 description: Explores and maps unfamiliar parts of the codebase — finds where something lives, how it's wired together, and what touches what. Use before planning or building when the relevant code isn't already understood, or to answer "where/how does X work" questions.
 tools: read,grep,find,bash
-model: sonnet
 color: yellow
 ---
 

@@ -2,7 +2,6 @@
 name: bug-investigator
 description: Bug diagnosis specialist. Use when a bug is reported or a test is failing. Investigates and identifies root cause WITHOUT touching source code. Returns a diagnosis and recommended fix for the main session to implement.
 tools: read,grep,find,bash
-model: sonnet
 color: red
 ---
 

@@ -1,13 +1,7 @@
 ---
-name: code-docs
-version: 1.0.0
+name: code-commenter
 description: |
-  Write down to earth code comments. Use when needing to add comments to classes, functions, methods etc. 
-compatibility: claude-code
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
+  Write down to earth code comments. Use when needing to add comments to classes, functions, methods etc in programming languages.
 ---
 
 The user wants you to add documentation to the code. This will be for functions, methods, or classes - NOT individual variables. 

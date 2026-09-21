@@ -1,0 +1,20 @@
+# Global implementation workflows for implementation-team.ts.
+# A project may override these at .pi/agents/implementation-team.yaml.
+
+implementation:
+  description: "Plan, implement, verify, and independently review a scoped change"
+  steps:
+    - agent: planner
+      prompt: "Create the smallest concrete implementation plan for the original task. Inspect the repository first. Surface blockers rather than guessing. Original task:\n\n$ORIGINAL"
+    - agent: builder
+      prompt: "Implement the original task using the plan below. Inspect the repository, make the smallest correct changes, and run relevant tests or checks. Original task:\n\n$ORIGINAL\n\nPlan:\n\n$INPUT"
+    - agent: reviewer
+      prompt: "Independently inspect the actual working tree and review it against the original task. Run relevant verification when possible. Do not rely only on the implementer report. End with exactly one marker on its own line: IMPLEMENTATION_APPROVED or IMPLEMENTATION_NEEDS_CHANGES. Original task:\n\n$ORIGINAL\n\nImplementer report:\n\n$INPUT"
+
+implementation-repair:
+  description: "Apply requested corrections and independently re-review the working tree"
+  steps:
+    - agent: builder
+      prompt: "Repair the existing implementation using the complete correction request below. Inspect the current working tree, preserve the original requirements, make only necessary changes, and run relevant tests. Correction request:\n\n$ORIGINAL"
+    - agent: reviewer
+      prompt: "Independently inspect the repaired working tree against the complete correction request. Run relevant verification when possible. End with exactly one marker on its own line: IMPLEMENTATION_APPROVED or IMPLEMENTATION_NEEDS_CHANGES. Correction request:\n\n$ORIGINAL\n\nRepair report:\n\n$INPUT"

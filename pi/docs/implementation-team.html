@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Implementation Team</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { max-width: 760px; margin: 3rem auto; padding: 0 1.25rem 3rem; line-height: 1.55; }
+    h1 { margin-bottom: .15rem; }
+    h2 { margin-top: 2rem; }
+    code, pre { background: color-mix(in srgb, currentColor 10%, transparent); border-radius: 4px; }
+    code { padding: .1rem .3rem; }
+    pre { padding: 1rem; overflow-x: auto; }
+    .flow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+    .box { border: 1px solid currentColor; border-radius: 6px; padding: .55rem .7rem; }
+    .arrow { opacity: .7; }
+    .note { border-left: 4px solid #c78318; padding: .6rem .85rem; background: color-mix(in srgb, #c78318 12%, transparent); }
+  </style>
+</head>
+<body>
+  <h1>Implementation Team</h1>
+  <p>The implementation-team extension turns Pi into a Chief who coordinates a small implementation team. The Chief does not inspect or change the repository itself. It sends a complete task and a stable issue ID to the team, then reports the reviewer-approved result or a real blocker.</p>
+
+  <h2>Start it explicitly</h2>
+  <p>Run Pi from the project you want to work in:</p>
+  <pre><code>pi -e ~/.pi/agent/extensions/implementation-team.ts</code></pre>
+  <p>The extension intentionally activates only when passed with <code>-e</code> (or <code>--extension</code>). Starting ordinary Pi leaves it inactive.</p>
+
+  <h2>Workflows</h2>
+  <p>The default workflow file is <code>~/.pi/agent/agents/implementation-team.yaml</code>. It defines:</p>
+  <ul>
+    <li><code>implementation</code>: planner, then builder, then an independent reviewer.</li>
+    <li><code>implementation-repair</code>: builder repair, then an independent reviewer.</li>
+  </ul>
+  <p>A project can replace the whole workflow definition with <code>.pi/agents/implementation-team.yaml</code>, relative to that project's root. Use this when a project needs different stages or prompts.</p>
+
+  <h2>Configure a team in YAML</h2>
+  <p>A workflow is a named sequence of steps. The workflow name is the top-level YAML key. Each workflow has a human-readable <code>description</code> and a <code>steps</code> list. Every step needs an <code>agent</code> name and a <code>prompt</code>. Steps always run in listed order.</p>
+  <pre><code>frontend-change:
+  description: "Plan, build, and review a frontend change"
+  steps:
+    - agent: planner
+      prompt: "Plan the task. Requirements:\n\n$ORIGINAL"
+    - agent: builder
+      prompt: "Implement the task using this plan. Requirements:\n\n$ORIGINAL\n\nPlan:\n\n$INPUT"
+    - agent: reviewer
+      prompt: "Review the working tree. Requirements:\n\n$ORIGINAL\n\nBuilder report:\n\n$INPUT"</code></pre>
+  <p>The YAML reader expects this simple shape: top-level workflow names, an indented <code>description</code>, <code>steps</code>, and list items with <code>agent</code> and <code>prompt</code>. Keep each prompt as one quoted YAML value; use <code>\n</code> inside a double-quoted prompt for line breaks.</p>
+
+  <h2>Tailor or create a new team</h2>
+  <ol>
+    <li>Create <code>.pi/agents/implementation-team.yaml</code> in the project.</li>
+    <li>Copy the default workflows you still need, then adjust prompts, reorder steps, or add a named workflow such as <code>frontend-change</code>.</li>
+    <li>Use agent names that Pi can load. The global team includes <code>planner</code>, <code>builder</code>, and <code>reviewer</code>; project agent files may also live in <code>agents/</code>, <code>.claude/agents/</code>, or <code>.pi/agents/</code>.</li>
+    <li>Tell the Chief which named workflow to use when making the request.</li>
+  </ol>
+  <p>The project YAML replaces the global file; it does not add to it. Put every workflow that project should offer in the override file. A new workflow is a new team arrangement, not a new executable. If you need a new role, add an agent persona file with a matching <code>name</code>, then reference that name in a step.</p>
+
+  <h2>Prompt variables</h2>
+  <ul>
+    <li><code>$ORIGINAL</code> is the complete task passed to the workflow. It stays the same for every step.</li>
+    <li><code>$INPUT</code> is the prior step's output. For the first step, it is the original task.</li>
+  </ul>
+  <p>Use <code>$ORIGINAL</code> when a stage must retain the full requirements. Use <code>$INPUT</code> to hand a plan, implementation report, or review findings to the next stage. The example above gives the builder both.</p>
+
+  <div class="flow" role="img" aria-label="Implementation workflow: task to planner to builder to reviewer to approved result or repair">
+    <span class="box">Task + issue ID</span><span class="arrow">→</span>
+    <span class="box">Planner</span><span class="arrow">→</span>
+    <span class="box">Builder</span><span class="arrow">→</span>
+    <span class="box">Reviewer</span><span class="arrow">→</span>
+    <span class="box">Approved, or repair</span>
+  </div>
+
+  <h2>Use it</h2>
+  <p>Tell the Chief what to implement and include a stable issue identifier. The Chief delegates through its <code>run_implementation</code> tool. For a new change it uses <code>implementation</code>; if review requests changes, it uses <code>implementation-repair</code> with the original requirements and review findings.</p>
+  <pre><code>Implement OPS-184: add a retry button to the failed upload screen.
+Keep the existing API contract and add focused tests.</code></pre>
+
+  <h2>Watch and inspect the run</h2>
+  <p>While a workflow runs, the dashboard below the editor shows the workflow and issue ID. Each stage shows whether it is pending, running, done, or failed, plus elapsed time, tool-call count, and its latest output line. It is progress information, not a final review decision.</p>
+  <p>Use <code>/implementation-output</code> to pick a stage and open its live or saved output. To open a known stage directly, pass its agent name:</p>
+  <pre><code>/implementation-output builder</code></pre>
+  <p>Agent transcripts and saved stage output are kept under Pi's session storage, separated by project and the supplied issue ID. This lets work on one issue keep its own specialist history without needing to know the exact generated directory name.</p>
+
+  <p class="note"><strong>Do not run <code>/reload</code> while a workflow is running.</strong> Reload shuts down the extension runtime and terminates its active child process. Wait until the workflow finishes or fails before reloading.</p>
+</body>
+</html>

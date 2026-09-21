@@ -27,6 +27,11 @@ Prefer the rule of zero: compose types that already manage their own resources a
 - Prefer forward declarations in headers over full includes when only a pointer or reference is needed.
 - Include the most specific header available (`<memory>` not `<utility>` just to get `std::move`).
 
+## Call-Site Clarity
+
+- Never annotate positional arguments with inline parameter-name comments (e.g. `foo(/*width=*/10, /*height=*/20)`). Don't add them, and remove them on sight when reviewing.
+- If a call site is ambiguous enough to need that, fix the actual problem instead: give arguments named local variables before the call, pass a small struct/aggregate with named members, or use designated initializers (`Config{.width = 10, .height = 20}`).
+
 ## Doxygen Comments
 
 Use Javadoc style (`/** ... */`) for block comments. Use `///<` for inline documentation on the same line as a member declaration.

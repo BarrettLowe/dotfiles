@@ -1,5 +1,6 @@
 arch
-code_docs
+code-commenter
+code-reviewer
 commit-merge-mr
 cpp-style
 explain

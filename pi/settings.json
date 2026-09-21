@@ -1,13 +1,14 @@
 {
   "quietStartup": true,
-  "lastChangelogVersion": "0.84.2",
+  "lastChangelogVersion": "0.85.1",
   "theme": "kanagawa",
   "defaultProjectTrust": "ask",
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-sonnet-5",
+  "defaultProvider": "llama.cpp",
+  "defaultModel": "Ornith-1.0-35B-UD-Q4_K_M",
   "defaultThinkingLevel": "medium",
   "packages": [
-    "npm:pi-yaml-hooks"
+    "npm:pi-yaml-hooks",
+    "npm:@juicesharp/rpiv-voice"
   ],
   "hideThinkingBlock": false,
   "warnings": {

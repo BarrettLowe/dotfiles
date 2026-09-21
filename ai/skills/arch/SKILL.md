@@ -1,7 +1,6 @@
 ---
 name: architecture-design
-description: This skill defines how to work with the user to design an architecture. Use any time a new feature or refactor is being developed.
-model: opus
+description: This skill defines how to work with the user to design an architecture. Use any time a new feature or refactor is being developed in a programming language.
 ---
 
 # /arch

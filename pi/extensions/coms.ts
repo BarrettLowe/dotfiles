@@ -33,6 +33,7 @@ const TIMEOUT_MS = Number(process.env.PI_COMS_TIMEOUT_MS) || 1_800_000;
 const PING_INTERVAL_MS = Number(process.env.PI_COMS_PING_INTERVAL_MS) || 10_000;
 const KEEPALIVE_INTERVAL_MS = 30_000;
 const LINE_CAP_BYTES = 64 * 1024;
+const COMS_TOOL_NAMES = ["coms_list", "coms_send", "coms_get", "coms_await"];
 
 const FALLBACK_PALETTE = [
 	"#72F1B8", "#36F9F6", "#FF7EDB", "#FEDE5D",
@@ -767,8 +768,10 @@ export default function (pi: ExtensionAPI) {
 		});
 	}
 
-	// ━━ session_start ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-	pi.on("session_start", async (_event, ctx) => {
+	// ━━ Runtime activation ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	async function enable(ctx: ExtensionContext, nameOverride?: string): Promise<void> {
+		if (identity) return;
+		shuttingDown = false;
 		applyExtensionDefaults(import.meta.url, ctx);
 		currentCtx = ctx;
 
@@ -780,7 +783,7 @@ export default function (pi: ExtensionAPI) {
 		const session_id = ulid();
 
 		const defaultName = `agent-${session_id.slice(-6)}`;
-		const desiredName = flags.name || fm.name || defaultName;
+		const desiredName = nameOverride || flags.name || fm.name || defaultName;
 		const name = resolveUniqueName(project, desiredName);
 		if (name !== desiredName) {
 			try {
@@ -860,6 +863,7 @@ export default function (pi: ExtensionAPI) {
 			endpoint,
 			registryFile,
 		};
+		pi.setActiveTools([...new Set([...pi.getActiveTools(), ...COMS_TOOL_NAMES])]);
 		includeExplicit = false;
 		displayProject = project;
 
@@ -927,6 +931,11 @@ export default function (pi: ExtensionAPI) {
 
 		// Kick one ping cycle immediately so the widget populates fast.
 		refreshPool().catch(() => {});
+	}
+
+	pi.on("session_start", (_event, ctx) => {
+		currentCtx = ctx;
+		pi.setActiveTools(pi.getActiveTools().filter((name) => !COMS_TOOL_NAMES.includes(name)));
 	});
 
 	// ━━ Helpers used by tools ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1551,9 +1560,22 @@ export default function (pi: ExtensionAPI) {
 
 	// ━━ /coms slash command ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 	pi.registerCommand("coms", {
-		description: "Force-refresh the coms pool widget (or filter with --all / --project <name>)",
+		description: "Enable or disable coms (/coms on [name]|off); when enabled, refresh or filter with --all / --project <name>",
 		handler: async (args, ctx) => {
 			const trimmed = (args ?? "").trim();
+			const enableMatch = trimmed.match(/^on(?:\s+(.+))?$/);
+			if (enableMatch) {
+				await enable(ctx, enableMatch[1]?.trim());
+				return;
+			}
+			if (trimmed === "off") {
+				await cleanShutdown();
+				return;
+			}
+			if (!identity) {
+				ctx.ui.notify("coms is disabled; use /coms on", "info");
+				return;
+			}
 			if (trimmed.includes("--all")) {
 				includeExplicit = !includeExplicit;
 				try { ctx.ui.notify(`coms: include_explicit = ${includeExplicit}`, "info"); } catch { /* ignore */ }
@@ -1588,8 +1610,15 @@ export default function (pi: ExtensionAPI) {
 			} catch { /* best-effort */ }
 		}
 		if (currentCtx?.hasUI) {
-			try { currentCtx.ui.setWidget("coms-pool", undefined); } catch { /* ignore */ }
+			try {
+				currentCtx.ui.setWidget("coms-pool", undefined);
+				currentCtx.ui.setStatus("coms", undefined);
+			} catch { /* ignore */ }
 		}
+		identity = null;
+		peerCards.clear();
+		currentInbound = null;
+		pi.setActiveTools(pi.getActiveTools().filter((name) => !COMS_TOOL_NAMES.includes(name)));
 	}
 
 	pi.on("session_shutdown", async () => { await cleanShutdown(); });

@@ -128,6 +128,7 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/conc` | concurrency-architect | Designing threaded systems, auditing mutex/atomic usage, async patterns, deadlock risk |
 | `/py` | python-style | Writing or reviewing Python — apply Barrett's style conventions |
 | `/cpp` | cpp-style | Writing or reviewing C++ — apply Barrett's style conventions (ownership, nodiscard, IWYU, Doxygen) |
+| `/code-reviewer` | code-reviewer | Reviewing staged or recently changed code before committing |
 | `/humanize` | humanizer | Producing human-facing text — docs, commit messages, PR/MR descriptions, issues, tasks, release notes, and code comments |
 | `/tdd` | tdd-workflow | Adding a feature or fixing a bug test-first — full RED → GREEN → REFACTOR → coverage cycle for Python or C++ |
 | `/flutter` | flutter-style | Writing or reviewing Flutter/Dart — Riverpod, go_router, very_good_analysis, mobile+web conventions |

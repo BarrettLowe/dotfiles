@@ -1,7 +1,8 @@
 arch
 audit
 cmake-configurator
-code_docs
+code-commenter
+code-reviewer
 commit-merge-mr
 concurrency-architect
 cpp-build-resolver
