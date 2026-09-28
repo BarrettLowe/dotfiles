@@ -44,7 +44,10 @@ return {
                     theme = { wave = {}, lotus = {}, dragon = {}, all = {} },
                 },
                 overrides = function(colors)
-                    return {}
+                    return {
+                        -- #2d4f67 gives Visual mode a clearly visible blue background.
+                        Visual = { bg = "#2d4f67" },
+                    }
                 end,
                 theme = "wave",
                 background = {
