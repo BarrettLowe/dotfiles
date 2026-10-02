@@ -152,14 +152,14 @@ bindsym XF86Calculator exec gnome-calculator
 
     set $ws1 "1: Sp"
     set $ws2 "2: Dev"
-    set $ws3 "3: Term"
+    set $ws3 "3: Utils"
     set $ws4 "4: Web"
     set $ws5 "5: Brain"
-    set $ws6 "6: Chat"
+    set $ws6 "6: Coms"
     set $ws7 "7: Misc"
     set $ws8 "8: Misc2"
     set $ws9 "9: Media"
-    set $ws10 "10: Dev"
+    set $ws10 "10: Code"
     # Switch to workspace
     bindsym $mod+1 workspace $ws1
     bindsym $mod+2 workspace $ws2

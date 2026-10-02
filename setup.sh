@@ -322,6 +322,9 @@ else
     print_info "Skipping Claude Code CLI (pass --with-claude to install)"
 fi
 
+# Install pi-agent
+curl -fsSL https://pi.dev/install.sh | sh
+
 # Final summary
 print_header "Setup Complete! 🎉"
 echo -e "${GREEN}Toolchain is now provisioned.${NC}"

@@ -2,7 +2,7 @@
 name: reviewer
 description: Reviews code changes or existing code for correctness, quality, and risk before they're considered done. Use after a change is implemented, or when auditing existing code for problems, without making any edits itself.
 tools: read,grep,find,bash
-model: gpt-5.6-sol
+model: gpt-6-sol
 thinking: high
 color: red
 ---

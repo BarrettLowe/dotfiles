@@ -23,7 +23,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { Text, type AutocompleteItem, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { spawn } from "child_process";
-import { readdirSync, existsSync, mkdirSync, unlinkSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import {
 	loadTeamDispatcherPrompt,
@@ -34,10 +34,25 @@ import {
 	type AgentDef,
 	type TeamMember,
 } from "./agent-team-config.ts";
+import { AgentTraceWriter } from "./agent-team-trace.ts";
+import {
+	AssistantOutputCollector,
+	createAgentSessionFile,
+	terminateChildProcess,
+	watchChildAbort,
+} from "./agent-team-runtime.ts";
 
 // ── Types ────────────────────────────────────────
 
 const OPEN_ITEMS_FILE = "/home/barrett-lowe/work-notes/notes/open-items.md";
+
+interface AgentDispatchResult {
+	output: string;
+	streamedOutput: string;
+	exitCode: number;
+	elapsed: number;
+	aborted: boolean;
+}
 
 interface AgentState {
 	def: AgentDef;
@@ -77,15 +92,36 @@ export default function (pi: ExtensionAPI) {
 	let widgetCtx: any;
 	let sessionDir = "";
 	let contextWindow = 0;
+	let traceWriter: AgentTraceWriter | undefined;
+	let dispatcherRunCount = 0;
+	let dispatcherRunId = "";
+	let dispatcherStartedAt = 0;
+	let dispatcherToolCount = 0;
+	let dispatcherTextChunks: string[] = [];
+	let dispatcherPendingText = "";
+	let dispatcherLastTextTraceAt = 0;
+	let dispatcherTimer: ReturnType<typeof setInterval> | undefined;
+
+	function flushDispatcherText(force = false) {
+		if (!dispatcherRunId || !dispatcherPendingText) return;
+		const now = Date.now();
+		if (!force && now - dispatcherLastTextTraceAt < 250 && dispatcherPendingText.length < 500 && !dispatcherPendingText.includes("\n")) return;
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "assistant_stream",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: { outputKind: "streamed", text: dispatcherPendingText },
+		});
+		dispatcherPendingText = "";
+		dispatcherLastTextTraceAt = now;
+	}
 
 	function loadAgents(cwd: string) {
 		projectCwd = cwd;
 
-		// Create session storage dir
-		sessionDir = join(cwd, ".pi", "agent-sessions");
-		if (!existsSync(sessionDir)) {
-			mkdirSync(sessionDir, { recursive: true });
-		}
+		if (!sessionDir) throw new Error("Agent session directory was not initialized");
+		if (!existsSync(sessionDir)) mkdirSync(sessionDir, { recursive: true });
 
 		// Load all agent definitions
 		allAgentDefs = scanAgentDirs(cwd);
@@ -110,7 +146,7 @@ export default function (pi: ExtensionAPI) {
 			const def = defsByName.get(member.name.toLowerCase());
 			if (!def) continue;
 			const key = def.name.toLowerCase().replace(/\s+/g, "-");
-			const sessionFile = join(sessionDir, `${key}.json`);
+			const sessionFile = join(sessionDir, `${key}.jsonl`);
 			agentStates.set(def.name.toLowerCase(), {
 				def,
 				extensions: member.extensions.map(extension => resolveExtensionSource(extension)),
@@ -232,22 +268,27 @@ export default function (pi: ExtensionAPI) {
 		agentName: string,
 		task: string,
 		ctx: any,
-	): Promise<{ output: string; exitCode: number; elapsed: number }> {
+		signal?: AbortSignal,
+	): Promise<AgentDispatchResult> {
 		const key = agentName.toLowerCase();
 		const state = agentStates.get(key);
 		if (!state) {
 			return Promise.resolve({
 				output: `Agent "${agentName}" not found. Available: ${Array.from(agentStates.values()).map(s => displayName(s.def.name)).join(", ")}`,
+				streamedOutput: "",
 				exitCode: 1,
 				elapsed: 0,
+				aborted: false,
 			});
 		}
 
 		if (state.status === "running") {
 			return Promise.resolve({
 				output: `Agent "${displayName(state.def.name)}" is already running. Wait for it to finish.`,
+				streamedOutput: "",
 				exitCode: 1,
 				elapsed: 0,
+				aborted: false,
 			});
 		}
 
@@ -258,10 +299,23 @@ export default function (pi: ExtensionAPI) {
 		state.lastWork = "";
 		state.runCount++;
 		updateWidget();
+		const runId = `${traceWriter?.sessionId ?? "untraced"}:${key}:${state.runCount}`;
 
 		const startTime = Date.now();
+		let lastHeartbeatAt = startTime;
 		state.timer = setInterval(() => {
-			state.elapsed = Date.now() - startTime;
+			const now = Date.now();
+			state.elapsed = now - startTime;
+			if (now - lastHeartbeatAt >= 5_000) {
+				traceWriter?.emit({
+					runId,
+					type: "heartbeat",
+					team: activeTeamName,
+					agent: state.def.name,
+					payload: { elapsedMs: state.elapsed },
+				});
+				lastHeartbeatAt = now;
+			}
 			updateWidget();
 		}, 1000);
 
@@ -275,12 +329,29 @@ export default function (pi: ExtensionAPI) {
 		const modelId = slashIndex === -1 ? "" : model.slice(slashIndex + 1);
 		const agentContextWindow = ctx.modelRegistry?.find?.(modelProvider, modelId)?.contextWindow
 			?? contextWindow;
+		traceWriter?.emit({
+			runId,
+			type: "dispatch_start",
+			team: activeTeamName,
+			agent: state.def.name,
+			payload: {
+				kind: "agent",
+				parentRunId: dispatcherRunId || undefined,
+				task,
+				model,
+				thinking,
+				tools: state.def.tools,
+				extensions: state.extensions,
+				contextWindow: agentContextWindow,
+				runNumber: state.runCount,
+			},
+		});
 
-		// Session file for this agent
-		const agentKey = state.def.name.toLowerCase().replace(/\s+/g, "-");
-		const agentSessionFile = join(sessionDir, `${agentKey}.json`);
-
-		// Build args — first run creates session, subsequent runs resume
+		const agentSessionFile = createAgentSessionFile(
+			projectCwd,
+			traceWriter?.sessionId ?? "untraced",
+			state.def.name,
+		);
 		const args = [
 			"--mode", "json",
 			"-p",
@@ -292,113 +363,188 @@ export default function (pi: ExtensionAPI) {
 			"--append-system-prompt", state.def.systemPrompt,
 			"--session", agentSessionFile,
 		];
-
-		// Continue existing session if we have one
-		if (state.sessionFile) {
-			args.push("-c");
-		}
-
+		if (state.sessionFile) args.push("-c");
 		args.push(task);
 
-		const textChunks: string[] = [];
+		const output = new AssistantOutputCollector();
+		let pendingTraceText = "";
+		let lastTextTraceAt = 0;
+		const flushTextTrace = (force = false) => {
+			if (!pendingTraceText) return;
+			const now = Date.now();
+			if (!force && now - lastTextTraceAt < 250 && pendingTraceText.length < 500 && !pendingTraceText.includes("\n")) return;
+			traceWriter?.emit({
+				runId,
+				type: "assistant_stream",
+				team: activeTeamName,
+				agent: state.def.name,
+				payload: { outputKind: "streamed", text: pendingTraceText },
+			});
+			pendingTraceText = "";
+			lastTextTraceAt = now;
+		};
 
 		return new Promise((resolve) => {
 			const proc = spawn("pi", args, {
 				stdio: ["ignore", "pipe", "pipe"],
 				env: { ...process.env },
+				detached: process.platform !== "win32",
 			});
-
 			let buffer = "";
+			let settled = false;
+			let abortRequested = false;
+			let abortWatcher: ReturnType<typeof watchChildAbort> | undefined;
+
+			const finish = (exitCode: number, errorMessage = "", aborted = false) => {
+				if (settled) return;
+				settled = true;
+				flushTextTrace(true);
+				clearInterval(state.timer);
+				state.elapsed = Date.now() - startTime;
+				state.status = exitCode === 0 && !aborted ? "done" : "error";
+				if (state.status === "done") state.sessionFile = agentSessionFile;
+
+				const finalAssistantText = output.finalAssistantText;
+				const resultOutput = aborted
+					? `Dispatch to ${displayName(state.def.name)} was aborted.`
+					: errorMessage || finalAssistantText;
+				state.lastWork = resultOutput.split("\n").filter((line: string) => line.trim()).pop() || "";
+				traceWriter?.emit({
+					runId,
+					type: "assistant_final",
+					team: activeTeamName,
+					agent: state.def.name,
+					payload: { outputKind: "final", text: finalAssistantText },
+				});
+				traceWriter?.emit({
+					runId,
+					type: "dispatch_end",
+					team: activeTeamName,
+					agent: state.def.name,
+					payload: {
+						status: aborted ? "aborted" : state.status,
+						exitCode,
+						elapsedMs: state.elapsed,
+						toolCount: state.toolCount,
+						finalAssistantText,
+					},
+				});
+				updateWidget();
+				ctx.ui.notify(
+					`${displayName(state.def.name)} ${aborted ? "aborted" : state.status} in ${Math.round(state.elapsed / 1000)}s`,
+					state.status === "done" ? "success" : "error",
+				);
+				resolve({
+					output: resultOutput,
+					streamedOutput: output.streamedText,
+					exitCode,
+					elapsed: state.elapsed,
+					aborted,
+				});
+			};
+
+			const consumeEvent = (event: any) => {
+				const collected = output.consume(event);
+				if (collected.streamedDelta !== undefined) {
+					pendingTraceText += collected.streamedDelta;
+					flushTextTrace();
+					const last = output.streamedText.split("\n").filter((line: string) => line.trim()).pop() || "";
+					state.lastWork = last;
+					updateWidget();
+				} else if (event.type === "tool_execution_start") {
+					flushTextTrace(true);
+					state.toolCount++;
+					traceWriter?.emit({
+						runId,
+						type: "tool_start",
+						team: activeTeamName,
+						agent: state.def.name,
+						payload: { toolCallId: event.toolCallId, toolName: event.toolName, args: event.args },
+					});
+					updateWidget();
+				} else if (event.type === "tool_execution_end") {
+					traceWriter?.emit({
+						runId,
+						type: "tool_end",
+						team: activeTeamName,
+						agent: state.def.name,
+						payload: { toolCallId: event.toolCallId, toolName: event.toolName, result: event.result, isError: Boolean(event.isError) },
+					});
+				} else if (event.type === "message_end") {
+					flushTextTrace(true);
+					const message = event.message;
+					traceWriter?.emit({
+						runId,
+						type: "message_end",
+						team: activeTeamName,
+						agent: state.def.name,
+						payload: { role: message?.role, usage: message?.usage, stopReason: message?.stopReason },
+					});
+					if (message?.usage && agentContextWindow > 0) {
+						state.contextPct = ((message.usage.input || 0) / agentContextWindow) * 100;
+						updateWidget();
+					}
+				} else if (event.type === "agent_end") {
+					const last = [...(event.messages || [])].reverse().find((message: any) => message.role === "assistant");
+					if (last?.usage && agentContextWindow > 0) {
+						state.contextPct = ((last.usage.input || 0) / agentContextWindow) * 100;
+						updateWidget();
+					}
+				}
+			};
 
 			proc.stdout!.setEncoding("utf-8");
 			proc.stdout!.on("data", (chunk: string) => {
+				if (settled) return;
 				buffer += chunk;
 				const lines = buffer.split("\n");
 				buffer = lines.pop() || "";
 				for (const line of lines) {
 					if (!line.trim()) continue;
-					try {
-						const event = JSON.parse(line);
-						if (event.type === "message_update") {
-							const delta = event.assistantMessageEvent;
-							if (delta?.type === "text_delta") {
-								textChunks.push(delta.delta || "");
-								const full = textChunks.join("");
-								const last = full.split("\n").filter((l: string) => l.trim()).pop() || "";
-								state.lastWork = last;
-								updateWidget();
-							}
-						} else if (event.type === "tool_execution_start") {
-							state.toolCount++;
-							updateWidget();
-						} else if (event.type === "message_end") {
-							const msg = event.message;
-							if (msg?.usage && agentContextWindow > 0) {
-								state.contextPct = ((msg.usage.input || 0) / agentContextWindow) * 100;
-								updateWidget();
-							}
-						} else if (event.type === "agent_end") {
-							const msgs = event.messages || [];
-							const last = [...msgs].reverse().find((m: any) => m.role === "assistant");
-							if (last?.usage && agentContextWindow > 0) {
-								state.contextPct = ((last.usage.input || 0) / agentContextWindow) * 100;
-								updateWidget();
-							}
-						}
-					} catch {}
+					try { consumeEvent(JSON.parse(line)); } catch {}
 				}
 			});
 
 			proc.stderr!.setEncoding("utf-8");
-			proc.stderr!.on("data", () => {});
+			proc.stderr!.on("data", (chunk: string) => {
+				if (settled) return;
+				traceWriter?.emit({
+					runId,
+					type: "stderr",
+					team: activeTeamName,
+					agent: state.def.name,
+					payload: { text: chunk },
+				});
+			});
 
 			proc.on("close", (code) => {
-				if (buffer.trim()) {
-					try {
-						const event = JSON.parse(buffer);
-						if (event.type === "message_update") {
-							const delta = event.assistantMessageEvent;
-							if (delta?.type === "text_delta") textChunks.push(delta.delta || "");
-						}
-					} catch {}
+				const aborted = abortRequested || abortWatcher?.aborted === true;
+				abortWatcher?.childExited();
+				if (!settled && buffer.trim()) {
+					try { consumeEvent(JSON.parse(buffer)); } catch {}
 				}
-
-				clearInterval(state.timer);
-				state.elapsed = Date.now() - startTime;
-				state.status = code === 0 ? "done" : "error";
-
-				// Mark session file as available for resume
-				if (code === 0) {
-					state.sessionFile = agentSessionFile;
+				finish(aborted ? 1 : code ?? 1, "", aborted);
+			});
+			proc.on("error", (error) => {
+				const aborted = abortRequested || abortWatcher?.aborted === true;
+				abortWatcher?.childExited();
+				if (!aborted) {
+					traceWriter?.emit({
+						runId,
+						type: "dispatch_error",
+						team: activeTeamName,
+						agent: state.def.name,
+						payload: { message: error.message, elapsedMs: Date.now() - startTime },
+					});
 				}
-
-				const full = textChunks.join("");
-				state.lastWork = full.split("\n").filter((l: string) => l.trim()).pop() || "";
-				updateWidget();
-
-				ctx.ui.notify(
-					`${displayName(state.def.name)} ${state.status} in ${Math.round(state.elapsed / 1000)}s`,
-					state.status === "done" ? "success" : "error"
-				);
-
-				resolve({
-					output: full,
-					exitCode: code ?? 1,
-					elapsed: state.elapsed,
-				});
+				finish(1, aborted ? "" : `Error spawning agent: ${error.message}`, aborted);
 			});
 
-			proc.on("error", (err) => {
-				clearInterval(state.timer);
-				state.status = "error";
-				state.lastWork = `Error: ${err.message}`;
-				updateWidget();
-				resolve({
-					output: `Error spawning agent: ${err.message}`,
-					exitCode: 1,
-					elapsed: Date.now() - startTime,
-				});
-			});
+			abortWatcher = watchChildAbort(
+				signal,
+				(childSignal) => terminateChildProcess(proc, childSignal),
+				() => { abortRequested = true; },
+			);
 		});
 	}
 
@@ -455,43 +601,29 @@ export default function (pi: ExtensionAPI) {
 			task: Type.String({ description: "Task description for the agent to execute" }),
 		}),
 
-		async execute(_toolCallId, params, _signal, onUpdate, ctx) {
+		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const { agent, task } = params as { agent: string; task: string };
+			onUpdate?.({
+				content: [{ type: "text", text: `Dispatching to ${agent}...` }],
+				details: { agent, task, status: "dispatching" },
+			});
 
-			try {
-				if (onUpdate) {
-					onUpdate({
-						content: [{ type: "text", text: `Dispatching to ${agent}...` }],
-						details: { agent, task, status: "dispatching" },
-					});
-				}
+			const result = await dispatchAgent(agent, task, ctx, signal);
+			if (result.exitCode !== 0) throw new Error(result.output);
 
-				const result = await dispatchAgent(agent, task, ctx);
-
-				const truncated = result.output.length > 8000
-					? result.output.slice(0, 8000) + "\n\n... [truncated]"
-					: result.output;
-
-				const status = result.exitCode === 0 ? "done" : "error";
-				const summary = `[${agent}] ${status} in ${Math.round(result.elapsed / 1000)}s`;
-
-				return {
-					content: [{ type: "text", text: `${summary}\n\n${truncated}` }],
-					details: {
-						agent,
-						task,
-						status,
-						elapsed: result.elapsed,
-						exitCode: result.exitCode,
-						fullOutput: result.output,
-					},
-				};
-			} catch (err: any) {
-				return {
-					content: [{ type: "text", text: `Error dispatching to ${agent}: ${err?.message || err}` }],
-					details: { agent, task, status: "error", elapsed: 0, exitCode: 1, fullOutput: "" },
-				};
-			}
+			return {
+				content: [{ type: "text", text: result.output }],
+				details: {
+					agent,
+					task,
+					status: "done",
+					elapsed: result.elapsed,
+					exitCode: result.exitCode,
+					fullOutput: result.output,
+					finalOutput: result.output,
+					streamedOutput: result.streamedOutput,
+				},
+			};
 		},
 
 		renderCall(args, theme) {
@@ -610,6 +742,44 @@ export default function (pi: ExtensionAPI) {
 	// ── System Prompt Override ───────────────────
 
 	pi.on("before_agent_start", async (_event, _ctx) => {
+		flushDispatcherText(true);
+		if (dispatcherTimer) clearInterval(dispatcherTimer);
+		dispatcherRunCount++;
+		dispatcherRunId = `${traceWriter?.sessionId ?? "untraced"}:dispatcher:${dispatcherRunCount}`;
+		dispatcherStartedAt = Date.now();
+		dispatcherToolCount = 0;
+		dispatcherTextChunks = [];
+		dispatcherPendingText = "";
+		dispatcherLastTextTraceAt = 0;
+		const dispatcherModel = _ctx.model
+			? `${_ctx.model.provider}/${_ctx.model.id}`
+			: "unknown";
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "dispatch_start",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				kind: "dispatcher",
+				task: _event.prompt,
+				model: dispatcherModel,
+				thinking: _ctx.thinkingLevel ?? pi.getThinkingLevel(),
+				tools: ["dispatch_agent", "read_open_items", "edit_open_items"],
+				contextWindow: _ctx.model?.contextWindow ?? contextWindow,
+				runNumber: dispatcherRunCount,
+			},
+		});
+		dispatcherTimer = setInterval(() => {
+			if (!dispatcherRunId) return;
+			traceWriter?.emit({
+				runId: dispatcherRunId,
+				type: "heartbeat",
+				team: activeTeamName,
+				agent: "dispatcher",
+				payload: { elapsedMs: Math.max(0, Date.now() - dispatcherStartedAt) },
+			});
+		}, 5_000);
+
 		// Build dynamic agent catalog from active team only
 		const agentCatalog = Array.from(agentStates.values())
 			.map(s => `### ${displayName(s.def.name)}\n**Dispatch as:** \`${s.def.name}\`\n${s.def.description}\n**Tools:** ${s.def.tools}\n**Model:** ${s.def.model || "dispatcher model"}\n**Thinking:** ${s.def.thinking}`)
@@ -653,6 +823,102 @@ ${agentCatalog}`,
 		};
 	});
 
+	// ── Dispatcher tracing ───────────────────────
+
+	pi.on("message_update", async (event) => {
+		if (!dispatcherRunId) return;
+		const delta = event.assistantMessageEvent;
+		if (delta?.type !== "text_delta") return;
+		const text = delta.delta || "";
+		dispatcherTextChunks.push(text);
+		dispatcherPendingText += text;
+		flushDispatcherText();
+	});
+
+	pi.on("tool_execution_start", async (event) => {
+		if (!dispatcherRunId) return;
+		flushDispatcherText(true);
+		dispatcherToolCount++;
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "tool_start",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				toolCallId: event.toolCallId,
+				toolName: event.toolName,
+				args: event.args,
+			},
+		});
+	});
+
+	pi.on("tool_execution_end", async (event) => {
+		if (!dispatcherRunId) return;
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "tool_end",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				toolCallId: event.toolCallId,
+				toolName: event.toolName,
+				result: event.result,
+				isError: Boolean(event.isError),
+			},
+		});
+	});
+
+	pi.on("message_end", async (event) => {
+		if (!dispatcherRunId) return;
+		flushDispatcherText(true);
+		const message = event.message as any;
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "message_end",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				role: message?.role,
+				usage: message?.usage,
+				stopReason: message?.stopReason,
+			},
+		});
+	});
+
+	pi.on("agent_end", async (event) => {
+		if (!dispatcherRunId) return;
+		if (dispatcherTimer) clearInterval(dispatcherTimer);
+		dispatcherTimer = undefined;
+		flushDispatcherText(true);
+		const lastAssistant = [...event.messages].reverse().find((message: any) => message.role === "assistant") as any;
+		const stopReason = lastAssistant?.stopReason;
+		const status = stopReason === "error" || stopReason === "aborted" ? "error" : "done";
+		const finalOutput = new AssistantOutputCollector();
+		finalOutput.consume({ type: "agent_end", messages: event.messages });
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "assistant_final",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: { outputKind: "final", text: finalOutput.finalAssistantText },
+		});
+		traceWriter?.emit({
+			runId: dispatcherRunId,
+			type: "dispatch_end",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				status,
+				stopReason,
+				elapsedMs: Math.max(0, Date.now() - dispatcherStartedAt),
+				toolCount: dispatcherToolCount,
+				streamedAssistantText: dispatcherTextChunks.join(""),
+				finalAssistantText: finalOutput.finalAssistantText,
+			},
+		});
+		dispatcherRunId = "";
+	});
+
 	// ── Session Start ────────────────────────────
 
 	pi.on("session_start", async (_event, _ctx) => {
@@ -662,17 +928,12 @@ ${agentCatalog}`,
 		}
 		widgetCtx = _ctx;
 		contextWindow = _ctx.model?.contextWindow || 0;
-
-		// Wipe old agent session files so subagents start fresh
-		const sessDir = join(_ctx.cwd, ".pi", "agent-sessions");
-		if (existsSync(sessDir)) {
-			for (const f of readdirSync(sessDir)) {
-				if (f.endsWith(".json")) {
-					try { unlinkSync(join(sessDir, f)); } catch {}
-				}
-			}
-		}
-
+		if (dispatcherTimer) clearInterval(dispatcherTimer);
+		dispatcherTimer = undefined;
+		dispatcherRunId = "";
+		dispatcherRunCount = 0;
+		traceWriter = new AgentTraceWriter(_ctx.cwd);
+		sessionDir = join(_ctx.cwd, ".pi", "agent-sessions", traceWriter.sessionId);
 		loadAgents(_ctx.cwd);
 
 		// Use the CLI-selected team, or default to the first available team.
@@ -682,6 +943,18 @@ ${agentCatalog}`,
 		if (initialTeam) {
 			activateTeam(initialTeam);
 		}
+		traceWriter.emit({
+			runId: `${traceWriter.sessionId}:session`,
+			type: "session_start",
+			team: activeTeamName,
+			agent: "dispatcher",
+			payload: {
+				cwd: _ctx.cwd,
+				traceFile: traceWriter.traceFile,
+				sessionDir,
+				members: Array.from(agentStates.values()).map(state => state.def.name),
+			},
+		});
 		if (requestedTeam && !Object.hasOwn(teams, requestedTeam)) {
 			_ctx.ui.notify(
 				`Team "${requestedTeam}" not found. Using "${initialTeam}". Available: ${Object.keys(teams).join(", ")}`,
@@ -689,7 +962,7 @@ ${agentCatalog}`,
 			);
 		}
 
-		// Lock down to dispatching plus the two fixed-path open-items tools.
+		// Lock down to dispatching and the two fixed-path open-items tools.
 		pi.setActiveTools(["dispatch_agent", "read_open_items", "edit_open_items"]);
 
 		_ctx.ui.setStatus("agent-team", `Team: ${activeTeamName} (${agentStates.size})`);

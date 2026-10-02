@@ -45,8 +45,12 @@ const { spawn } = require("child_process") as any;
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { fileURLToPath } from "node:url";
 import { applyExtensionDefaults } from "./lib/themeMap.ts";
 
+const MODEL_ACCESS_GUARD_EXTENSION = fileURLToPath(
+	new URL("./model-access-guard.ts", import.meta.url),
+);
 const FALLBACK_MODEL = "openrouter/google/gemini-3.5-flash";
 // Inline character cap for a subagent's result text delivered back to the
 // main agent. Outputs at or under this are returned in full, no file written.
@@ -359,6 +363,12 @@ export default function (pi: ExtensionAPI) {
 				}
 				updateWidgets();
 			}
+			// Some providers, including OpenAI Codex, report usage only once the
+			// assistant message is complete. message_end is the authoritative usage.
+			if (type === "message_end" && event.message?.role === "assistant") {
+				state.contextTokens = event.message.usage?.totalTokens ?? state.contextTokens;
+				updateWidgets();
+			}
 		} catch {}
 	}
 
@@ -399,6 +409,7 @@ export default function (pi: ExtensionAPI) {
 			"-p",
 			"--session", state.sessionFile,   // persistent session for /subcont resumption
 			"--no-extensions",
+			"--extension", MODEL_ACCESS_GUARD_EXTENSION,
 			"--model", model,
 			"--tools", "read,bash,grep,find,ls",
 			"--thinking", thinking,
@@ -507,7 +518,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerTool({
 		name: "subagent_create",
-		description: "Spawn a background subagent. Thinking level is required and is the primary way to match the subagent to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately and delivers results as a follow-up message.",
+		description: "Spawn a background subagent. Thinking level is required and is the primary way to match the subagent to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately and delivers results as a follow-up message. Continue only independent work while it runs; do not poll its status, sleep while waiting, or read its session/result files. Settle normally when independent work is done so the follow-up can be delivered.",
 		parameters: Type.Object({
 			task: Type.String({ description: "The complete task description for the subagent to perform" }),
 			model: Type.Optional(Type.String({
@@ -549,13 +560,14 @@ export default function (pi: ExtensionAPI) {
 
 			return {
 				content: [{ type: "text", text: `Subagent #${id}${args.agent ? ` [${args.agent}]` : ""} spawned with ${state.model} (${state.thinking} thinking) and is running in background.` }],
+				terminate: true,
 			};
 		},
 	});
 
 	pi.registerTool({
 		name: "subagent_continue",
-		description: "Continue an existing subagent conversation. Thinking level is required and is the primary way to match this turn to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately while it runs in the background.",
+		description: "Continue an existing subagent conversation. Thinking level is required and is the primary way to match this turn to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately and delivers results as a follow-up message. Continue only independent work while it runs; do not poll its status, sleep while waiting, or read its session/result files. Settle normally when independent work is done so the follow-up can be delivered.",
 		parameters: Type.Object({
 			id: Type.Number({ description: "The ID of the subagent to continue" }),
 			prompt: Type.String({ description: "The follow-up prompt or new instructions" }),

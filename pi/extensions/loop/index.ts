@@ -63,7 +63,7 @@ export default function loopExtension(pi: ExtensionAPI) {
   let sessionContext: ExtensionContext | undefined;
   let ticker: ReturnType<typeof setInterval> | undefined;
   let ticking = false;
-  let agentRunActive = false;
+  const loopRunIds = new Set<number>();
 
   const persist = () => {
     pi.appendEntry(STATE_ENTRY, {
@@ -83,6 +83,7 @@ export default function loopExtension(pi: ExtensionAPI) {
   };
 
   const dispatch = (loop: LoopDefinition) => {
+    loopRunIds.add(loop.id);
     pi.sendMessage(
       {
         customType: MESSAGE_TYPE,
@@ -102,17 +103,11 @@ export default function loopExtension(pi: ExtensionAPI) {
     try {
       const now = Date.now();
       const due = state.loops.filter((loop) => loop.enabled && loop.nextRunAt <= now);
-      if (due.length > 0 && !shouldDispatchDueLoops(ctx.isIdle(), agentRunActive)) {
+      if (due.length > 0 && !shouldDispatchDueLoops(ctx.isIdle(), loopRunIds.size > 0)) {
         updateFooter(ctx);
         return;
       }
-      if (due.length > 0) {
-        for (const loop of due) {
-          loop.nextRunAt = now + loop.intervalMs;
-        }
-        persist();
-        for (const loop of due) dispatch(loop);
-      }
+      for (const loop of due) dispatch(loop);
       updateFooter(ctx);
     } finally {
       ticking = false;
@@ -127,7 +122,7 @@ export default function loopExtension(pi: ExtensionAPI) {
   };
 
   const loadSession = (ctx: ExtensionContext) => {
-    agentRunActive = false;
+    loopRunIds.clear();
     state = restoreState(ctx);
     if (normalizeMissedLoops(state.loops, Date.now())) persist();
     restartTicker(ctx);
@@ -135,17 +130,22 @@ export default function loopExtension(pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => loadSession(ctx));
   pi.on("session_tree", async (_event, ctx) => loadSession(ctx));
-  pi.on("agent_start", async () => {
-    agentRunActive = true;
-  });
-  pi.on("agent_end", async () => {
-    agentRunActive = false;
+  pi.on("agent_settled", async () => {
+    if (loopRunIds.size === 0) return;
+
+    const now = Date.now();
+    for (const loop of state.loops) {
+      if (loop.enabled && loopRunIds.has(loop.id)) loop.nextRunAt = now + loop.intervalMs;
+    }
+    loopRunIds.clear();
+    persist();
+    if (sessionContext) updateFooter(sessionContext);
   });
   pi.on("session_shutdown", async (_event, ctx) => {
     if (ticker) clearInterval(ticker);
     ticker = undefined;
     sessionContext = undefined;
-    agentRunActive = false;
+    loopRunIds.clear();
     ctx.ui.setStatus(STATUS_KEY, undefined);
   });
 

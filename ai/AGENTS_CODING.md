@@ -1,6 +1,8 @@
-# AGENTS.md
+# Coding guidelines
 
-## 1. Think Before Coding
+## General
+
+### 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -10,7 +12,7 @@ Before implementing:
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
-## 2. Simplicity First
+### 2. Simplicity First
 
 **Minimum code that solves the problem. Nothing speculative.**
 
@@ -22,7 +24,7 @@ Before implementing:
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## 3. Surgical Changes
+### 3. Surgical Changes
 
 **Touch only what you must. Clean up only your own mess.**
 
@@ -38,7 +40,7 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
-## 4. Goal-Driven Execution
+### 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
@@ -56,7 +58,25 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## Notes
 
-# Rules
+- Never spell out numbers (four -> 4)
+- Be terse for inline and oneline comments. Use complete sentances only when necessary.
 
-- Never push to version control unless asked
+### Hardcoded values
+
+When using any hardcoded values/hex etc, always include a brief comment explaining
+
+```cpp
+if (some_val < 5) // 5 - arbitrary threshold
+{/*whatever*/}
+
+float delta = prev_val - 0.0000001; //subtract negligible small value
+
+// 0xAB - msg type
+// 0x1 - length of payload
+// 0x1234 - checksum
+int[] = {0xAB, 0x1, 0x1234};
+
+```
+

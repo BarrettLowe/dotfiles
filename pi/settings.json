@@ -1,11 +1,11 @@
 {
   "quietStartup": true,
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "0.83.0",
   "theme": "kanagawa",
   "defaultProjectTrust": "ask",
   "defaultProvider": "llama.cpp",
-  "defaultModel": "Ornith-1.0-35B-UD-Q4_K_M",
-  "defaultThinkingLevel": "medium",
+  "defaultModel": "ornith",
+  "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-yaml-hooks",
     "npm:@juicesharp/rpiv-voice"
@@ -13,5 +13,6 @@
   "hideThinkingBlock": false,
   "warnings": {
     "anthropicExtraUsage": false
-  }
+  },
+  "tuiMode": "fullscreen"
 }

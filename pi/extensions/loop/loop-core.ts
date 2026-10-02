@@ -77,8 +77,8 @@ export function findNextLoop(loops: LoopDefinition[]): LoopDefinition | undefine
     );
 }
 
-export function shouldDispatchDueLoops(isIdle: boolean, agentRunActive: boolean): boolean {
-  return isIdle || agentRunActive;
+export function shouldDispatchDueLoops(isIdle: boolean, loopRunActive: boolean): boolean {
+  return isIdle && !loopRunActive;
 }
 
 export function normalizeMissedLoops(loops: LoopDefinition[], now: number): boolean {

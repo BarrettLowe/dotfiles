@@ -152,6 +152,11 @@ alias claude-sync="bash ~/dotfiles/ai/sync.sh"
 pipair() {
   pi --no-extensions --no-skills --skill ~/dotfiles/ai/skills/pair "$@"
 }
+
+# Orient mode: read-only exploration, no write tools, replaced system prompt
+piorient() {
+  pi --tools read,grep,find,ls --system-prompt "$(cat ~/dotfiles/ai/pi-profiles/orient.md)" "$@"
+}
 alias zc="$EDITOR ~/dotfiles/.zshrc"
 alias zlc="$EDITOR ~/.zshrc_local"
 alias tc="$EDITOR ~/dotfiles/.tmux.conf"
@@ -299,3 +304,7 @@ export PATH="$PATH:/home/barrett-lowe/.lmstudio/bin"
 # Must be last — venv activation in .zshrc_local resets _OLD_VIRTUAL_PATH and drops earlier additions
 [[ -d "/opt/nvim-linux-x86_64/bin" ]] && export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 
+
+# >>> Codex installer >>>
+export PATH="/home/barrett-lowe/.local/bin:$PATH"
+# <<< Codex installer <<<

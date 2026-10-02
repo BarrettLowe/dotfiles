@@ -34,19 +34,30 @@ scout-review-architect:
   - reviewer
   - architect
 
-underdogs:
+mvps:
+  - scout:
+    extensions:
+      - ~/.pi/agent/extensions/model-access-guard.ts
   - planner:
     extensions:
-      ~/.pi/agent/extensions/model-access-guard.ts
-  - builder:
-    extensions:
-      ~/.pi/agent/extensions/model-access-guard.ts
+      - ~/.pi/agent/extensions/model-access-guard.ts
   - reviewer:
     extensions:
-      ~/.pi/agent/extensions/model-access-guard.ts
-  - qa:
+      - ~/.pi/agent/extensions/model-access-guard.ts
+
+underdogs:
+  - scout:
     extensions:
-      ~/.pi/agent/extensions/model-access-guard.ts
+      - ~/.pi/agent/extensions/model-access-guard.ts
+  - planner:
+    extensions:
+      - ~/.pi/agent/extensions/model-access-guard.ts
+  - software-engineer:
+    extensions:
+      - ~/.pi/agent/extensions/model-access-guard.ts
+  - reviewer:
+    extensions:
+      - ~/.pi/agent/extensions/model-access-guard.ts
   - bd:
     extensions:
-      ~/.pi/agent/extensions/model-access-guard.ts
+      - ~/.pi/agent/extensions/model-access-guard.ts

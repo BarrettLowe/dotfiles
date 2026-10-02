@@ -3,7 +3,7 @@
 # merging in machine-local overrides. Safe to run repeatedly. Converts
 # directory symlinks to real dirs on first run.
 #
-# Shared source:       ~/dotfiles/ai/{skills,agents,rules,commands}/
+# Shared source:       ~/dotfiles/ai/{AGENTS_.md,skills,agents,rules,commands}/
 # Machine-local:       ~/.local/ai/{skills,agents,rules,commands}/
 # Machine-local CLAUDE.md append: ~/CLAUDE_MORE.md
 # Machine-local pi AGENTS.md append: ~/AGENTS_MORE.md
@@ -89,9 +89,9 @@ sync_dir "skills" "$PI_AGENT_DIR/skills" "$DOTFILES_AI/pi/skills_list.txt"
 # every session). Shared base + optional machine-local append.
 [[ -L "$PI_AGENT_DIR/AGENTS.md" ]] && rm "$PI_AGENT_DIR/AGENTS.md"
 if [[ -f "$HOME/AGENTS_MORE.md" ]]; then
-    cat "$DOTFILES_AI/AGENTS.md" "$HOME/AGENTS_MORE.md" > "$PI_AGENT_DIR/AGENTS.md"
+    cat "$DOTFILES_AI/AGENTS_.md" "$HOME/AGENTS_MORE.md" > "$PI_AGENT_DIR/AGENTS.md"
 else
-    cp "$DOTFILES_AI/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
+    cp "$DOTFILES_AI/AGENTS_.md" "$PI_AGENT_DIR/AGENTS.md"
 fi
 
 # Config files: settings + keybindings (single machine-wide source, no local override)

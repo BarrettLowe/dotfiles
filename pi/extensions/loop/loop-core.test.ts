@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import loopExtension from "./index.ts";
 import {
+  MIN_INTERVAL_MS,
   findNextLoop,
   formatCountdown,
   formatDuration,
@@ -18,7 +20,7 @@ import {
 // - duration/countdown display is concise and stable
 // - only enabled loops participate in next-run selection
 // - missed executions move to one interval after restoration
-// - due loops defer during non-agent lifecycle work
+// - due loops wait for Pi to be idle and the prior loop command to settle
 
 test("parseLoopSpec parses supported duration units", () => {
   assert.deepEqual(parseLoopSpec("30s check status"), { intervalMs: 30_000, prompt: "check status" });
@@ -68,10 +70,77 @@ test("findNextLoop ignores paused loops", () => {
   assert.equal(findNextLoop([]), undefined);
 });
 
-test("shouldDispatchDueLoops defers non-agent busy lifecycle work", () => {
+test("shouldDispatchDueLoops waits for the prior loop command to settle", () => {
   assert.equal(shouldDispatchDueLoops(true, false), true);
-  assert.equal(shouldDispatchDueLoops(false, true), true);
   assert.equal(shouldDispatchDueLoops(false, false), false);
+  assert.equal(shouldDispatchDueLoops(false, true), false);
+  assert.equal(shouldDispatchDueLoops(true, true), false);
+});
+
+test("a loop restarts its timer after its prompt settles", async () => {
+  const handlers = new Map<string, (event: unknown, ctx: any) => Promise<void> | void>();
+  const messages: unknown[] = [];
+  const entries: unknown[] = [];
+  let tick: (() => void) | undefined;
+  const intervalMs = MIN_INTERVAL_MS;
+  const startAt = 100_000; // arbitrary test timestamp
+  const dueAt = startAt + intervalMs;
+  const settledAt = dueAt + 3_000; // simulated command duration
+  let now = startAt;
+  const originalNow = Date.now;
+  const originalSetInterval = globalThis.setInterval;
+  const originalClearInterval = globalThis.clearInterval;
+  Date.now = () => now;
+  globalThis.setInterval = ((callback: () => void) => {
+    tick = callback;
+    return 0;
+  }) as typeof setInterval;
+  globalThis.clearInterval = (() => undefined) as typeof clearInterval;
+
+  const ctx = {
+    isIdle: () => true,
+    sessionManager: {
+      getBranch: () => [
+        {
+          type: "custom",
+          customType: "loop-state",
+          data: {
+            version: 1,
+            nextId: 2,
+            footerEnabled: true,
+            loops: [{ id: 1, intervalMs, prompt: "check", enabled: true, nextRunAt: dueAt }],
+          },
+        },
+      ],
+    },
+    ui: { setStatus: () => undefined },
+  };
+  const pi = {
+    appendEntry: (_type: string, data: unknown) => entries.push(data),
+    on: (event: string, handler: (event: unknown, ctx: typeof ctx) => Promise<void> | void) => {
+      handlers.set(event, handler);
+      return () => undefined;
+    },
+    registerCommand: () => undefined,
+    sendMessage: (message: unknown) => messages.push(message),
+  };
+
+  try {
+    loopExtension(pi as any);
+    await handlers.get("session_start")?.({}, ctx);
+    now = dueAt;
+    tick?.();
+    tick?.();
+    assert.equal(messages.length, 1);
+
+    now = settledAt;
+    await handlers.get("agent_settled")?.({}, ctx);
+    assert.equal((entries.at(-1) as any).loops[0].nextRunAt, settledAt + intervalMs);
+  } finally {
+    Date.now = originalNow;
+    globalThis.setInterval = originalSetInterval;
+    globalThis.clearInterval = originalClearInterval;
+  }
 });
 
 test("normalizeMissedLoops schedules missed loops one interval from now", () => {
