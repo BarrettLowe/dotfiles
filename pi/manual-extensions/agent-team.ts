@@ -6,8 +6,8 @@
  * maintains its own Pi session for cross-invocation memory.
  *
  * Loads local agent definitions first, then globals from ~/.claude/agents/*.md
- * and ~/.pi/agent/agents/*.md. Local definitions override globals by name.
- * Teams are loaded from ~/.pi/agent/agents/teams.yaml and .pi/agents/teams.yaml;
+ * and <agent-dir>/agents/*.md. Local definitions override globals by name.
+ * Teams are loaded from <agent-dir>/agents/teams.yaml and .pi/agents/teams.yaml;
  * project teams override globals by name. Only active team members can be dispatched.
  * Optional team guidance follows the same global/project precedence.
  *
@@ -19,7 +19,7 @@
  * Usage: pi -e ~/dotfiles/pi/manual-extensions/agent-team.ts [--agent-team <name>]
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { Text, type AutocompleteItem, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { spawn } from "child_process";
@@ -969,7 +969,7 @@ ${agentCatalog}`,
 		const members = Array.from(agentStates.values()).map(s => displayName(s.def.name)).join(", ");
 		_ctx.ui.notify(
 			`Team: ${activeTeamName} (${members})\n` +
-			`Teams: ~/.pi/agent/agents/teams.yaml + .pi/agents/teams.yaml\n\n` +
+			`Teams: ${join(getAgentDir(), "agents", "teams.yaml")} + .pi/agents/teams.yaml\n\n` +
 			`/agents-team          Select a team\n` +
 			`/agents-list          List active agents and status\n` +
 			`/agents-grid <1-6>    Set grid column count`,

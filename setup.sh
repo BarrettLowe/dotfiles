@@ -103,11 +103,9 @@ if [ -d "$HOME/.config/Code/User" ]; then
     create_symlink "$DOTFILES_DIR/vscode/User/keybindings.json" "$HOME/.config/Code/User/keybindings.json"
 fi
 
-# Claude Code + pi agent (shared skills/agents/rules/commands live in ai/)
-mkdir -p "$HOME/.claude"
+# Pi configuration: enabled profiles, or ~/.pi/agent without profiles.conf.
 bash "$DOTFILES_DIR/ai/sync.sh"
-create_symlink "$DOTFILES_DIR/ai/claude/settings.json" "$HOME/.claude/settings.json"
-print_success "AI harness config synced"
+print_success "Pi config synced"
 
 # GitHub Copilot CLI
 mkdir -p "$HOME/.config/github-copilot"

@@ -3,8 +3,6 @@
   "lastChangelogVersion": "0.83.0",
   "theme": "kanagawa",
   "defaultProjectTrust": "ask",
-  "defaultProvider": "llama.cpp",
-  "defaultModel": "ornith",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-yaml-hooks",

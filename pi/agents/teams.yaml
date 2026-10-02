@@ -15,14 +15,13 @@
 # - Each member name must match an agent's frontmatter `name:` field
 #   case-insensitively (not the filename).
 # - `extensions` is optional. A bare name resolves to
-#   ~/.pi/agent/extensions/<name>.ts; `~/...` paths expand from the home directory.
+#   <agent-dir>/extensions/<name>.ts (PI_CODING_AGENT_DIR); `~/...` paths expand from the home directory.
 # - No inline lists or other per-member metadata.
 #
-# NOTE: agent-team.ts only scans agent .md files from project-relative
-# directories (<cwd>/agents/, <cwd>/.claude/agents/, <cwd>/.pi/agents/) and
-# reads this file from <cwd>/.pi/agents/teams.yaml. Copy or symlink this file
-# and your agent .md files into a project's .pi/agents/ directory before
-# running `pi -e extensions/agent-team.ts` there.
+# Agent definitions load from project directories (<cwd>/agents/,
+# <cwd>/.claude/agents/, <cwd>/.pi/agents/), ~/.claude/agents/, and
+# <agent-dir>/agents/. Teams load from <agent-dir>/agents/teams.yaml and
+# <cwd>/.pi/agents/teams.yaml; project definitions override globals.
 
 plan-build-review:
   - planner
@@ -37,27 +36,27 @@ scout-review-architect:
 mvps:
   - scout:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - planner:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - reviewer:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
 
 underdogs:
   - scout:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - planner:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - software-engineer:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - reviewer:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard
   - bd:
     extensions:
-      - ~/.pi/agent/extensions/model-access-guard.ts
+      - model-access-guard

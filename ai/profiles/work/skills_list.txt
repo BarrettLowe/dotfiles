@@ -1,0 +1,16 @@
+# Shared Pi skills plus the work-only GitLab ticket skill.
+arch
+code-commenter
+code-reviewer
+commit-merge-mr
+cpp-style
+explain
+graphify
+grill-me
+humanizer
+mansplain
+orient
+pair
+python-style
+tdd-workflow
+gitlab-ticket

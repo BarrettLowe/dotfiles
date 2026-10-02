@@ -33,6 +33,10 @@ This repository contains configuration files for:
 - **Ag (The Silver Searcher)** - Ignore patterns for code search
 - **Inputrc** - Readline configuration for better terminal input
 
+## Pi profiles
+
+See [ai/PROFILES.md](ai/PROFILES.md) for separate home/work accounts, settings, tools, and memory on the same machine. Machines without a profiles file keep the existing single-profile paths.
+
 ## System Setup Guides
 
 **Read these guides in order when setting up a new system:**

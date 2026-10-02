@@ -3,7 +3,7 @@
  *
  * Each agent listens on a single endpoint (unix socket on POSIX, named pipe on
  * Windows) and discovers peers through per-project registry files under
- * ~/.pi/coms/projects/<project>/agents/<name>.json.
+ * <agent-dir>/coms/projects/<project>/agents/<name>.json (PI_COMS_DIR overrides).
  *
  * Phase A (foundation): identity resolution, registry I/O, transport bind/send,
  * connection handlers. Phase B: tools (coms_list/send/get/await), agent_end
@@ -14,7 +14,7 @@
  */
 
 import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder, getAgentDir } from "@mariozechner/pi-coding-agent";
 import { Text, Container, truncateToWidth, visibleWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui";
 import type { AutocompleteItem } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
@@ -22,12 +22,11 @@ import { applyExtensionDefaults } from "./lib/themeMap.ts";
 import * as net from "node:net";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as os from "node:os";
 import * as crypto from "node:crypto";
 
 // ━━ Constants ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const COMS_DIR = process.env.PI_COMS_DIR || path.join(os.homedir(), ".pi", "coms");
+const COMS_DIR = process.env.PI_COMS_DIR || path.join(getAgentDir(), "coms");
 const MAX_HOPS = Number(process.env.PI_COMS_MAX_HOPS) || 5;
 const TIMEOUT_MS = Number(process.env.PI_COMS_TIMEOUT_MS) || 1_800_000;
 const PING_INTERVAL_MS = Number(process.env.PI_COMS_PING_INTERVAL_MS) || 10_000;

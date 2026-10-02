@@ -1,3 +1,4 @@
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
@@ -47,13 +48,13 @@ function parseAgentFile(filePath: string): AgentDef | null {
 	}
 }
 
-export function scanAgentDirs(cwd: string, home: string = homedir()): AgentDef[] {
+export function scanAgentDirs(cwd: string, home: string = homedir(), agentDir: string = getAgentDir()): AgentDef[] {
 	const dirs = [
 		join(cwd, "agents"),
 		join(cwd, ".claude", "agents"),
 		join(cwd, ".pi", "agents"),
 		join(home, ".claude", "agents"),
-		join(home, ".pi", "agent", "agents"),
+		join(agentDir, "agents"),
 	];
 
 	const agents: AgentDef[] = [];
@@ -119,11 +120,11 @@ export function parseTeamsYaml(raw: string): Record<string, TeamMember[]> {
 	return teams;
 }
 
-export function resolveExtensionSource(source: string, home: string = homedir()): string {
+export function resolveExtensionSource(source: string, home: string = homedir(), agentDir: string = getAgentDir()): string {
 	if (source === "~") return home;
 	if (source.startsWith("~/")) return join(home, source.slice(2));
 	if (!source.includes("/")) {
-		return join(home, ".pi", "agent", "extensions", source.endsWith(".ts") ? source : `${source}.ts`);
+		return join(agentDir, "extensions", source.endsWith(".ts") ? source : `${source}.ts`);
 	}
 	return source;
 }
@@ -137,8 +138,8 @@ function loadTeamsFile(path: string): Record<string, TeamMember[]> {
 	}
 }
 
-export function loadTeams(cwd: string, home: string = homedir()): Record<string, TeamMember[]> {
-	const globalTeams = loadTeamsFile(join(home, ".pi", "agent", "agents", "teams.yaml"));
+export function loadTeams(cwd: string, agentDir: string = getAgentDir()): Record<string, TeamMember[]> {
+	const globalTeams = loadTeamsFile(join(agentDir, "agents", "teams.yaml"));
 	const projectTeams = loadTeamsFile(join(cwd, ".pi", "agents", "teams.yaml"));
 	return { ...globalTeams, ...projectTeams };
 }
@@ -154,11 +155,11 @@ export function resolveInitialTeam(
 export function loadTeamDispatcherPrompt(
 	cwd: string,
 	teamName: string,
-	home: string = homedir(),
+	agentDir: string = getAgentDir(),
 ): string {
 	const promptPaths = [
 		join(cwd, ".pi", "agents", `${teamName}.dispatcher.md`),
-		join(home, ".pi", "agent", "agents", `${teamName}.dispatcher.md`),
+		join(agentDir, "agents", `${teamName}.dispatcher.md`),
 	];
 
 	for (const promptPath of promptPaths) {

@@ -127,7 +127,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- ============================================================================
--- CLAUDE CONFIG AUTO-SYNC
+-- PI CONFIG AUTO-SYNC
 -- ============================================================================
 
 local home = vim.fn.expand("~")
@@ -135,8 +135,9 @@ vim.api.nvim_create_autocmd("BufWritePost", {
     group = main_group,
     pattern = {
         home .. "/dotfiles/ai/**",
+        home .. "/dotfiles/pi/**",
         home .. "/.local/ai/**",
-        home .. "/CLAUDE_MORE.md",
+        home .. "/AGENTS_MORE.md",
     },
     callback = function()
         vim.fn.jobstart({ "bash", home .. "/dotfiles/ai/sync.sh" }, {
@@ -147,7 +148,7 @@ vim.api.nvim_create_autocmd("BufWritePost", {
             end,
         })
     end,
-    desc = "Sync ~/.claude and ~/.pi/agent/skills after saving shared or machine-local AI config",
+    desc = "Sync Pi profiles after saving shared or machine-local AI config",
 })
 
 -- ============================================================================

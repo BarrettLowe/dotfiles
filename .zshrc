@@ -146,7 +146,16 @@ alias tmux="TERM=xterm-256color tmux"
 vc() {
   (cd ~/dotfiles && $EDITOR neovim/init.lua)
 }
-alias claude-sync="bash ~/dotfiles/ai/sync.sh"
+alias pi-sync="bash ~/dotfiles/ai/sync.sh"
+
+# Select profiles for this process only, including nested subagents.
+unfunction pi 2>/dev/null
+if [[ -f "$HOME/.local/ai/profiles.conf" ]]; then
+  source "$HOME/.local/ai/profiles.conf"
+  pi() {
+    PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/profiles/${DEFAULT_PROFILE:-${PROFILES[1]}}}" command pi "$@"
+  }
+fi
 
 # Pair programming mode: only the pair skill loaded, no other extensions/skills
 pipair() {
@@ -265,7 +274,7 @@ if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ ! -f /.dockerenv ]] && [[ -z "$TMUX" 
     fi
 fi
 
-# Sync Claude Code config: shared dotfiles + machine-local overrides
+# Sync Pi profiles: shared dotfiles + machine-local overrides
 [[ -f "$HOME/dotfiles/ai/sync.sh" ]] && bash "$HOME/dotfiles/ai/sync.sh"
 
 # Load local configurations (system-specific settings)

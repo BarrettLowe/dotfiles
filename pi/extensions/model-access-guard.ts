@@ -1,5 +1,5 @@
 // Blocks certain models from reading/editing files under specific paths,
-// based on rules in ~/.pi/agent/model-access.json.
+// based on rules in <agent-dir>/model-access.json (PI_CODING_AGENT_DIR).
 //
 // Config shape:
 // {
@@ -12,12 +12,10 @@
 // Toggle at runtime with /model-guard on|off|status (session-only, does not edit the config file).
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
-
-const CONFIG_PATH = join(homedir(), ".pi", "agent", "model-access.json");
 
 interface Rule {
   modelPattern: string;
@@ -36,7 +34,7 @@ function expandHome(p: string): string {
 
 function loadConfig(): Config {
   try {
-    const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
+    const raw = JSON.parse(readFileSync(join(getAgentDir(), "model-access.json"), "utf-8"));
     return {
       enabled: raw.enabled ?? true,
       rules: Array.isArray(raw.rules) ? raw.rules : [],

@@ -2,15 +2,15 @@
  * Extensions list extension
  *
  * Provides a /extensions command to list installed and enabled extensions.
- * Scans global (~/.pi/agent/extensions/), project-local (.pi/extensions/),
+ * Scans global (<agent-dir>/extensions/), project-local (.pi/extensions/),
  * and custom paths from settings.json.
  *
  * Usage: /extensions
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { CONFIG_DIR_NAME } from "@earendil-works/pi-coding-agent";
-import { join } from "node:path";
+import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
+import { isAbsolute, join } from "node:path";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -22,7 +22,7 @@ interface ExtEntry {
 }
 
 function readSettings(): Record<string, unknown> {
-  const settingsPath = join(homedir(), CONFIG_DIR_NAME, "settings.json");
+  const settingsPath = join(getAgentDir(), "settings.json");
   if (!existsSync(settingsPath)) return {};
   try {
     return JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>;
@@ -36,7 +36,7 @@ function scan(ctxCwd: string): ExtEntry[] {
   const settings = readSettings();
   const customPaths = (settings.extensions as string[]) ?? [];
 
-  const globalDir = join(homedir(), ".pi", "agent", "extensions");
+  const globalDir = join(getAgentDir(), "extensions");
   if (existsSync(globalDir)) {
     for (const item of readdirSync(globalDir).sort()) {
       const fullPath = join(globalDir, item);
@@ -79,7 +79,9 @@ function scan(ctxCwd: string): ExtEntry[] {
 
   // Custom paths from settings.json
   for (const p of customPaths) {
-    const resolved = p.replace(/\$\w+/g, ""); // strip env var placeholders
+    const source = p.replace(/\$\w+/g, ""); // strip env var placeholders
+    const resolved = source.startsWith("~/") ? join(homedir(), source.slice(2))
+      : isAbsolute(source) ? source : join(getAgentDir(), source);
     if (existsSync(resolved)) {
       const name = resolved.split("/").pop() ?? resolved;
       entries.push({ path: resolved, name, kind: "custom" });
@@ -109,7 +111,7 @@ export default function (pi: ExtensionAPI) {
 
       const items: string[] = [];
       const order: { key: string; label: string }[] = [
-        { key: "global", label: "Global (~/.pi/agent/extensions/)" },
+        { key: "global", label: `Global (${join(getAgentDir(), "extensions")}/)` },
         { key: "custom", label: "Custom (settings.json)" },
         { key: "project", label: "Project-local (.pi/extensions/)" },
       ];

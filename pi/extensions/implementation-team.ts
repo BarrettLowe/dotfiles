@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -10,7 +10,6 @@ import {
   readdirSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
 import {
@@ -52,8 +51,6 @@ interface TeamRun {
   steps: StepProgress[];
 }
 
-const GLOBAL_AGENT_DIR = join(homedir(), ".pi", "agent", "agents");
-const GLOBAL_WORKFLOW_PATH = join(GLOBAL_AGENT_DIR, "implementation-team.yaml");
 const OUTPUT_LIMIT = 8_000;
 
 function parseAgentFile(filePath: string): AgentDefinition | undefined {
@@ -80,7 +77,7 @@ function parseAgentFile(filePath: string): AgentDefinition | undefined {
 function loadAgents(cwd: string): Map<string, AgentDefinition> {
   const agents = new Map<string, AgentDefinition>();
   const directories = [
-    GLOBAL_AGENT_DIR,
+    join(getAgentDir(), "agents"),
     join(cwd, "agents"),
     join(cwd, ".claude", "agents"),
     join(cwd, ".pi", "agents"),
@@ -103,7 +100,7 @@ function loadAgents(cwd: string): Map<string, AgentDefinition> {
 
 function loadWorkflows(cwd: string): WorkflowDefinition[] {
   const projectPath = join(cwd, ".pi", "agents", "implementation-team.yaml");
-  const workflowPath = existsSync(projectPath) ? projectPath : GLOBAL_WORKFLOW_PATH;
+  const workflowPath = existsSync(projectPath) ? projectPath : join(getAgentDir(), "agents", "implementation-team.yaml");
   if (!existsSync(workflowPath)) {
     throw new Error(`Implementation workflow file not found: ${workflowPath}`);
   }
@@ -113,9 +110,7 @@ function loadWorkflows(cwd: string): WorkflowDefinition[] {
 function sessionFile(cwd: string, workItemId: string, agentName: string): string {
   const projectKey = createHash("sha256").update(resolve(cwd)).digest("hex").slice(0, 12);
   const directory = join(
-    homedir(),
-    ".pi",
-    "agent",
+    getAgentDir(),
     "sessions",
     "implementation-team",
     projectKey,

@@ -4,7 +4,7 @@
  * Each /sub spawns a background Pi subagent with its own persistent session,
  * enabling conversation continuations via /subcont.
  *
- * Agent personalities are markdown files in ~/.pi/agent/agents/*.md with a
+ * Agent personalities are markdown files in <agent-dir>/agents/*.md (PI_CODING_AGENT_DIR) with a
  * YAML frontmatter block (name, description, tools, model, color) followed
  * by the personality prompt body. The `model` field is ignored — model
  * selection stays with --model / the parent model. The body is appended
@@ -38,12 +38,11 @@
 
 import { StringEnum, type ThinkingLevel } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder, parseFrontmatter } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder, getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 const { spawn } = require("child_process") as any;
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "node:url";
 import { applyExtensionDefaults } from "./lib/themeMap.ts";
@@ -65,7 +64,7 @@ function formatTokenCount(n: number): string {
 const THINKING_OVERRIDES = ["low", "medium", "high", "xhigh"] as const;
 type ThinkingOverride = (typeof THINKING_OVERRIDES)[number];
 
-const AGENTS_DIR = path.join(os.homedir(), ".pi", "agent", "agents");
+const AGENTS_DIR = path.join(getAgentDir(), "agents");
 
 interface Personality {
 	name: string;
@@ -74,7 +73,7 @@ interface Personality {
 }
 
 /**
- * Discover agent personality markdown files from ~/.pi/agent/agents/*.md.
+ * Discover agent personality markdown files from <agent-dir>/agents/*.md (PI_CODING_AGENT_DIR).
  * Each file is YAML frontmatter (name, description, tools, model, color) +
  * a body. `model` is intentionally ignored here — model choice stays with
  * --model / the parent model, not the personality. The returned body is
@@ -264,7 +263,7 @@ export default function (pi: ExtensionAPI) {
 	// ── Session file helpers ──────────────────────────────────────────────────
 
 	function makeSessionFile(id: number): string {
-		const dir = path.join(os.homedir(), ".pi", "agent", "sessions", "subagents");
+		const dir = path.join(getAgentDir(), "sessions", "subagents");
 		fs.mkdirSync(dir, { recursive: true });
 		return path.join(dir, `subagent-${id}-${Date.now()}.jsonl`);
 	}
