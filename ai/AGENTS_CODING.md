@@ -80,3 +80,8 @@ int[] = {0xAB, 0x1, 0x1234};
 
 ```
 
+### Naming Variables
+
+- Follow project conventions
+- Prefer explicit names over brevity
+
