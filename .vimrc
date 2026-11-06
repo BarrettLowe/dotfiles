@@ -88,7 +88,16 @@ if exists('g:vscode')
     set nocompatible
     
     " VSCode-specific keybindings
-    nnoremap <leader>f <Cmd>call VSCodeNotify('workbench.action.quickOpen')<CR>
+    nnoremap <leader>ff <Cmd>call VSCodeNotify('workbench.action.quickOpen')<CR>
+    nnoremap <leader>fg <Cmd>call VSCodeNotify('workbench.action.findInFiles')<CR>
+    nnoremap <leader>fb <Cmd>call VSCodeNotify('workbench.action.showAllEditors')<CR>
+    nnoremap <leader>fr <Cmd>call VSCodeNotify('workbench.action.openRecent')<CR>
+    nnoremap <leader>fw <Cmd>call VSCodeNotify('workbench.action.findInFiles', {'query': expand('<cword>')})<CR>
+    nnoremap <leader>fl <Cmd>call VSCodeNotify('actions.find')<CR>
+    nnoremap <leader>D <Cmd>call VSCodeNotify('workbench.actions.view.problems')<CR>
+    nnoremap <leader>ds <Cmd>call VSCodeNotify('workbench.action.gotoSymbol')<CR>
+    nnoremap <leader>ws <Cmd>call VSCodeNotify('workbench.action.showAllSymbols')<CR>
+    nnoremap <leader>fe <Cmd>call VSCodeNotify('workbench.view.explorer')<CR>
     nnoremap <leader>p <Cmd>call VSCodeNotify('workbench.action.showCommands')<CR>
 else
     syntax on
