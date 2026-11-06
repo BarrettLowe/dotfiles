@@ -6,7 +6,14 @@ return {
     priority = 1000,
     lazy = false,
     opts = {
-        picker = { enabled = true },
+        picker = { 
+            enabled = true,
+            sources = {
+                grep = {
+                    hidden = true
+                }
+            }
+        },
         explorer = { enabled = true }
     },
     config = function(plugin, opts)
