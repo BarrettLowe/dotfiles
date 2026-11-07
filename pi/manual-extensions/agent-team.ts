@@ -26,12 +26,15 @@ import { spawn } from "child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import {
+	loadAgentRuntimeOverrides,
 	loadTeamDispatcherPrompt,
 	loadTeams,
+	resolveAgentRuntime,
 	resolveExtensionSource,
 	resolveInitialTeam,
 	scanAgentDirs,
 	type AgentDef,
+	type AgentRuntimeOverrides,
 	type TeamMember,
 } from "./agent-team-config.ts";
 import { AgentTraceWriter } from "./agent-team-trace.ts";
@@ -56,6 +59,7 @@ interface AgentDispatchResult {
 
 interface AgentState {
 	def: AgentDef;
+	runtime: { model: string; thinking: string };
 	extensions: string[];
 	status: "idle" | "running" | "done" | "error";
 	task: string;
@@ -84,6 +88,7 @@ export default function (pi: ExtensionAPI) {
 
 	const agentStates: Map<string, AgentState> = new Map();
 	let allAgentDefs: AgentDef[] = [];
+	let runtimeOverrides: AgentRuntimeOverrides = {};
 	let teams: Record<string, TeamMember[]> = {};
 	let activeTeamName = "";
 	let activeTeamPrompt = "";
@@ -125,6 +130,7 @@ export default function (pi: ExtensionAPI) {
 
 		// Load all agent definitions
 		allAgentDefs = scanAgentDirs(cwd);
+		runtimeOverrides = loadAgentRuntimeOverrides();
 
 		// Merge global and project teams; project definitions win by name.
 		teams = loadTeams(cwd);
@@ -149,6 +155,7 @@ export default function (pi: ExtensionAPI) {
 			const sessionFile = join(sessionDir, `${key}.jsonl`);
 			agentStates.set(def.name.toLowerCase(), {
 				def,
+				runtime: resolveAgentRuntime(def, runtimeOverrides),
 				extensions: member.extensions.map(extension => resolveExtensionSource(extension)),
 				status: "idle",
 				task: "",
@@ -191,7 +198,7 @@ export default function (pi: ExtensionAPI) {
 		// Context bar: 5 blocks + percent
 		const filled = Math.ceil(state.contextPct / 20);
 		const bar = "#".repeat(filled) + "-".repeat(5 - filled);
-		const runtime = `${state.def.model || "inherited"}/${state.def.thinking}`;
+		const runtime = `${state.runtime.model || "inherited"}/${state.runtime.thinking}`;
 		const ctxStr = truncate(`[${bar}] ${Math.ceil(state.contextPct)}% · ${runtime}`, w - 1);
 		const ctxLine = theme.fg("dim", ctxStr);
 		const ctxVisible = ctxStr.length;
@@ -322,8 +329,8 @@ export default function (pi: ExtensionAPI) {
 		const parentModel = ctx.model
 			? `${ctx.model.provider}/${ctx.model.id}`
 			: "openrouter/google/gemini-3-flash-preview";
-		const model = state.def.model || parentModel;
-		const thinking = state.def.thinking || "off";
+		const model = state.runtime.model || parentModel;
+		const thinking = state.runtime.thinking;
 		const slashIndex = model.indexOf("/");
 		const modelProvider = slashIndex === -1 ? model : model.slice(0, slashIndex);
 		const modelId = slashIndex === -1 ? "" : model.slice(slashIndex + 1);
@@ -708,8 +715,8 @@ export default function (pi: ExtensionAPI) {
 			const names = Array.from(agentStates.values())
 				.map(s => {
 					const session = s.sessionFile ? "resumed" : "new";
-					const model = s.def.model || "dispatcher model";
-					return `${displayName(s.def.name)} (${s.status}, ${session}, runs: ${s.runCount}, model: ${model}, thinking: ${s.def.thinking}): ${s.def.description}`;
+					const model = s.runtime.model || "dispatcher model";
+					return `${displayName(s.def.name)} (${s.status}, ${session}, runs: ${s.runCount}, model: ${model}, thinking: ${s.runtime.thinking}): ${s.def.description}`;
 				})
 				.join("\n");
 			_ctx.ui.notify(names || "No agents loaded", "info");
@@ -782,7 +789,7 @@ export default function (pi: ExtensionAPI) {
 
 		// Build dynamic agent catalog from active team only
 		const agentCatalog = Array.from(agentStates.values())
-			.map(s => `### ${displayName(s.def.name)}\n**Dispatch as:** \`${s.def.name}\`\n${s.def.description}\n**Tools:** ${s.def.tools}\n**Model:** ${s.def.model || "dispatcher model"}\n**Thinking:** ${s.def.thinking}`)
+			.map(s => `### ${displayName(s.def.name)}\n**Dispatch as:** \`${s.def.name}\`\n${s.def.description}\n**Tools:** ${s.def.tools}\n**Model:** ${s.runtime.model || "dispatcher model"}\n**Thinking:** ${s.runtime.thinking}`)
 			.join("\n\n");
 
 		const teamMembers = Array.from(agentStates.values()).map(s => displayName(s.def.name)).join(", ");

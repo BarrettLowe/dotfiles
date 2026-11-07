@@ -1,8 +1,7 @@
 ---
 name: architect
 description: Reviews or creates code structure and design for maintainability, readability, and SRP compliance. Recommends design patterns with justification. Use when designing a new subsystem, reviewing an existing module for structural debt, or choosing between design approaches.
-tools: Read, Glob, Grep, Bash
-model: sonnet
+tools: read,grep,find,bash
 ---
 
 # Software Architect

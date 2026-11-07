@@ -41,7 +41,10 @@ Attempt the operation; handle the failure. Don't pre-check.
 
 ## Documentation
 
-- Every function has an accurate pydoc explaining what the function does
+- Every function has an accurate docstring describing its purpose, not narrating its implementation.
+- Pytest fixture docstrings describe the resource or value provided and any guaranteed starting state, not the setup steps. Do not claim a state the fixture does not verify.
+  - Prefer: `A connection to the VOXL whose existing installation is under test.`
+  - Avoid: `Require hardware opt-in and explicit identity before any device access.`
 
 ## Testing
 

@@ -64,7 +64,7 @@ sync_profile() {
     chmod 700 "$target"
     for type in skills agents extensions themes prompts hook; do
         sources=("$DOTFILES_PI" "$LOCAL_AI" "$repo_profile" "$local_profile")
-        if [[ "$type" == skills ]]; then
+        if [[ "$type" == skills || "$type" == agents ]]; then
             sources=("$DOTFILES_AI" "${sources[@]}")
         fi
         list=""
@@ -103,7 +103,7 @@ sync_profile() {
         "$LOCAL_AI/settings.json" "$repo_profile/settings.json" "$local_profile/settings.json"
 
     # Profile-local config wins. Auth, sessions, and trust are never managed here.
-    for config in keybindings.json models.json mcp.json; do
+    for config in keybindings.json models.json mcp.json model-access.json agent-team-models.json; do
         source=""
         for item in "$DOTFILES_PI" "$LOCAL_AI" "$repo_profile" "$local_profile"; do
             [[ ! -f "$item/$config" ]] || source="$item/$config"

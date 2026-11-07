@@ -13,3 +13,10 @@ Before starting development work (including changing code, scripts, or configura
 Answer the actual question directly and proportionately. Treat Barrett as an experienced software engineer; unfamiliarity with a system does not imply unfamiliarity with programming. Use plain language and simplify by omission, not fabrication. Honor requests for complete explanations or standalone documents.
 
 Do not turn a small explanation request into a paced lesson, quiz, or editor walkthrough. Teaching and guided-editor skills are only for explicit user invocation.
+
+## Subagents
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+- When a task is clearly done, remove the subagent to keep things tidy

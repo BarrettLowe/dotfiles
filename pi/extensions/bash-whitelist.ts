@@ -37,12 +37,10 @@
  *     static parsing; the latter always resolves "unknown" (prompts).
  *   - No arg-token normalization: "rm -rf" does not match "rm -fr" or
  *     "rm -r -f" — list additional spellings as separate entries.
- *   - Subagents run as separate non-interactive `pi --print` processes that
- *     load this extension fresh but have no UI: anything not already in
- *     the persisted whitelist file is hard-blocked for them, with no
- *     prompt surfaced back to the parent session, and no inheritance of
- *     the parent session's in-session ("remember for this session")
- *     approvals.
+ *   - Subagents load this extension fresh. RPC children send approval
+ *     requests to the parent; print/JSON children without UI still block
+ *     unknown commands. In-session approvals belong to the child process,
+ *     not the parent or subsequent /subcont runs.
  *   - No project-local override in this pass. Extension point noted below
  *     at the config-load call site.
  *
@@ -169,6 +167,7 @@ export default function (pi: ExtensionAPI) {
 			const choice = await ctx.ui.select(
 				`⚠️ Could not safely parse this bash command for whitelist checking:\n\n  ${command}\n\nReason: ${parsed.reason ?? "unknown"}\n\nAllow anyway?`,
 				["Yes, just this once", "No"],
+				{ signal: ctx.signal },
 			);
 
 			if (choice === "Yes, just this once") return;
@@ -223,6 +222,7 @@ export default function (pi: ExtensionAPI) {
 					`Yes, add '${item.exeBasename}' to the whitelist permanently`,
 					"No",
 				],
+				{ signal: ctx.signal },
 			);
 
 			if (choice === "Yes, just this once") {

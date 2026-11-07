@@ -1,8 +1,7 @@
 ---
 name: bug-fixer
 description: Surgical bug fix executor. Use when you have a clear diagnosis and a specific fix — from a code review finding, bug-investigator output, or explicit user instruction. Applies the fix and reports changes. Does NOT investigate or diagnose.
-tools: Read, Grep, Glob, Bash, Edit
-model: haiku
+tools: read,grep,find,bash,edit
 color: orange
 ---
 

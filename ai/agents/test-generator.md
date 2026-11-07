@@ -2,7 +2,6 @@
 name: test-generator
 description: Generates C++ unit tests for a given class or function. Auto-detects GoogleTest or Catch2 from the project. Covers happy path, edge cases, and error conditions. Use when writing tests for new or existing code.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: sonnet
 ---
 
 # C++ Test Generator

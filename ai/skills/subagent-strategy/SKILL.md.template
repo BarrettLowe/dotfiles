@@ -1,0 +1,102 @@
+---
+name: subagent-strategy
+description: Follow my agent selection, responsibility, context reuse, and cleanup strategy when I explicitly request subagents.
+disable-model-invocation: true
+---
+
+# Subagent strategy
+
+## Finish this template before enabling it
+
+Replace every `[FILL: ...]` entry and delete this section. Rename this file to
+`SKILL.md`, add `subagent-strategy` to the intended profile's `skills_list.txt`,
+run `bash ~/dotfiles/ai/sync.sh`, then `/reload` in Pi.
+Invoke with `/skill:subagent-strategy <task>`.
+
+## When this strategy applies
+
+- Use subagents when: [FILL: requests or kinds of work that warrant delegation].
+- Keep work in the main session when: [FILL: exceptions, small tasks, sensitive decisions].
+- This strategy applies for: [FILL: this request, the whole task including follow-ups, or the session].
+- Before creating agents: [FILL: proceed directly, show the split, or ask for approval].
+
+## Which agents to use
+
+Use exact agent names available to the subagent tools. Repeat rows as needed.
+A named agent defines its instructions; its live instance ID identifies the
+conversation to continue. Creating another instance of the same named agent
+does not preserve the previous instance's accumulated context.
+
+| Agent name | Use when | Responsibility throughout the task | Do not assign |
+| --- | --- | --- | --- |
+| [FILL: exact name] | [FILL: trigger] | [FILL: coherent area or outcome] | [FILL: exclusions] |
+| [FILL: exact name] | [FILL: trigger] | [FILL: coherent area or outcome] | [FILL: exclusions] |
+| [FILL: exact name] | [FILL: trigger] | [FILL: coherent area or outcome] | [FILL: exclusions] |
+
+- If several agents fit, choose by: [FILL: selection rule].
+- If the required agent is unavailable: [FILL: ask, keep work local, or use a specified fallback].
+- Maximum concurrent agents: [FILL: limit].
+- Agents may delegate further only when: [FILL: conditions, or never].
+
+## Give each instance a lasting responsibility
+
+Assign a coherent part of the task rather than a disconnected sequence of chores.
+Keep related follow-ups with the same instance so it can build useful context.
+Do not create a replacement merely because the agent finished its latest request.
+
+Each assignment must state:
+
+- Overall task and relevant user constraints.
+- Agent's responsibility: [FILL: how to define its area or outcome].
+- Boundaries: [FILL: allowed files, read-only versus editing, decisions it may make].
+- Relevant starting context: [FILL: files, decisions, prior findings, dependencies].
+- Current request and completion criteria: [FILL: expected work and evidence].
+- Required report: [FILL: findings, changed files, checks, blockers, remaining questions].
+- Stop and ask when: [FILL: uncertainty, scope changes, conflicts, or other conditions].
+
+The main agent remains responsible for: [FILL: planning, decisions, coordination,
+verification, and/or final response].
+
+## Preserve meaningful context
+
+Track each instance's ID, agent name, responsibility, status, and likely follow-ups.
+Keep this record in: [FILL: main-session context or an agreed task-notes file].
+
+- Continue an existing instance when: [FILL: related follow-up criteria].
+- Create a new instance when: [FILL: distinct responsibility, independent opinion, or other reason].
+- Replace an instance when: [FILL: failure, stale assumptions, excessive unrelated context].
+- Before replacing it, preserve: [FILL: decisions, evidence, files, checks, open questions].
+- Send updates to affected agents when: [FILL: shared decisions or files change].
+- Across a new Pi session: [FILL: where to save a handoff; do not assume live instances survive].
+
+Do not send every agent the entire conversation by default. Give each agent the
+context needed for its responsibility and explain changes that invalidate earlier work.
+
+## Coordinate work and check results
+
+- Run work in parallel when: [FILL: independence requirements].
+- Wait for another agent's result when: [FILL: dependency rules].
+- Prevent conflicting edits by: [FILL: separate file ownership or sequential edits].
+- Resolve conflicting recommendations by: [FILL: main-agent decision, evidence, or user approval].
+- Before accepting a result, check: [FILL: required evidence and verification].
+
+Use the subagent tools' completion notifications. Do independent work while agents
+run; do not poll, sleep to wait, or read their internal session/result files.
+
+## Agent cleanup policy
+
+A completed request is not necessarily a completed responsibility. Keep an instance
+available when its context is still useful for likely follow-ups.
+
+- Retain a completed instance until: [FILL: responsibility closes, verification finishes, or another milestone].
+- Remove an instance when: [FILL: its result is accepted and no related follow-up remains].
+- For failed or blocked instances: [FILL: retry, continue with clarification, or replace after a handoff].
+- On cancellation or a change of direction: [FILL: which owned agents to stop and what to preserve].
+- At the end of the overall task: [FILL: remove all task-owned agents or explicitly retain specified ones].
+- Before removal, preserve: [FILL: necessary findings and unresolved work, and where they belong].
+- Report cleanup to the user as: [FILL: brief summary, retained IDs with reasons, or only exceptions].
+
+Remove only instances created for this task unless the user authorizes broader
+cleanup. Removing a running instance terminates its work; do so only when that
+work is intentionally cancelled. Agent cleanup does not authorize deleting project
+files, branches, or other task artifacts.

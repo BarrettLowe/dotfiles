@@ -10,7 +10,6 @@ description: |
   sticky-note callouts. Outputs ./.claude-artifacts/plan.html.
 license: MIT
 compatibility: claude-code
-model: opus
 allowed-tools:
   - Read
   - Write

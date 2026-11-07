@@ -2,7 +2,6 @@
 name: concurrency-architect
 description: Designs and reviews concurrent C++ systems. Covers lock strategy, std::atomic, async patterns, memory ordering, and deadlock risk. Use when designing multithreaded code or auditing existing concurrent systems.
 tools: ["Read", "Write", "Edit", "Grep", "Glob"]
-model: opus
 ---
 
 # C++ Concurrency Architect

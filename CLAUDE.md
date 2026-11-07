@@ -61,4 +61,4 @@ This assembles each enabled `~/.pi/profiles/<name>/` directory, or `~/.pi/agent/
 
 ### Agent/Skill Maintenance
 
-Shared Pi agents live in `pi/agents/`; shared skills live in `ai/skills/`. Profile-only resources belong in `ai/profiles/<name>/` or `~/.local/ai/profiles/<name>/`. Update the relevant allow-list when adding or removing a resource. Do not edit generated profile instructions directly.
+Shared agent definitions live in `ai/agents/`; shared skills live in `ai/skills/`. Profile-only resources belong in `ai/profiles/<name>/` or `~/.local/ai/profiles/<name>/`. Update the relevant allow-list when adding or removing a resource. Do not edit generated profile instructions directly.

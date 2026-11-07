@@ -2,7 +2,6 @@
 name: dependency-mapper
 description: Dependency and dataflow analysis specialist. Backs /map. Analyzes a subsystem for call topology, shared state, implicit ordering, and data flow. Returns structured JSON. Read-only — never modifies files.
 tools: Read, Grep, Glob, Bash
-model: sonnet
 color: purple
 ---
 

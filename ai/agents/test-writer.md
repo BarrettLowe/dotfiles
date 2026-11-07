@@ -2,7 +2,6 @@
 name: test-writer
 description: Test specialist. Use after implementing a feature or fix to write thorough tests. Focuses purely on coverage and correctness — has no opinion about implementation. Reports exactly what is and isn't covered.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: sonnet
 color: green
 ---
 

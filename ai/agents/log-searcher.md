@@ -2,7 +2,6 @@
 name: log-searcher
 description: Searches log files. Accepts abstract queries ("why did the connection drop") or specific ones (an exact string/regex/error code). Read and grep only — never modifies anything. Returns quoted matches when hits are few, or a location list (file:line) when hits are many, so the calling agent never has to read a whole log to find one line. Use whenever you'd otherwise grep/cat a log file yourself and risk filling context with noise.
 tools: Read, Grep
-model: sonnet
 color: yellow
 ---
 

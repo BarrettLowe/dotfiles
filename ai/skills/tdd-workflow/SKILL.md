@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: Enforces test-driven development for Python and C++ (GoogleTest/Catch2). Writes failing tests first, implements minimal code, refactors, then verifies 80%+ coverage. Use when adding a feature, fixing a bug, or refactoring a module.
+description: Enforces test-driven development for Python and C++ (GoogleTest/Catch2). Writes failing tests first, implements minimal code, refactors, then verifies 80%+ coverage. Use only when requested by user.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 ---
 

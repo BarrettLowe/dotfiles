@@ -10,6 +10,10 @@ import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 import { host, loadExtensions } from "./helpers/pi-host.mjs";
 
+host.initTheme("dark", false);
+const keys = { up: "\x1b[A", down: "\x1b[B", enter: "\r", esc: "\x1b", pageUp: "\x1b[5~", pageDown: "\x1b[6~" };
+const keybindings = { matches: (data, action) => data === keys[({ "tui.select.up": "up", "tui.select.down": "down", "tui.select.confirm": "enter", "tui.select.cancel": "esc" })[action]] };
+
 async function fixture(t, options = {}) {
 	const agentDir = mkdtempSync(join(tmpdir(), "pi-subagent-usage-"));
 	const previousDir = process.env.PI_CODING_AGENT_DIR;
@@ -24,9 +28,28 @@ async function fixture(t, options = {}) {
 	const mocked = t.mock.method(childProcess, "spawn", (command, args, spawnOptions) => {
 		if (options.spawnError) throw new Error(options.spawnError);
 		const child = new EventEmitter();
+		child.stdin = new PassThrough();
 		child.stdout = new PassThrough();
 		child.stderr = new PassThrough();
-		Object.assign(child, { command, args, options: spawnOptions, signals: [] });
+		Object.assign(child, { command, args, options: spawnOptions, signals: [], records: [] });
+		child.stdin.setEncoding("utf8");
+		child.stdin.on("data", chunk => {
+			for (const line of chunk.trim().split("\n")) {
+				const record = JSON.parse(line);
+				child.records.push(record);
+				if (record.type === "get_state" && options.autoReady !== false) {
+					child.stdout.write(JSON.stringify({ type: "response", command: "get_state", id: record.id, success: true, data: {} }) + "\n");
+				}
+			}
+		});
+		const emit = child.emit.bind(child);
+		child.emit = (event, ...args) => {
+			// Existing completion tests model a settled RPC run followed by EOF.
+			if (event === "close" && args[0] === 0 && options.settleOnClose !== false) {
+				child.stdout.write('\n{"type":"agent_settled","aborted":false}\n');
+			}
+			return emit(event, ...args);
+		};
 		child.kill = (signal) => {
 			child.signals.push(signal);
 			if (options.autoCloseOnKill !== false || signal === "SIGKILL") child.emit("close", null, signal);
@@ -48,6 +71,8 @@ async function fixture(t, options = {}) {
 	const snapshots = [];
 	const messages = [];
 	const widgets = new Map();
+	const overlays = [];
+	const notifications = [];
 	const runtime = host.createExtensionRuntime();
 	Object.assign(runtime, {
 		getThinkingLevel: () => "low",
@@ -67,14 +92,31 @@ async function fixture(t, options = {}) {
 	const ext = result.extensions[0];
 	const ctx = {
 		cwd: agentDir,
-		hasUI: false,
+		hasUI: options.hasUI ?? false,
+		mode: options.mode ?? "print",
 		model: { provider: "test", id: "model" },
 		modelRegistry: { find: () => ({ contextWindow: 32000 }) },
-		ui: { notify() {}, setWidget: (key, widget) => widgets.set(key, widget) },
+		ui: {
+			notify: (message, type) => notifications.push({ message, type }),
+			setWidget: (key, widget) => widgets.set(key, widget),
+			custom: (factory, config) => new Promise(resolve => {
+				const overlay = { config, closed: false };
+				overlay.component = factory({ terminal: { rows: 30 }, requestRender() {}, addInputListener: () => () => {} }, { fg: (_color, text) => text }, keybindings, value => {
+					overlay.closed = true;
+					overlay.component?.dispose?.();
+					resolve(value);
+				});
+				overlays.push(overlay);
+				config?.onHandle?.({ isFocused: () => !overlay.closed });
+			}),
+		},
 	};
 	await ext.commands.get("sub").handler(options.task ?? "test usage", ctx);
 	return {
-		ext, ctx, children, snapshots, messages, runtime, agentDir,
+		ext, ctx, children, snapshots, messages, runtime, agentDir, overlays, notifications,
+		shortcut: name => ext.shortcuts.get(name).handler(ctx),
+		press: key => overlays.findLast(overlay => !overlay.closed)?.component.handleInput(keys[key] ?? key),
+		viewText: () => overlays.findLast(overlay => !overlay.closed)?.component.render(180).join("\n") ?? "",
 		command: (name, args = "") => ext.commands.get(name).handler(args, ctx),
 		tool: (name, args) => ext.tools.get(name).definition.execute("call", args, undefined, undefined, ctx),
 		event: async (name, event = {}, context = ctx) => {
@@ -84,6 +126,19 @@ async function fixture(t, options = {}) {
 		label: () => widgets.get("sub-1")({}, { fg: (_color, text) => text }).render(200).join("\n"),
 	};
 }
+
+test("subpers completes active profile agent names before the task", async (t) => {
+	const f = await fixture(t, { personalities: { reviewer: "read", scout: "read" } });
+	const complete = f.ext.commands.get("subpers").getArgumentCompletions;
+	assert.deepEqual(complete("").map(item => item.label), ["reviewer", "scout"]);
+	assert.deepEqual(complete("sc"), [{ value: "scout ", label: "scout", description: undefined }]);
+	assert.equal(complete("missing"), null);
+	assert.equal(complete("scout review this"), null);
+	assert.equal(complete("--model"), null);
+
+	writeFileSync(join(f.agentDir, "agents", "tester.md"), "---\nname: tester\ndescription: Checks tests\n---\nTest personality");
+	assert.deepEqual(complete("te"), [{ value: "tester ", label: "tester", description: "Checks tests" }]);
+});
 
 const update = (totalTokens) => ({
 	type: "message_update", usage: { totalTokens },
@@ -398,7 +453,10 @@ test("generalists receive editing tools, explicit guards, cwd and resolved snaps
 	assert.deepEqual({ model: f.snapshots[0].agents[0].model, thinking: f.snapshots[0].agents[0].thinking }, {
 		model: "test/override", thinking: "high",
 	});
-	assert.equal(child.args.at(-2), "--");
+	assert.deepEqual(child.args.slice(0, 2), ["--mode", "rpc"]);
+	assert.deepEqual(child.options.stdio, ["pipe", "pipe", "pipe"]);
+	assert.equal(child.records.find(record => record.type === "prompt").message, "task");
+	assert.ok(!child.args.includes("-p"));
 });
 
 for (const tools of ["read, edit, write", "[read, edit, write]"]) {
@@ -493,4 +551,259 @@ test("an unfinished response cannot reuse the preceding assistant message as its
 	assert.equal(f.snapshots.at(-1).agents[0].status, "error");
 	assert.match(f.messages[0].content, /final assistant message/);
 	assert.doesNotMatch(f.messages[0].content, /intermediate|unfinished/);
+});
+
+const request = (id = "permission", extra = {}) => ({
+	type: "extension_ui_request", method: "select", id,
+	title: "Unwhitelisted bash command:\n\n  npm test\n\nAllow npm?",
+	options: ["Yes, just this once", "No"], ...extra,
+});
+const replies = child => child.records.filter(record => record.type === "extension_ui_response");
+const tick = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); };
+
+test("RPC waits for readiness and sends the task once through stdin", async t => {
+	const task = "--model test/model --thinking high @not-a-file --literal\nsecond line";
+	const f = await fixture(t, { task, autoReady: false });
+	const child = f.children[0];
+	assert.deepEqual(child.records.map(record => record.type), ["get_state"]);
+	const ready = { type: "response", command: "get_state", id: child.records[0].id, success: true };
+	f.emit(ready);
+	f.emit(ready);
+	const prompts = child.records.filter(record => record.type === "prompt");
+	assert.equal(prompts.length, 1);
+	assert.equal(prompts[0].message, "@not-a-file --literal\nsecond line");
+	assert.ok(!child.args.includes("@not-a-file"));
+});
+
+test("agent_end does not finish RPC; settlement closes stdin and exit delivers once", async t => {
+	const f = await fixture(t, { settleOnClose: false });
+	f.emit(assistant("First answer"));
+	f.emit({ type: "agent_end", willRetry: true });
+	assert.equal(f.children[0].stdin.writableEnded, false);
+	assert.equal(f.messages.length, 0);
+	f.emit(assistant("Recovered answer"));
+	f.emit({ type: "agent_settled", aborted: false });
+	assert.equal(f.children[0].stdin.writableEnded, true);
+	assert.equal(f.messages.length, 0);
+	f.children[0].emit("close", 0);
+	f.children[0].emit("close", 0);
+	assert.equal(f.messages.length, 1);
+	assert.match(f.messages[0].content, /Recovered answer/);
+	assert.equal(f.snapshots.at(-1).agents[0].status, "done");
+});
+
+test("clean exit without settlement cannot report an intermediate answer as success", async t => {
+	const f = await fixture(t, { settleOnClose: false });
+	f.emit(assistant("intermediate", { stopReason: "toolUse" }));
+	f.children[0].emit("close", 0);
+	assert.equal(f.snapshots.at(-1).agents[0].status, "error");
+	assert.match(f.messages[0].content, /before its run settled/);
+});
+
+test("failed RPC commands shut down and report their error", async t => {
+	const f = await fixture(t, { settleOnClose: false });
+	f.emit({ type: "response", command: "prompt", success: false, error: "prompt rejected" });
+	assert.equal(f.children[0].stdin.writableEnded, true);
+	f.children[0].emit("close", 0);
+	assert.match(f.messages[0].content, /prompt rejected/);
+	assert.equal(f.snapshots.at(-1).agents[0].status, "error");
+});
+
+test("settled RPC children that do not exit are forcibly stopped", async t => {
+	t.mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+	const f = await fixture(t, { settleOnClose: false });
+	f.emit(assistant("finished"));
+	f.emit({ type: "agent_settled", aborted: false });
+	t.mock.timers.tick(5000);
+	assert.deepEqual(f.children[0].signals, ["SIGKILL"]);
+	assert.equal(f.snapshots.at(-1).agents[0].status, "error");
+});
+
+test("stdin failures are reported without unhandled stream errors", async t => {
+	const f = await fixture(t);
+	assert.doesNotThrow(() => f.children[0].stdin.emit("error", new Error("broken pipe")));
+	assert.deepEqual(f.children[0].signals, ["SIGTERM"]);
+	assert.match(f.messages[0].content, /broken pipe/);
+});
+
+test("Alt+Down and subview open an overlay; Esc returns without touching the child", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	const viewing = f.shortcut("alt+down");
+	assert.equal(f.overlays.length, 1);
+	assert.equal(f.overlays[0].config.overlay, true);
+	assert.match(f.viewText(), /Read-only · Esc back/);
+	assert.match(f.viewText(), /#1 \[running\]/);
+	f.emit({ type: "message_start", message: { role: "assistant", content: [] } });
+	f.emit({ type: "message_update", assistantMessageEvent: { type: "text_delta", contentIndex: 0, delta: "live child text" } });
+	assert.match(f.viewText(), /live child text/);
+	f.press("esc");
+	await viewing;
+	assert.deepEqual(f.children[0].signals, []);
+	assert.match((await f.tool("subagent_list", {})).content[0].text, /RUNNING/);
+	assert.equal(f.messages.length, 0);
+	const again = f.command("subview", "1");
+	assert.equal(f.overlays.length, 2);
+	f.press("esc");
+	await again;
+});
+
+const permissionChoices = ["Yes, just this once", "Yes, and remember 'npm' for this session", "Yes, add 'npm' to the whitelist permanently", "No"];
+for (const choice of permissionChoices) {
+	test(`permission warning clears after choosing: ${choice}`, async t => {
+		const f = await fixture(t, { hasUI: true, mode: "tui" });
+		f.emit(request("transient", { options: permissionChoices }));
+		assert.match(f.label(), /Awaiting bash approval/);
+		assert.equal(f.notifications.some(item => item.type === "warning" && /needs bash permission/.test(item.message)), false,
+			"pending permissions belong in the live widget, not a permanent transcript warning");
+		const reviewing = f.shortcut("alt+a");
+		f.overlays.at(-1).component.close(choice);
+		await reviewing;
+		assert.doesNotMatch(f.label(), /Awaiting bash approval|⏸/);
+		assert.deepEqual(replies(f.children[0]), [{ type: "extension_ui_response", id: "transient", value: choice }]);
+		assert.deepEqual(f.children[0].signals, []);
+	});
+}
+
+test("Esc dismisses nested approval before viewer and preserves the queued request", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	const viewing = f.shortcut("alt+down");
+	f.emit(request());
+	assert.match(f.label(), /Awaiting bash approval/);
+	assert.match(f.viewText(), /1 approvals/);
+	assert.equal(f.messages.length, 0);
+	f.press("a");
+	assert.equal(f.overlays.length, 2);
+	assert.match(f.viewText(), /Working directory:/);
+	assert.match(f.viewText(), /npm test/);
+	f.press("esc");
+	await tick();
+	assert.equal(f.overlays[1].closed, true);
+	assert.equal(f.overlays[0].closed, false);
+	assert.deepEqual(replies(f.children[0]), []);
+	assert.match(f.label(), /Awaiting bash approval/);
+	f.press("esc");
+	await viewing;
+	assert.deepEqual(f.children[0].signals, []);
+	const reviewing = f.shortcut("alt+a");
+	f.press("up");
+	f.press("enter");
+	await reviewing;
+	assert.deepEqual(replies(f.children[0]), [{ type: "extension_ui_response", id: "permission", value: "Yes, just this once" }]);
+	assert.equal(f.children[0].records.filter(record => record.type === "prompt").length, 1);
+	assert.doesNotMatch(f.label(), /Awaiting bash approval/);
+	assert.ok(!Object.hasOwn(f.snapshots[0].agents[0], "transcript"));
+});
+
+test("requests from concurrent children are queued, deduped, and routed to their owner", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	f.emit(request("same-id"));
+	f.emit(request("same-id"));
+	await f.command("sub", "second agent");
+	f.emit(request("same-id"));
+	const first = f.command("subapprove");
+	await f.command("subapprove", "2");
+	assert.equal(f.overlays.length, 1);
+	f.press("enter");
+	await first;
+	assert.deepEqual(replies(f.children[0]), [{ type: "extension_ui_response", id: "same-id", value: "No" }]);
+	assert.deepEqual(replies(f.children[1]), []);
+	const second = f.command("subapprove");
+	assert.match(f.viewText(), /Subagent #2/);
+	f.press("up");
+	f.press("enter");
+	await second;
+	assert.equal(replies(f.children[1])[0].value, "Yes, just this once");
+	await f.command("subapprove");
+	assert.equal(f.overlays.length, 2);
+});
+
+test("removal dismisses permission review; a stale choice cannot approve a reused agent ID", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	f.emit(request());
+	const reviewing = f.command("subapprove");
+	const oldDialog = f.overlays[0].component;
+	await f.command("subclear");
+	await reviewing;
+	assert.equal(f.overlays[0].closed, true);
+	await f.command("sub", "new agent");
+	f.emit(request());
+	oldDialog.close("Yes, just this once");
+	assert.deepEqual(replies(f.children[0]), []);
+	assert.deepEqual(replies(f.children[1]), []);
+	assert.match(f.label(), /Awaiting bash approval/);
+	const next = f.command("subapprove");
+	f.press("enter");
+	await next;
+	assert.equal(replies(f.children[1])[0].value, "No");
+});
+
+test("shutdown closes both overlays and removes pending permissions without replying late", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	const viewing = f.shortcut("alt+down");
+	f.emit(request());
+	f.press("a");
+	await f.event("session_shutdown", { reason: "reload" });
+	await viewing;
+	await tick();
+	assert.ok(f.overlays.every(overlay => overlay.closed));
+	assert.deepEqual(f.children[0].signals, ["SIGTERM"]);
+	assert.deepEqual(replies(f.children[0]), []);
+	f.runtime.invalidate();
+	assert.doesNotThrow(() => f.overlays[1].component.close("Yes, just this once"));
+	assert.equal(f.messages.length, 0);
+});
+
+test("request timeout dismisses its overlay and cannot authorize late", async t => {
+	t.mock.timers.enable({ apis: ["setTimeout", "setInterval"] });
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	f.emit(request("expires", { timeout: 1000 }));
+	const reviewing = f.command("subapprove");
+	t.mock.timers.tick(1000);
+	await reviewing;
+	assert.equal(f.overlays[0].closed, true);
+	assert.deepEqual(replies(f.children[0]), [{ type: "extension_ui_response", id: "expires", cancelled: true }]);
+	f.overlays[0].component.close("Yes, just this once");
+	assert.equal(replies(f.children[0]).length, 1);
+});
+
+test("RPC parents can forward a queued permission through their own UI protocol", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "rpc" });
+	let title;
+	f.ctx.ui.select = async (message, options, config) => {
+		title = message;
+		assert.ok(config.signal instanceof AbortSignal);
+		return options.at(-1);
+	};
+	f.emit(request());
+	await f.command("subapprove");
+	assert.match(title, /Subagent #1/);
+	assert.match(title, /Working directory:/);
+	assert.deepEqual(replies(f.children[0]), [{ type: "extension_ui_response", id: "permission", value: "No" }]);
+	assert.equal(f.overlays.length, 0);
+});
+
+test("long permission requests can be scrolled to review the full command", async t => {
+	const f = await fixture(t, { hasUI: true, mode: "tui" });
+	const title = Array.from({ length: 100 }, (_, index) => `command-line-${index}`).join("\n");
+	f.emit(request("long", { title }));
+	const reviewing = f.command("subapprove");
+	assert.doesNotMatch(f.viewText(), /command-line-99/);
+	for (let page = 0; page < 10; page++) f.press("pageDown");
+	assert.match(f.viewText(), /command-line-99/);
+	assert.match(f.viewText(), /Esc back/);
+	f.press("esc");
+	await reviewing;
+	assert.deepEqual(replies(f.children[0]), []);
+});
+
+test("headless parents reject dialogs rather than leave a child waiting indefinitely", async t => {
+	const f = await fixture(t);
+	f.emit(request());
+	f.emit({ type: "extension_ui_request", id: "other", method: "input", title: "unexpected" });
+	assert.deepEqual(replies(f.children[0]), [
+		{ type: "extension_ui_response", id: "permission", cancelled: true },
+		{ type: "extension_ui_response", id: "other", cancelled: true },
+	]);
+	await f.command("subview");
+	assert.equal(f.overlays.length, 0);
 });

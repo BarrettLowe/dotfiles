@@ -8,14 +8,13 @@ concurrency-architect
 cpp-build-resolver
 cpp-style
 excalidraw-diagram
-explain
 gitlab-ticket
 graphify
 grill-me
+guided-editor
 humanizer
-mansplain
+learning-style
 odoo-local-dev
-orient
 pickup-work
 plan-html
 plan-orchestration

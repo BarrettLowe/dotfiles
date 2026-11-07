@@ -3,7 +3,6 @@ name: planning
 description: |
   Plan a task, feature, or goal and render it as a hand-crafted dark-theme HTML
   artifact.
-model: gpt-5.6-sol
 ---
 
 Understand what the task is and why it needs to get done - this is crucial. If you do not know, stop and ask for clarification. 

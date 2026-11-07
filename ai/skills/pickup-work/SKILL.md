@@ -50,7 +50,7 @@ proceed.
 
 Map the code the change will touch — entry points, call flow, the specific
 files/functions in play, and whether a submodule is involved (`git submodule status`,
-`.gitmodules`). Delegate to the `codebase-explorer` agent to keep your context clean;
+`.gitmodules`). Delegate to the `scout` agent to keep your context clean;
 come back with a summary, not raw dumps.
 
 ## Gate ① — The grill (alignment lock)
@@ -85,7 +85,7 @@ body, and continue straight to Step 4.
 
 ## Step 4 — Build
 
-Implement exactly the locked spec. Use `feature-implementer` / `bug-fixer` sub-agents
+Implement exactly the locked spec. Use `software-engineer` / `bug-fixer` sub-agents
 where they help, or work directly.
 
 - Commit **locally** on `blowe/<slug>`. **Never push.**

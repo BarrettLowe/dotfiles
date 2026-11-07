@@ -20,6 +20,8 @@
  *   /subpers                                         — pick a personality interactively, then be prompted for a task
  *   /subpers bug-investigator find why login fails    — pick a personality directly
  *   /subcont 1 --thinking xhigh now write tests for it — reuses the same personality (if any) automatically
+ *   /subview 2                                       — inspect a read-only child session (Alt+↓ opens picker)
+ *   /subapprove                                      — review the oldest pending permission (Alt+A)
  *   /subrm 2                                         — remove subagent #2 widget
  *   /subclear                                        — clear all subagent widgets
  *
@@ -36,21 +38,33 @@
  * no backing state.
  */
 
-import { StringEnum, type ThinkingLevel } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder, getAgentDir, parseFrontmatter } from "@mariozechner/pi-coding-agent";
-import { Container, Text } from "@mariozechner/pi-tui";
+import { StringEnum, type AssistantMessage, type ThinkingLevel } from "@mariozechner/pi-ai";
+import type { ChildProcess } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import type { ExtensionAPI, RpcExtensionUIRequest } from "@mariozechner/pi-coding-agent";
+import { calculateContextTokens, DynamicBorder, getAgentDir, getLastAssistantUsage, parseFrontmatter, SessionManager } from "@mariozechner/pi-coding-agent";
+import { Container, Text, truncateToWidth } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 const { spawn } = require("child_process") as any;
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "node:url";
 import { applyExtensionDefaults } from "./lib/themeMap.ts";
+import { SubagentTranscript, SubagentView } from "./lib/subagent-view.ts";
+import { SubagentApprovalDialog } from "./lib/subagent-approval.ts";
+import { SubagentOverlayGroup } from "./lib/subagent-overlay.ts";
 
 const MODEL_ACCESS_GUARD_EXTENSION = fileURLToPath(
 	new URL("./model-access-guard.ts", import.meta.url),
 );
+const BASH_WHITELIST_EXTENSION = fileURLToPath(
+	new URL("./bash-whitelist.ts", import.meta.url),
+);
 const FALLBACK_MODEL = "openrouter/google/gemini-3.5-flash";
+const DEFAULT_SUBAGENT_TOOLS = ["read", "bash", "grep", "find", "ls", "edit", "write"];
+const SUPPORTED_SUBAGENT_TOOLS = new Set([...DEFAULT_SUBAGENT_TOOLS, "powershell"]);
+const CANCEL_TIMEOUT_MS = 5000; // Grace period before forcibly stopping a child.
+const WIDGET_INTERVAL_MS = 1000; // Refresh elapsed time once per second.
 // Inline character cap for a subagent's result text delivered back to the
 // main agent. Outputs at or under this are returned in full, no file written.
 // Longer outputs are truncated to this many chars inline, with the full,
@@ -70,6 +84,7 @@ interface Personality {
 	name: string;
 	description: string;
 	body: string;
+	tools?: unknown;
 }
 
 /**
@@ -94,7 +109,7 @@ function loadPersonalities(): Map<string, Personality> {
 			const fm = frontmatter as Record<string, unknown>;
 			const name = (typeof fm.name === "string" && fm.name.trim()) || file.replace(/\.md$/, "");
 			const description = (typeof fm.description === "string" && fm.description.trim()) || "";
-			map.set(name, { name, description, body: body.trim() });
+			map.set(name, { name, description, body: body.trim(), tools: fm.tools });
 		} catch {
 			// Skip unreadable/malformed personality files rather than failing the whole extension.
 		}
@@ -114,21 +129,42 @@ interface SubState {
 	task: string;
 	textChunks: string[];
 	elapsed: number;
-	contextTokens: number;   // latest cumulative token usage reported by the subagent process
-	contextWindow: number;   // context window size of state.model, resolved once at spawn time
+	contextTokens: number | null;   // latest response's context size, including cached input and output
+	contextWindow: number;
 	sessionFile: string;   // persistent JSONL session path — used by /subcont to resume
 	turnCount: number;     // increments each time /subcont continues this agent
 	model: string;
 	thinking: ThinkingLevel;
-	proc?: any;            // active ChildProcess ref (for kill on /subrm)
 	personality?: string;  // name of the agent personality applied to this subagent, if any
 }
 
-// Serializable projection of SubState used for session persistence — everything
-// except `proc`, which is a live ChildProcess handle that cannot (and does not
-// need to) survive a reload: a subagent surviving reload is by definition not
-// still attached to a live process on the new side.
-type SubStateRecord = Omit<SubState, "proc">;
+type SubStateRecord = SubState;
+
+interface ActiveRun {
+	id: string;
+	state: SubState;
+	proc?: ChildProcess;
+	timer?: ReturnType<typeof setInterval>;
+	exitTimer?: ReturnType<typeof setTimeout>;
+	ctx: any;
+	prompt: string;
+	promptSent: boolean;
+	settled: boolean;
+	failure?: Error;
+	activity?: string;
+	cancelled: boolean;
+	finished: boolean;
+	stderr: string;
+	lastMessage?: AssistantMessage;
+	done: Promise<void>;
+	resolve: () => void;
+}
+
+interface PendingApproval {
+	run: ActiveRun;
+	request: Extract<RpcExtensionUIRequest, { method: "select" }>;
+	timer?: ReturnType<typeof setTimeout>;
+}
 
 interface SubagentSnapshot {
 	nextId: number;
@@ -210,6 +246,16 @@ function parseCommandOptions(input: string): ParsedCommand {
 
 export default function (pi: ExtensionAPI) {
 	const agents: Map<number, SubState> = new Map();
+	const activeRuns = new Map<number, ActiveRun>();
+	const transcripts = new Map<number, SubagentTranscript>();
+	const approvals: PendingApproval[] = [];
+	const overlays = new SubagentOverlayGroup();
+	let viewer: SubagentView | undefined;
+	let lastViewedId: number | undefined;
+	let reviewingApproval: PendingApproval | undefined;
+	let dismissApproval: (() => void) | undefined;
+	let shuttingDown = false;
+	let shutdownCleanup: Promise<void> | undefined;
 	let nextId = 1;
 	let widgetCtx: any;
 	// Ids whose widget is currently on screen. Used by updateWidgets() to tear
@@ -220,10 +266,8 @@ export default function (pi: ExtensionAPI) {
 
 	// ── State persistence (survives /reload, session resume, /tree) ──────────
 
-	// Strips the live `proc` handle before a state is written to the session.
 	function toRecord(state: SubState): SubStateRecord {
-		const { proc, ...rest } = state;
-		return rest;
+		return { ...state, textChunks: [...state.textChunks] };
 	}
 
 	// Snapshots the full agents map into the session as a custom entry. Called
@@ -244,6 +288,7 @@ export default function (pi: ExtensionAPI) {
 	// on reload, or a fresh branch view) and needs restoring from disk.
 	function reconstructState(ctx: any) {
 		agents.clear();
+		transcripts.clear();
 		nextId = 1;
 
 		let latest: SubagentSnapshot | undefined;
@@ -256,7 +301,16 @@ export default function (pi: ExtensionAPI) {
 
 		nextId = latest.nextId ?? 1;
 		for (const rec of latest.agents ?? []) {
-			agents.set(rec.id, { ...rec });
+			const state = {
+				...rec, textChunks: [...rec.textChunks],
+				contextTokens: rec.contextWindow === undefined ? restoreContextTokens(rec.sessionFile) : rec.contextTokens,
+				contextWindow: contextWindowForModel(rec.model, ctx),
+			};
+			if (state.status === "running") {
+				state.status = "error";
+				state.textChunks.push("\n[Interrupted: no live subagent process. Use /subcont to resume.]");
+			}
+			agents.set(rec.id, state);
 		}
 	}
 
@@ -265,12 +319,199 @@ export default function (pi: ExtensionAPI) {
 	function makeSessionFile(id: number): string {
 		const dir = path.join(getAgentDir(), "sessions", "subagents");
 		fs.mkdirSync(dir, { recursive: true });
-		return path.join(dir, `subagent-${id}-${Date.now()}.jsonl`);
+		return path.join(dir, `subagent-${id}-${randomUUID()}.jsonl`);
 	}
+
+	function contextWindowForModel(model: string, ctx: any): number {
+		const slash = model.indexOf("/");
+		return ctx.modelRegistry?.find?.(model.slice(0, slash), model.slice(slash + 1))?.contextWindow ?? 0;
+	}
+
+	// Older snapshots stored cumulative usage without a context window.
+	function restoreContextTokens(sessionFile: string): number | null {
+		if (!fs.existsSync(sessionFile)) return null;
+		try {
+			const branch = SessionManager.open(sessionFile).getBranch();
+			const compactionIndex = branch.findLastIndex(entry => entry.type === "compaction");
+			const usage = getLastAssistantUsage(branch.slice(compactionIndex + 1));
+			return usage ? calculateContextTokens(usage) : null;
+		} catch {
+			return null;
+		}
+	}
+
+	// ── Read-only inspection and queued permissions ───────────────────────────
+
+	function transcript(state: SubState): SubagentTranscript {
+		let history = transcripts.get(state.id);
+		if (!history) {
+			history = new SubagentTranscript(state.sessionFile);
+			transcripts.set(state.id, history);
+		}
+		return history;
+	}
+
+	function removeApproval(pending: PendingApproval) {
+		const index = approvals.indexOf(pending);
+		if (index !== -1) approvals.splice(index, 1);
+		clearTimeout(pending.timer);
+		if (reviewingApproval === pending) dismissApproval?.();
+	}
+
+	function clearApprovals(run: ActiveRun) {
+		for (const pending of [...approvals]) {
+			if (pending.run === run) removeApproval(pending);
+		}
+	}
+
+	function endRunProcess(run: ActiveRun) {
+		if (run.exitTimer) return;
+		// RPC stays alive after settlement; EOF requests an orderly shutdown.
+		run.exitTimer = setTimeout(() => {
+			if (!run.finished) run.proc?.kill("SIGKILL");
+		}, CANCEL_TIMEOUT_MS);
+		run.proc?.stdin?.end();
+	}
+
+	function sendRpc(run: ActiveRun, record: object) {
+		if (!isCurrentRun(run) || run.proc?.stdin?.writableEnded) return;
+		run.proc?.stdin?.write(`${JSON.stringify(record)}\n`);
+	}
+
+	function handleUiRequest(run: ActiveRun, request: RpcExtensionUIRequest) {
+		if (request.method === "notify") {
+			run.ctx.ui.notify(`Subagent #${run.state.id}: ${request.message}`, request.notifyType || "info");
+			return;
+		}
+		if (request.method !== "select") {
+			if (["confirm", "input", "editor"].includes(request.method)) {
+				sendRpc(run, { type: "extension_ui_response", id: request.id, cancelled: true });
+			}
+			return;
+		}
+		if (!run.ctx.hasUI || run.settled || !Array.isArray(request.options) || !request.options.length) {
+			sendRpc(run, { type: "extension_ui_response", id: request.id, cancelled: true });
+			return;
+		}
+		if (approvals.some(item => item.run === run && item.request.id === request.id)) return;
+		const pending: PendingApproval = { run, request };
+		approvals.push(pending);
+		if (request.timeout !== undefined) {
+			pending.timer = setTimeout(() => {
+				removeApproval(pending);
+				sendRpc(run, { type: "extension_ui_response", id: request.id, cancelled: true });
+				updateWidgets();
+			}, request.timeout);
+		}
+		transcript(run.state).addNotice("Bash permission requested; awaiting user review.");
+	}
+
+	async function reviewApproval(ctx: any, id?: number) {
+		if (reviewingApproval || shuttingDown) return;
+		const pending = approvals.find(item => (id === undefined || item.run.state.id === id) && isCurrentRun(item.run));
+		if (!pending) {
+			ctx.ui.notify("No pending subagent permissions.", "info");
+			return;
+		}
+		const { run, request } = pending;
+		reviewingApproval = pending;
+		const state = run.state;
+		const title = `Subagent #${state.id}${state.personality ? ` [${state.personality}]` : ""}\nTask: ${state.task}\nWorking directory: ${run.ctx.cwd}\nSession approvals apply only to this subagent run.\n\n${request.title}`;
+		try {
+			let choice: string | undefined;
+			if (ctx.mode === "tui") {
+				choice = await overlays.show<string>(ctx, (tui, theme, keys, done) => {
+					const dialog = new SubagentApprovalDialog(tui, theme, keys, title, request.options, done);
+					dismissApproval = () => dialog.close();
+					return dialog;
+				});
+			} else if (ctx.hasUI) {
+				const controller = new AbortController();
+				dismissApproval = () => controller.abort();
+				choice = await ctx.ui.select(title, request.options, { signal: controller.signal });
+			}
+			// Esc leaves the request queued; only an explicit choice reaches the child.
+			if (choice !== undefined && request.options.includes(choice) && approvals.includes(pending) && isCurrentRun(run)) {
+				removeApproval(pending);
+				sendRpc(run, { type: "extension_ui_response", id: request.id, value: choice });
+				transcript(state).addNotice(`Bash permission decision: ${choice}`);
+			}
+		} catch (error) {
+			if (!shuttingDown) ctx.ui.notify(`Could not review subagent permission: ${String(error)}`, "error");
+		} finally {
+			if (reviewingApproval === pending) {
+				reviewingApproval = undefined;
+				dismissApproval = undefined;
+			}
+			if (!shuttingDown) updateWidgets();
+		}
+	}
+
+	async function openView(ctx: any, id?: number) {
+		if (ctx.mode !== "tui") {
+			ctx.ui.notify("Subagent inspection requires interactive Pi.", "error");
+			return;
+		}
+		if (viewer || reviewingApproval || shuttingDown) return;
+		if (id !== undefined && !agents.has(id)) {
+			ctx.ui.notify(`No subagent #${id} found.`, "error");
+			return;
+		}
+		if (!agents.size) {
+			ctx.ui.notify("No subagents to inspect.", "info");
+			return;
+		}
+		widgetCtx = ctx;
+		try {
+			await overlays.show<void>(ctx, (tui, theme, keys, done) => {
+				viewer = new SubagentView(tui, theme, keys, done, {
+					list: () => Array.from(agents.values(), state => ({
+						...state, approvalCount: approvals.filter(item => item.run.state === state).length,
+					})),
+					transcript: agentId => transcript(agents.get(agentId)!),
+					reviewApproval: agentId => reviewApproval(ctx, agentId),
+					select: agentId => { lastViewedId = agentId; },
+				}, id, lastViewedId ?? approvals[0]?.run.state.id);
+				return viewer;
+			});
+		} finally {
+			viewer = undefined;
+		}
+	}
+
+	pi.registerShortcut("alt+down", {
+		description: "Inspect subagents (read-only; Esc returns to primary session)",
+		handler: ctx => openView(ctx),
+	});
+	pi.registerShortcut("alt+a", {
+		description: "Review the oldest pending subagent bash permission",
+		handler: ctx => reviewApproval(ctx),
+	});
+	pi.registerCommand("subview", {
+		description: "Inspect subagent sessions: /subview [id] (Alt+↓)",
+		handler: async (args, ctx) => {
+			if (args.trim() && !/^\d+$/.test(args.trim())) {
+				ctx.ui.notify("Usage: /subview [id]", "error");
+				return;
+			}
+			await openView(ctx, args.trim() ? Number(args.trim()) : undefined);
+		},
+	});
+	pi.registerCommand("subapprove", {
+		description: "Review queued bash permissions: /subapprove [id] (Alt+A)",
+		handler: async (args, ctx) => {
+			if (args.trim() && !/^\d+$/.test(args.trim())) {
+				ctx.ui.notify("Usage: /subapprove [id]", "error");
+				return;
+			}
+			await reviewApproval(ctx, args.trim() ? Number(args.trim()) : undefined);
+		},
+	});
 
 	// ── Widget rendering ──────────────────────────────────────────────────────
 
 	function updateWidgets() {
+		viewer?.refresh();
 		if (!widgetCtx) return;
 
 		// Clear widgets for any previously-rendered id that's no longer in `agents`
@@ -296,9 +537,10 @@ export default function (pi: ExtensionAPI) {
 				return {
 					render(width: number): string[] {
 						const lines: string[] = [];
-						const statusColor = state.status === "running" ? "accent"
+						const pending = approvals.filter(item => item.run.state === state);
+						const statusColor = pending.length ? "warning" : state.status === "running" ? "accent"
 							: state.status === "done" ? "success" : "error";
-						const statusIcon = state.status === "running" ? "●"
+						const statusIcon = pending.length ? "⏸" : state.status === "running" ? "●"
 							: state.status === "done" ? "✓" : "✗";
 
 						const taskPreview = state.task.length > 40
@@ -312,9 +554,12 @@ export default function (pi: ExtensionAPI) {
 							? theme.fg("dim", ` · [${state.personality}]`)
 							: "";
 
-						const usageLabel = state.contextWindow > 0
-							? `${formatTokenCount(state.contextTokens)}/${formatTokenCount(state.contextWindow)}`
-							: formatTokenCount(state.contextTokens);
+						const used = state.contextTokens === null ? "?" : formatTokenCount(state.contextTokens);
+						const limit = state.contextWindow > 0 ? formatTokenCount(state.contextWindow) : "?";
+						const percent = state.contextTokens !== null && state.contextWindow > 0
+							? ` · ${Math.round(state.contextTokens / state.contextWindow * 100)}%`
+							: "";
+						const usageLabel = `${used} / ${limit} context${percent}`;
 
 						lines.push(
 							theme.fg(statusColor, `${statusIcon} Subagent #${state.id}`) +
@@ -327,15 +572,12 @@ export default function (pi: ExtensionAPI) {
 						);
 
 						const fullText = state.textChunks.join("");
-						const lastLine = fullText.split("\n").filter((l: string) => l.trim()).pop() || "";
-						if (lastLine) {
-							const trimmed = lastLine.length > width - 10
-								? lastLine.slice(0, width - 13) + "..."
-								: lastLine;
-							lines.push(theme.fg("muted", `  ${trimmed}`));
-						}
+						const lastLine = pending.length ? `Awaiting bash approval (${pending.length}) · Alt+A review`
+							: activeRuns.get(id)?.activity || fullText.split("\n").filter((l: string) => l.trim()).pop() || "";
+						if (lastLine) lines.push(theme.fg("muted", `  ${lastLine}`));
+						if (id === agents.keys().next().value) lines.push(theme.fg("dim", "  Alt+↓ inspect subagents · Alt+A permissions"));
 
-						content.setText(lines.join("\n"));
+						content.setText(lines.map(line => truncateToWidth(line.replace(/[\r\n]/g, " "), Math.max(1, width - 2))).join("\n"));
 						return container.render(width);
 					},
 					invalidate() {
@@ -348,27 +590,111 @@ export default function (pi: ExtensionAPI) {
 
 	// ── Streaming helpers ─────────────────────────────────────────────────────
 
-	function processLine(state: SubState, line: string) {
-		if (!line.trim()) return;
-		try {
-			const event = JSON.parse(line);
-			const type = event.type;
+	function isCurrentRun(run: ActiveRun): boolean {
+		return !shuttingDown && !run.cancelled && !run.finished
+			&& activeRuns.get(run.state.id) === run && agents.get(run.state.id) === run.state;
+	}
 
-			if (type === "message_update") {
-				if (event.usage) state.contextTokens = event.usage.totalTokens ?? state.contextTokens;
-				const delta = event.assistantMessageEvent;
-				if (delta?.type === "text_delta") {
-					state.textChunks.push(delta.delta || "");
-				}
-				updateWidgets();
+	function assistantText(message?: AssistantMessage): string {
+		return message?.content?.filter(part => part.type === "text").map(part => part.text).join("\n") ?? "";
+	}
+
+	function processLine(run: ActiveRun, line: string) {
+		if (!isCurrentRun(run) || !line.trim()) return;
+		let event: any;
+		try {
+			event = JSON.parse(line);
+		} catch {
+			return;
+		}
+		if (!event || typeof event !== "object") return;
+		const state = run.state;
+		transcript(state).processEvent(event);
+		if (event.type === "extension_ui_request") handleUiRequest(run, event);
+		if (event.type === "response") {
+			if (!event.success) {
+				run.failure = new Error(event.error || `RPC ${event.command} failed.`);
+				endRunProcess(run);
+			} else if (event.id === `init-${run.id}` && !run.promptSent) {
+				run.promptSent = true;
+				sendRpc(run, { id: run.id, type: "prompt", message: run.prompt });
 			}
-			// Some providers, including OpenAI Codex, report usage only once the
-			// assistant message is complete. message_end is the authoritative usage.
-			if (type === "message_end" && event.message?.role === "assistant") {
-				state.contextTokens = event.message.usage?.totalTokens ?? state.contextTokens;
-				updateWidgets();
+		}
+		if (event.type === "agent_settled") {
+			run.settled = true;
+			if (event.aborted) run.failure = new Error("Subagent run was aborted.");
+			clearApprovals(run);
+			endRunProcess(run);
+		}
+		if (event.type === "message_update" && event.assistantMessageEvent?.type === "thinking_delta") run.activity = "Thinking…";
+		if (event.type === "tool_execution_start") run.activity = `${event.toolName}: ${event.args?.command || event.args?.path || "running"}`;
+		if (event.type === "tool_execution_end") run.activity = "Working…";
+		if (event.type === "compaction_start") run.activity = "Compacting context…";
+		if (event.type === "auto_retry_start") run.activity = `Retrying (${event.attempt})…`;
+		if (event.type === "message_start" && event.message?.role === "assistant") {
+			state.textChunks = [];
+			run.lastMessage = undefined;
+			run.activity = "Working…";
+		}
+		if (event.type === "message_update") {
+			const delta = event.assistantMessageEvent;
+			if (delta?.type === "text_delta") {
+				state.textChunks.push(delta.delta || "");
+				run.activity = undefined;
 			}
-		} catch {}
+		}
+		if (event.type === "message_end" && event.message?.role === "assistant") {
+			const message = event.message;
+			if (message.usage && message.stopReason !== "error" && message.stopReason !== "aborted") {
+				const tokens = calculateContextTokens(message.usage);
+				if (tokens > 0) state.contextTokens = tokens;
+			}
+			run.lastMessage = message;
+			state.textChunks = [assistantText(run.lastMessage)];
+		}
+		if (event.type === "compaction_end" && event.result && !event.aborted) {
+			state.contextTokens = event.result.estimatedTokensAfter ?? null;
+		}
+		updateWidgets();
+	}
+
+	async function cancelRun(run: ActiveRun, reason: string) {
+		if (run.finished) return;
+		if (run.cancelled) return run.done;
+		run.cancelled = true;
+		clearApprovals(run);
+		clearInterval(run.timer);
+		clearTimeout(run.exitTimer);
+		run.state.status = "error";
+		run.state.textChunks = [`[Interrupted: ${reason}. Use /subcont to resume.]`];
+		transcripts.get(run.state.id)?.addNotice(run.state.textChunks[0]);
+		updateWidgets();
+		const escalation = setTimeout(() => {
+			if (!run.finished) run.proc?.kill("SIGKILL");
+		}, CANCEL_TIMEOUT_MS);
+		try {
+			run.proc?.kill("SIGTERM");
+			await run.done;
+		} finally {
+			clearTimeout(escalation);
+		}
+	}
+
+	async function cancelAllRuns(reason: string) {
+		await Promise.all(Array.from(activeRuns.values(), run => cancelRun(run, reason)));
+	}
+
+	function personalityTools(personality?: Personality): string[] {
+		const raw = personality?.tools;
+		if (raw === undefined) return DEFAULT_SUBAGENT_TOOLS;
+		const tools = typeof raw === "string" ? raw.split(",") : raw;
+		if (!Array.isArray(tools) || tools.some(tool => typeof tool !== "string")) {
+			throw new Error(`Invalid tools declaration for personality "${personality?.name}".`);
+		}
+		const names = tools.map(tool => tool.trim()).filter(Boolean);
+		const invalid = names.filter(name => !SUPPORTED_SUBAGENT_TOOLS.has(name));
+		if (invalid.length) throw new Error(`Unknown tools for personality "${personality?.name}": ${invalid.join(", ")}`);
+		return names;
 	}
 
 	function spawnAgent(
@@ -376,130 +702,140 @@ export default function (pi: ExtensionAPI) {
 		prompt: string,
 		ctx: any,
 		options: SpawnOptions = {},
-	): Promise<void> {
-		const parentProvider = ctx.model?.provider?.trim();
-		const parentModelId = ctx.model?.id?.trim();
-		const hasParentModel = parentProvider && parentModelId
-			&& parentProvider !== "unknown" && parentModelId !== "unknown";
-		const parentModel = hasParentModel
-			? `${parentProvider}/${parentModelId}`
-			: FALLBACK_MODEL;
-		const model = options.model?.trim() || parentModel;
-		const thinking = options.thinking || pi.getThinkingLevel();
-		state.model = model;
-		state.thinking = thinking;
+	): boolean {
+		let resolve!: () => void;
+		const done = new Promise<void>(complete => { resolve = complete; });
+		const run: ActiveRun = {
+			id: randomUUID(), state, ctx, prompt, promptSent: false, settled: false,
+			cancelled: false, finished: false, stderr: "", done, resolve,
+		};
+		activeRuns.set(state.id, run);
+		const startTime = Date.now();
 
-		// Resolve the context window for the status line (e.g. "30k/66k"). The slash split
-		// only cuts on the first "/": provider ids never contain one, but model ids can
-		// (e.g. "openrouter/google/gemini-3.5-flash" -> provider "openrouter").
-		const slashIdx = model.indexOf("/");
-		const modelProvider = slashIdx === -1 ? model : model.slice(0, slashIdx);
-		const modelId = slashIdx === -1 ? "" : model.slice(slashIdx + 1);
-		state.contextWindow = ctx.modelRegistry?.find?.(modelProvider, modelId)?.contextWindow ?? 0;
-
-		// A personality picked at creation time sticks across /subcont turns unless
-		// explicitly overridden, so the same subagent keeps the same appended
-		// system-prompt text for every turn.
-		const personalityName = options.personality ?? state.personality;
-		state.personality = personalityName;
-
-		const spawnArgs = [
-			"--mode", "json",
-			"-p",
-			"--session", state.sessionFile,   // persistent session for /subcont resumption
-			"--no-extensions",
-			"--extension", MODEL_ACCESS_GUARD_EXTENSION,
-			"--model", model,
-			"--tools", "read,bash,grep,find,ls",
-			"--thinking", thinking,
-		];
-
-		if (personalityName) {
-			const personality = loadPersonalities().get(personalityName);
-			if (personality?.body) {
-				// Append the personality body verbatim. This text is identical on every
-				// call for a given personality name, which keeps the subagent's system
-				// prompt stable across turns for prompt-cache reuse.
-				spawnArgs.push("--append-system-prompt", personality.body);
+		const finish = (code: number | null, signal?: string | null, error?: Error) => {
+			if (run.finished) return;
+			const current = isCurrentRun(run);
+			run.finished = true;
+			clearApprovals(run);
+			clearInterval(run.timer);
+			clearTimeout(run.exitTimer);
+			if (activeRuns.get(state.id) === run) activeRuns.delete(state.id);
+			try {
+				if (!current) return;
+				state.elapsed = Date.now() - startTime;
+				const message = run.lastMessage;
+				const assistantFailed = message?.stopReason === "error" || message?.stopReason === "aborted";
+				state.status = !error && !run.failure && run.settled && code === 0 && message && !assistantFailed ? "done" : "error";
+				let result = assistantText(message);
+				if (state.status === "error") {
+					let failure = error?.message || run.failure?.message || message?.errorMessage || run.stderr.trim();
+					if (!failure) {
+						if (assistantFailed) failure = `Assistant ${message?.stopReason}.`;
+						else if (code !== 0) failure = `Subagent exited with ${signal ? `signal ${signal}` : `code ${code}`}.`;
+						else if (!message) failure = "Subagent exited without a final assistant message.";
+						else failure = "Subagent exited before its run settled.";
+					}
+					result = `Error: ${failure}${result ? `\n\n${result}` : ""}`;
+				}
+				state.textChunks = [result];
+				if (state.status === "error") transcript(state).addNotice(result);
+				let resultText = `Result:\n${result}`;
+				if (result.length > INLINE_RESULT_LIMIT) {
+					const resultFile = state.sessionFile.replace(/\.jsonl$/, `.turn-${state.turnCount}-${run.id}.result.txt`);
+					try {
+						fs.writeFileSync(resultFile, result, "utf-8");
+						resultText = `Result (showing first ${INLINE_RESULT_LIMIT} of ${result.length} chars — full output saved to ${resultFile}):\n${result.slice(0, INLINE_RESULT_LIMIT)}`;
+					} catch (err) {
+						state.status = "error";
+						resultText = `Could not save full result: ${(err as Error).message}\n\nResult (truncated):\n${result.slice(0, INLINE_RESULT_LIMIT)}`;
+						state.textChunks = [resultText];
+					}
+				}
+				updateWidgets();
+				persistState();
+				ctx.ui.notify(
+					`Subagent #${state.id} ${state.status} in ${Math.round(state.elapsed / 1000)}s`,
+					state.status === "done" ? "success" : "error",
+				);
+				pi.sendMessage({
+					customType: "subagent-result",
+					content: `Subagent #${state.id}${state.turnCount > 1 ? ` (Turn ${state.turnCount})` : ""} ${state.status} for "${prompt}" in ${Math.round(state.elapsed / 1000)}s.\n\n${resultText}`,
+					display: true,
+				}, { deliverAs: "followUp", triggerTurn: true });
+			} finally {
+				run.resolve();
 			}
-		}
+		};
 
-		spawnArgs.push(prompt);
+		try {
+			const parentProvider = ctx.model?.provider?.trim();
+			const parentModelId = ctx.model?.id?.trim();
+			const hasParentModel = parentProvider && parentModelId
+				&& parentProvider !== "unknown" && parentModelId !== "unknown";
+			state.model = options.model?.trim() || (hasParentModel ? `${parentProvider}/${parentModelId}` : FALLBACK_MODEL);
+			state.contextWindow = contextWindowForModel(state.model, ctx);
+			state.thinking = options.thinking || pi.getThinkingLevel();
+			state.personality = options.personality ?? state.personality;
+			const personality = state.personality ? loadPersonalities().get(state.personality) : undefined;
+			if (state.personality && !personality) throw new Error(`Unknown agent personality "${state.personality}".`);
+			const tools = personalityTools(personality);
+			const spawnArgs = [
+				"--mode", "rpc",
+				"--session", state.sessionFile,
+				"--no-extensions",
+				"--extension", MODEL_ACCESS_GUARD_EXTENSION,
+				"--extension", BASH_WHITELIST_EXTENSION,
+				"--model", state.model,
+				"--thinking", state.thinking,
+			];
+			if (tools.length) spawnArgs.push("--tools", tools.join(","));
+			else spawnArgs.push("--no-tools");
+			if (personality?.body) spawnArgs.push("--append-system-prompt", personality.body);
+			transcript(state);
+			updateWidgets();
+			persistState();
 
-		return new Promise<void>((resolve) => {
-			const proc = spawn("pi", spawnArgs, {
-				stdio: ["ignore", "pipe", "pipe"],
+			const proc: ChildProcess = spawn("pi", spawnArgs, {
+				cwd: ctx.cwd,
+				stdio: ["pipe", "pipe", "pipe"],
 				env: { ...process.env },
 			});
-
-			state.proc = proc;
-
-			const startTime = Date.now();
-			const timer = setInterval(() => {
+			run.proc = proc;
+			run.timer = setInterval(() => {
+				if (!isCurrentRun(run)) return;
 				state.elapsed = Date.now() - startTime;
 				updateWidgets();
-			}, 1000);
+			}, WIDGET_INTERVAL_MS);
 
 			let buffer = "";
-
 			proc.stdout!.setEncoding("utf-8");
 			proc.stdout!.on("data", (chunk: string) => {
+				if (!isCurrentRun(run)) return;
 				buffer += chunk;
 				const lines = buffer.split("\n");
 				buffer = lines.pop() || "";
-				for (const line of lines) processLine(state, line);
+				for (const line of lines) processLine(run, line);
 			});
-
 			proc.stderr!.setEncoding("utf-8");
 			proc.stderr!.on("data", (chunk: string) => {
-				if (chunk.trim()) {
-					state.textChunks.push(chunk);
-					updateWidgets();
-				}
+				if (isCurrentRun(run)) run.stderr += chunk;
 			});
-
-			proc.on("close", (code) => {
-				if (buffer.trim()) processLine(state, buffer);
-				clearInterval(timer);
-				state.elapsed = Date.now() - startTime;
-				state.status = code === 0 ? "done" : "error";
-				state.proc = undefined;
-				updateWidgets();
-				persistState();
-
-				const result = state.textChunks.join("");
-				ctx.ui.notify(
-					`Subagent #${state.id} ${state.status} in ${Math.round(state.elapsed / 1000)}s`,
-					state.status === "done" ? "success" : "error"
-				);
-
-				const resultText = result.length > INLINE_RESULT_LIMIT
-					? (() => {
-						const resultFile = state.sessionFile.replace(/\.jsonl$/, ".result.txt");
-						fs.writeFileSync(resultFile, result, "utf-8");
-						return `Result (showing first ${INLINE_RESULT_LIMIT} of ${result.length} chars — full output saved to ${resultFile}):\n${result.slice(0, INLINE_RESULT_LIMIT)}`;
-					})()
-					: `Result:\n${result}`;
-
-				pi.sendMessage({
-					customType: "subagent-result",
-					content: `Subagent #${state.id}${state.turnCount > 1 ? ` (Turn ${state.turnCount})` : ""} finished "${prompt}" in ${Math.round(state.elapsed / 1000)}s.\n\n${resultText}`,
-					display: true,
-				}, { deliverAs: "followUp", triggerTurn: true });
-
-				resolve();
+			proc.on("close", (code, signal) => {
+				if (buffer.trim()) processLine(run, buffer);
+				finish(code, signal);
 			});
-
-			proc.on("error", (err) => {
-				clearInterval(timer);
-				state.status = "error";
-				state.proc = undefined;
-				state.textChunks.push(`Error: ${err.message}`);
-				updateWidgets();
-				persistState();
-				resolve();
+			proc.on("error", err => finish(null, null, err));
+			proc.stdin!.on("error", (error: Error) => {
+				if (!isCurrentRun(run)) return;
+				run.failure = error;
+				endRunProcess(run);
+				proc.kill("SIGTERM");
 			});
-		});
+			sendRpc(run, { id: `init-${run.id}`, type: "get_state" });
+		} catch (err) {
+			finish(null, null, err as Error);
+		}
+		return state.status === "running";
 	}
 
 	// ── Tools for the Main Agent ──────────────────────────────────────────────
@@ -517,6 +853,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerTool({
 		name: "subagent_create",
+		executionMode: "sequential",
 		description: "Spawn a background subagent. Thinking level is required and is the primary way to match the subagent to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately and delivers results as a follow-up message. Continue only independent work while it runs; do not poll its status, sleep while waiting, or read its session/result files. Settle normally when independent work is done so the follow-up can be delivered.",
 		parameters: Type.Object({
 			task: Type.String({ description: "The complete task description for the subagent to perform" }),
@@ -542,7 +879,7 @@ export default function (pi: ExtensionAPI) {
 				task: args.task,
 				textChunks: [],
 				elapsed: 0,
-				contextTokens: 0,
+				contextTokens: null,
 				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
@@ -551,11 +888,9 @@ export default function (pi: ExtensionAPI) {
 				personality: args.agent,
 			};
 			agents.set(id, state);
-			updateWidgets();
-			persistState();
-
-			// Fire-and-forget
-			spawnAgent(state, args.task, ctx, { model: args.model, thinking: args.thinking, personality: args.agent });
+			if (!spawnAgent(state, args.task, ctx, { model: args.model, thinking: args.thinking, personality: args.agent })) {
+				return { content: [{ type: "text", text: state.textChunks.join("") }], isError: true };
+			}
 
 			return {
 				content: [{ type: "text", text: `Subagent #${id}${args.agent ? ` [${args.agent}]` : ""} spawned with ${state.model} (${state.thinking} thinking) and is running in background.` }],
@@ -566,6 +901,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerTool({
 		name: "subagent_continue",
+		executionMode: "sequential",
 		description: "Continue an existing subagent conversation. Thinking level is required and is the primary way to match this turn to task complexity: low for lightweight/simple tasks, medium for routine tasks needing moderate reasoning, high for complex multi-step work, and xhigh for the hardest tasks or when accuracy and performance are critical. Unless the user explicitly requests a specific model, omit model and use the default inherited parent model. Returns immediately and delivers results as a follow-up message. Continue only independent work while it runs; do not poll its status, sleep while waiting, or read its session/result files. Settle normally when independent work is done so the follow-up can be delivered.",
 		parameters: Type.Object({
 			id: Type.Number({ description: "The ID of the subagent to continue" }),
@@ -584,7 +920,7 @@ export default function (pi: ExtensionAPI) {
 			if (!state) {
 				return { content: [{ type: "text", text: `Error: No subagent #${args.id} found.` }] };
 			}
-			if (state.status === "running") {
+			if (state.status === "running" || activeRuns.has(args.id)) {
 				return { content: [{ type: "text", text: `Error: Subagent #${args.id} is still running.` }] };
 			}
 			if (args.agent && !loadPersonalities().has(args.agent)) {
@@ -596,12 +932,12 @@ export default function (pi: ExtensionAPI) {
 			state.textChunks = [];
 			state.elapsed = 0;
 			state.turnCount++;
-			updateWidgets();
-			persistState();
 
 			ctx.ui.notify(`Continuing Subagent #${args.id} (Turn ${state.turnCount})…`, "info");
 			// args.agent overrides only if explicitly given; otherwise spawnAgent keeps state.personality.
-			spawnAgent(state, args.prompt, ctx, { model: args.model, thinking: args.thinking, personality: args.agent });
+			if (!spawnAgent(state, args.prompt, ctx, { model: args.model, thinking: args.thinking, personality: args.agent })) {
+				return { content: [{ type: "text", text: state.textChunks.join("") }], isError: true };
+			}
 
 			return {
 				content: [{ type: "text", text: `Subagent #${args.id} continuing with ${state.model} (${state.thinking} thinking) in background.` }],
@@ -611,6 +947,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerTool({
 		name: "subagent_remove",
+		executionMode: "sequential",
 		description: "Remove a specific subagent. Kills it if it's currently running.",
 		parameters: Type.Object({
 			id: Type.Number({ description: "The ID of the subagent to remove" }),
@@ -622,11 +959,12 @@ export default function (pi: ExtensionAPI) {
 				return { content: [{ type: "text", text: `Error: No subagent #${args.id} found.` }] };
 			}
 
-			if (state.proc && state.status === "running") {
-				state.proc.kill("SIGTERM");
-			}
-			ctx.ui.setWidget(`sub-${args.id}`, undefined);
+			const run = activeRuns.get(args.id);
 			agents.delete(args.id);
+			if (run) await cancelRun(run, "removed");
+			transcripts.delete(args.id);
+			updateWidgets();
+			ctx.ui.setWidget(`sub-${args.id}`, undefined);
 			persistState();
 
 			return {
@@ -683,7 +1021,7 @@ export default function (pi: ExtensionAPI) {
 				task,
 				textChunks: [],
 				elapsed: 0,
-				contextTokens: 0,
+				contextTokens: null,
 				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
@@ -692,10 +1030,6 @@ export default function (pi: ExtensionAPI) {
 				personality: parsed.options.personality,
 			};
 			agents.set(id, state);
-			updateWidgets();
-			persistState();
-
-			// Fire-and-forget
 			spawnAgent(state, task, ctx, parsed.options);
 			ctx.ui.notify(`Subagent #${id}${state.personality ? ` [${state.personality}]` : ""}: ${state.model} (${state.thinking} thinking)`, "info");
 		},
@@ -739,7 +1073,7 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			if (state.status === "running") {
+			if (state.status === "running" || activeRuns.has(num)) {
 				ctx.ui.notify(`Subagent #${num} is still running — wait for it to finish first.`, "warning");
 				return;
 			}
@@ -750,8 +1084,6 @@ export default function (pi: ExtensionAPI) {
 			state.textChunks = [];
 			state.elapsed = 0;
 			state.turnCount++;
-			updateWidgets();
-			persistState();
 
 			ctx.ui.notify(`Continuing Subagent #${num} (Turn ${state.turnCount})…`, "info");
 
@@ -767,6 +1099,18 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("subpers", {
 		description: "Spawn a subagent with a chosen personality: /subpers [<agent-name>] [--model provider/model] [--thinking low|medium|high|xhigh] [<task>]",
+		getArgumentCompletions: (prefix) => {
+			if (/\s/.test(prefix) || prefix.startsWith("-")) return null;
+			const matches = Array.from(loadPersonalities().values())
+				.filter(personality => personality.name.startsWith(prefix))
+				.sort((a, b) => a.name.localeCompare(b.name))
+				.map(personality => ({
+					value: `${personality.name} `,
+					label: personality.name,
+					description: personality.description || undefined,
+				}));
+			return matches.length ? matches : null;
+		},
 		handler: async (args, ctx) => {
 			widgetCtx = ctx;
 
@@ -826,7 +1170,7 @@ export default function (pi: ExtensionAPI) {
 				task,
 				textChunks: [],
 				elapsed: 0,
-				contextTokens: 0,
+				contextTokens: null,
 				contextWindow: 0,
 				sessionFile: makeSessionFile(id),
 				turnCount: 1,
@@ -835,10 +1179,6 @@ export default function (pi: ExtensionAPI) {
 				personality: personalityName,
 			};
 			agents.set(id, state);
-			updateWidgets();
-			persistState();
-
-			// Fire-and-forget
 			spawnAgent(state, task, ctx, { ...parsed.options, personality: personalityName });
 			ctx.ui.notify(`Subagent #${id} [${personalityName}]: ${state.model} (${state.thinking} thinking)`, "info");
 		},
@@ -863,16 +1203,18 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			// Kill the process if still running
-			if (state.proc && state.status === "running") {
-				state.proc.kill("SIGTERM");
+			const run = activeRuns.get(num);
+			agents.delete(num);
+			if (run) {
+				await cancelRun(run, "removed");
 				ctx.ui.notify(`Subagent #${num} killed and removed.`, "warning");
 			} else {
 				ctx.ui.notify(`Subagent #${num} removed.`, "info");
 			}
 
+			transcripts.delete(num);
+			updateWidgets();
 			ctx.ui.setWidget(`sub-${num}`, undefined);
-			agents.delete(num);
 			persistState();
 		},
 	});
@@ -884,18 +1226,14 @@ export default function (pi: ExtensionAPI) {
 		handler: async (_args, ctx) => {
 			widgetCtx = ctx;
 
-			let killed = 0;
-			for (const [id, state] of Array.from(agents.entries())) {
-				if (state.proc && state.status === "running") {
-					state.proc.kill("SIGTERM");
-					killed++;
-				}
-				ctx.ui.setWidget(`sub-${id}`, undefined);
-			}
-
+			const killed = activeRuns.size;
 			const total = agents.size;
+			for (const id of agents.keys()) ctx.ui.setWidget(`sub-${id}`, undefined);
 			agents.clear();
-			nextId = 1;
+			transcripts.clear();
+			updateWidgets();
+			await cancelAllRuns("cleared");
+			if (agents.size === 0) nextId = 1;
 			persistState();
 
 			const msg = total === 0
@@ -913,18 +1251,25 @@ export default function (pi: ExtensionAPI) {
 	// right place to kill running children and clear their widgets — clearing
 	// widgets from session_start would run on the *new* instance's empty map and
 	// silently do nothing, leaving ghost widgets with no backing state behind.
-	pi.on("session_shutdown", async (_event, ctx) => {
-		for (const [id, state] of Array.from(agents.entries())) {
-			if (state.proc && state.status === "running") {
-				state.proc.kill("SIGTERM");
-				state.status = "error";
-				state.proc = undefined;
-				state.textChunks.push("\n[Interrupted: session ended before this subagent finished. Use /subcont to resume its task.]");
-			}
-			ctx.ui.setWidget(`sub-${id}`, undefined);
-		}
-		// Final snapshot so the interrupted status above is what gets restored.
-		persistState();
+	pi.on("session_shutdown", (_event, ctx) => {
+		if (shutdownCleanup) return shutdownCleanup;
+		shuttingDown = true;
+		dismissApproval?.();
+		viewer?.close();
+		shutdownCleanup = (async () => {
+			await cancelAllRuns("session ended before this subagent finished");
+			for (const id of agents.keys()) ctx.ui.setWidget(`sub-${id}`, undefined);
+			persistState();
+		})();
+		return shutdownCleanup;
+	});
+
+	pi.on("session_before_tree", async () => {
+		dismissApproval?.();
+		viewer?.close();
+		const hadRuns = activeRuns.size > 0;
+		await cancelAllRuns("tree navigation interrupted this subagent");
+		if (hadRuns) persistState();
 	});
 
 	// Runs on the *new* extension instance after reload/resume/tree-navigation —
@@ -942,6 +1287,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("session_tree", async (_event, ctx) => {
+		await cancelAllRuns("tree navigation interrupted this subagent");
 		restoreAndRender(ctx);
 	});
 }

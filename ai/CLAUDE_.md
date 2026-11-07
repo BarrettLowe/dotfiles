@@ -95,12 +95,12 @@ Invoke these with the Agent tool (`subagent_type: "<name>"`). They run in isolat
 | `bug-fixer` | Have a specific bug fix to apply — from a code review finding, `bug-investigator` output, or clear user instruction |
 | `bug-investigator` | Bug reported or test failing — diagnose root cause without touching source; returns a recommended fix |
 | `bug-verifier` | After a fix is applied — run the test/reproduction command, report pass/fail, return structured output for another `bug-investigator` round if still failing |
-| `feature-implementer` | Adding new capabilities, building a new module, or implementing a spec from scratch |
-| `code-reviewer` | Reviewing staged or recently changed code before committing |
-| `codebase-explorer` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
+| `software-engineer` | Adding new capabilities, building a new module, or implementing a spec from scratch |
+| `reviewer` | Reviewing staged or recently changed code before committing |
+| `scout` | Mapping structure, finding call sites, dependencies, and patterns BEFORE planning a refactor or feature (internal, pre-change) |
 | `dependency-mapper` | Backs `/map` — analyzes call topology, shared state, implicit ordering, and data flow for a specific subsystem |
 | `log-searcher` | Hunting for something specific or abstract inside log files — read/grep only, keeps log noise out of your context |
-| `orient-builder` | Backs `/orient` — ensures/refreshes the graphify graph and writes the `orient_<topic>.qf` quickfix trail, keeping graph noise out of the main session. Returns a compact digest. Can run standalone to drop a trail you walk yourself. Does NOT run the interactive quiz. |
+| `orient-builder` | Standalone graph-based trail builder. Ensures/refreshes the graphify graph and writes an `orient_<topic>.qf` quickfix trail. Returns a compact digest; does not run a quiz. |
 | `cpp-build-resolver` | C++ build errors, linker failures, template errors — fix with minimal changes |
 | `fix-pipeline` | A GitLab CI pipeline is failing and you need to diagnose and fix it |
 | `simplifier` | Simplifying recently generated code — dedup, inline, verbosity, dead code, over-engineering |
@@ -138,23 +138,20 @@ Invoke these with the Skill tool. Best for inline, conversational, or context-de
 | `/excalidraw` | excalidraw-diagram | Creating an Excalidraw diagram — workflows, architectures, concept maps, anything that benefits from visual argument over prose |
 | `/audit` | audit | Architectural audit of *existing* code you didn't write → `audit.html`. Learn-first: sequence diagram of current behavior, decisions explained neutrally with "still valid?" verdict, then friction points synthesized from that understanding, two-tier change roadmap (quick wins + high-value). Opt-in quiz on "quiz me". |
 | `/wiki` | wiki | Write a GitLab wiki page for a system or subsystem — high-level, teaching-focused, Mermaid diagram included. Invoke after completing a task or when documenting how something works for a new engineer. Outputs `.claude-artifacts/wiki-<topic>.md`. |
-| `/explain` | explain | Paced, INTERACTIVE walkthrough — a conversation, not an artifact. Walks execution flow one function/block at a time, stops at a checkpoint before each next step, re-explains differently (not louder) when I'm lost. Use when I can't follow a one-shot explanation and need to go slow. |
-| `/orient` | orient | Orient me to an unfamiliar architecture (AI-written or inherited) WITHOUT reading it line by line. Stands on graphify's graph (communities + god-nodes + cited `source_location`), emits a Neovim quickfix trail `.claude-artifacts/orient_<topic>.qf` I walk with `:cnext`, and quizzes me predict-the-owner so it sticks by doing. Lens: what each class is responsible for (SRP) + what it owns. Static/architecture altitude. Use first thing on a module to answer "what's responsible for what, where do I look." |
-| `/mansplain` | mansplain | Zero-shame, ground-up explanation that FINDS my floor first — asks small diagnostic questions one at a time to locate where my knowledge bottoms out, then builds up from there. Rigorous, not baby-talk; analogies map back to the real mechanism. Not code-only (concepts, errors, tools, math). Use when I want to be taught like I know nothing about a topic. |
+| `/learning-style` | learning-style | Explicit user invocation only. Paced teaching in any subject: 1 mental model, pause, then refine. Start code explanations with responsibility and ownership. |
+| `/guided-editor` | guided-editor | Explicit user invocation only. Build a Neovim quickfix trail and discuss real code 1 location at a time. Quizzes and graphify are optional. |
 
 ### When multiple could apply
 
-- **Feature vs. bug**: "implement X", "add Y", "build Z" → `feature-implementer`; "fix", "broken", "regression", known diagnosis → `bug-fixer`
+- **Feature vs. bug**: "implement X", "add Y", "build Z" → `software-engineer`; "fix", "broken", "regression", known diagnosis → `bug-fixer`
 - Build *fails* → `cpp-build-resolver` agent first; switch to `/cmake` only if the root cause is CMake structure
 - Writing with TDD → `/tdd` (tests before code); adding tests to existing code → `test-generator` (C++) or `test-writer` (other languages)
 - Structural design question → `architect` agent; then `/conc` for threading-specific details
-- Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `codebase-explorer` agent for one-off lookups where a graph would be overkill
+- Mapping a codebase → `/graphify` when you need a persistent, reusable graph (first encounter with a project, or you'll be querying it repeatedly); `scout` agent for one-off lookups where a graph would be overkill
 - **Understanding unfamiliar code** — pick by scope and question:
   - Single file, just opened: `/wtf` command ("what does this file do?")
   - Module/directory, architectural role: `/explore` command ("what is this module's job in the system?")
   - Whole codebase, need to query it across sessions: `/graphify` skill
-  - Pre-change internal scan (Claude's own pre-work): `codebase-explorer` agent
-  - **Can't follow a one-shot explanation — need it paced and interactive**: `/explain` skill (back-and-forth, one block at a time). The above all answer in a single pass; `/explain` goes at my pace.
-  - **"What's responsible for what, and where do I look?" — by DOING, not reading**: `/orient` skill. Leads with the architectural neighborhoods (from graphify), drops a Neovim quickfix trail I walk with `:cnext`, and quizzes me predict-the-owner. Use it first on an AI-written or inherited module; the lens is SRP/ownership, not execution flow.
-- **`/orient` vs `/graphify` vs `/explain`**: `/graphify` BUILDS the map and narrates it *at* me; `/orient` stands on that map but makes *me* produce the answers and walk it in my editor; `/explain` paces a single path's *execution flow* (temporal) once I want to trace one. `/orient` is structural (who owns what, at architecture altitude); reach for it when the gap is "I have no map of this module," then `/explain` to trace a specific path inside it.
-- **`/explain` vs `/mansplain`**: `/explain` assumes I'm competent and just paces the execution flow of *code*. `/mansplain` assumes nothing and *finds my floor first* — use it when the gap is conceptual/foundational (a concept, error, tool, math), not flow-tracing. I can also drop into `/mansplain` mid-`/explain` ("assume I know nothing here").
+  - Pre-change internal scan (Claude's own pre-work): `scout` agent
+- Answer ordinary explanation requests directly and proportionately. Do not turn them into a lesson, quiz, or editor walkthrough.
+- `/learning-style` and `/guided-editor` are user-invoked modes, not automatic routes. The former controls paced teaching; the latter guides navigation through real code in Neovim.

@@ -1,8 +1,7 @@
 ---
 name: documenter
 description: Writes documentation for wikis, READMEs, or any medium an engineer on a team might need
-tools: Read, Grep, Glob, Bash
-model: sonnet
+tools: read,grep,find,bash,write,edit
 color: purple
 ---
 
@@ -22,7 +21,7 @@ This is not the place for advanced vernacular or buzzword jargon.
 
 ## How to think about writing
 
-Come up with 3-5 basic questions that anyone new to this repo/content may have.
+Identify 1-3 scenarios where engineers may encounter the concept, and the basic questions they may have.
 
 Then figure out what a reasonable baseline of knowledge is based on the information you are documenting. Briefly mention that knowledge to start out.
 

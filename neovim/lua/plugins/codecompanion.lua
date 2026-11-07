@@ -15,41 +15,23 @@ return {
                 log_level = "DEBUG"
             },
             adapters = {
+                acp = {
+                    claude_code = function()
+                        return require("codecompanion.adapters").extend("claude_code", {})
+                    end,
+                },
                 http = {
-                    -- ollama_reasoning = function()
-                    --     return require("codecompanion.adapters").extend("ollama", {
-                    --         -- env = { url = "http://localhost:11434" },
-                    --         env = { url = "http://127.0.0.1:1234" },
-                    --         schema = {
-                    --             -- model = { default = "qwen2.5-coder:7b" },
-                    --             model = { default = "qwen/qwen3.5-9b" },
-                    --             num_ctx = { default = 16384 },
-                    --         },
-                    --     })
-                    -- end,
-                    -- ollama_fast = function()
-                    --     return require("codecompanion.adapters").extend("ollama", {
-                    --         env = { url = "http://localhost:11434" },
-                    --         schema = {
-                    --             model = { default = "codegemma:2b-code" },
-                    --             parameters = {
-                    --                 temperature = 0,
-                    --                 num_predict = 1024,
-                    --             }
-                    --         }
-                    --     })
-                    -- end,
-                    lmstudio = function()
+                    llama_cpp = function()
                         return require("codecompanion.adapters").extend("openai_compatible", {
-                            name = "lmstudio",  -- friendly name
-                            env = { url = "http://localhost:1234" },  -- LM Studio default port
+                            name = "llama_cpp",  -- friendly name
+                            env = { url = "http://localhost:8888" },  -- llama.cpp server default port
                             schema = {
                                 model = {
-                                    default = "",  -- leave empty; it will query /v1/models
+                                    default = "Ornith-1.0-35B-UD-Q4_K_M",  -- leave empty; it will query /v1/models
                                     num_ctx = { default = 16384 },
                                 },
                                 temperature = { default = 0.7 },
-                                -- no api_key needed (LM Studio ignores it)
+                                -- no api_key needed (llama.cpp ignores it)
                             },
                         })
                     end,
@@ -57,7 +39,7 @@ return {
             },
             strategies = {
                 chat = {
-                    adapter = "lmstudio",
+                    adapter = "claude_code",
                     tools = {
                         groups = {
                             ["read_only"] = {
@@ -77,13 +59,13 @@ return {
                         },
                     },
                 },
-                inline = { adapter = "ollama_reasoning" },
+                inline = { adapter = "llama_cpp" },
             },
             rules = {
                 default = {
                     description = "Collection of common files",
                     files = {
-                        "~/dotfiles/ai/AGENTS.md",
+                        "~/dotfiles/ai/AGENTS_.md",
                         "CLAUDE.md",
                         "AGENTS.md",
                     }

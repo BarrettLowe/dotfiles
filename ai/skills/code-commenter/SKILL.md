@@ -1,52 +1,57 @@
 ---
 name: code-commenter
-description: |
-  Write down to earth code comments. Use when needing to add comments to classes, functions, methods etc in programming languages.
+description: >
+  Add or improve documentation for code. Use for requests focused on
+  documenting functions, methods, classes, or other code interfaces.
 ---
 
-The user wants you to add documentation to the code. This will be for functions, methods, or classes - NOT individual variables. 
+# Code documentation
 
-## Rules:
-- Do not use jargon - comments should read as if it is a conversation while whiteboarding a concept
-- Do not include other contexts. BAD: "Takes the input from function YYY to convert to expected format" GOOD: "Converts from A format to B format."
-- Use doxygen for C/C++ code. Docstrings for python.
-- ONLY add comments for overall functions, methods, or classes. Do not comment on every line.
-- DO NOT touch ANY code.
+Use this skill for documentation-focused requests. Follow
+`~/dotfiles/ai/AGENTS_CODING.md` and the applicable language style guide.
 
-### C++ example
-```cpp
-/**
- * @brief Converts a GULP::LogLevel enum value to its canonical string representation.
- *
- * Always returns the canonical form regardless of any aliases used during parsing.
- * For example, both "print" and "comment" parse to Comment, but this will always
- * return "comment". Returns "unknown" for any unrecognized value.
- *
- * @param log_level  The GULP::LogLevel enum value to convert.
- * @return           The canonical lowercase string representation of the log level.
- */
-inline std::string LogLevelToString(const GULP::LogLevel &log_level) {...
- ```
+## Scope
 
-### Python example
-```python
-def calculate_velocity(distance: float, time: float) -> float:
-    """Calculate the average velocity of a moving object.
+- Document the code the user requested. Leave unrelated documentation alone.
+- For a documentation-only request, change comments and docstrings, not code.
+  If code needs changing to make documentation accurate, point it out instead.
+- Read enough of the implementation and its callers or tests to understand
+  the behavior. Do not guess; flag anything you cannot verify.
 
-    This function divides total distance by elapsed time to determine 
-    the rate of motion. 
+## What to write
 
-    Args:
-        distance (float): The total distance traveled in meters.
-        time (float): The total time taken in seconds.
+- Use plain, direct language. Avoid unnecessary jargon and filler.
+- Describe what a function or class is for and what a caller needs to know.
+- Include relevant constraints, units, return meanings, side effects, errors,
+  ownership, or lifecycle details when they matter.
+- Document observable behavior, not a step-by-step account of implementation.
+- Don't repeat information that is already obvious from the name or signature.
+- Avoid references to particular callers unless the relationship is part of the
+  interface.
+- Keep comments proportional to the complexity of the behavior. Don't add
+  detail merely to fill a template.
 
-    Returns:
-        float: The average velocity in meters per second (m/s).
+## Format
 
-    Raises:
-        ValueError: If time is less than or equal to zero.
-    """
-    if time <= 0:
-        raise ValueError("Time must be greater than zero.")
-    return distance / time
-```
+- For C and C++, use Doxygen; follow the C++ style guide where applicable.
+- For Python, use docstrings and follow the Python style guide.
+- For other languages, follow the project's documentation conventions.
+- Follow existing conventions when they do not conflict with these guidelines.
+
+## Examples
+
+A useful comment explains behavior a caller might otherwise miss:
+
+    /**
+     * @brief Converts a log level to its canonical name.
+     *
+     * Aliases return the same name as the level they represent.
+     *
+     * @param level  Level to convert.
+     * @return Canonical name, or "unknown" if the level is unrecognized.
+     */
+
+Avoid comments that only repeat the name:
+
+    // Returns the name.
+    std::string name() const;

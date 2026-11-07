@@ -10,7 +10,6 @@ description: |
   ./.claude-artifacts/audit.html. Best run with Opus.
 license: MIT
 compatibility: claude-code
-model: opus
 allowed-tools:
   - Read
   - Write
@@ -454,8 +453,6 @@ Do NOT print the HTML source.
 Do NOT summarize the artifact in chat — the HTML is the deliverable.
 
 ## Quiz Protocol (when the user types "quiz me")
-
-Same structure as `/teach` quiz but questions are calibrated to the audit context.
 
 Read the existing `.claude-artifacts/audit.html`, parse the `BRIEF` object, run the quiz.
 

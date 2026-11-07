@@ -2,7 +2,6 @@
 name: fix-pipeline
 description: Find and diagnose the single most relevant failing GitLab CI pipeline for the current branch/MR. Fetches job logs, identifies root causes, and fixes code issues. Use when a pipeline is failing and you need to understand why.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__gitlab__list_pipelines, mcp__gitlab__get_pipeline, mcp__gitlab__list_pipeline_jobs, mcp__gitlab__get_pipeline_job, mcp__gitlab__get_pipeline_job_output, mcp__gitlab__get_merge_request, mcp__gitlab__list_merge_requests
-model: sonnet
 ---
 
 # GitLab Pipeline Failure Diagnostic

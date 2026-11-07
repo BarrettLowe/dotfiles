@@ -80,8 +80,32 @@ int[] = {0xAB, 0x1, 0x1234};
 
 ```
 
-### Naming Variables
+## Engineering Principles
 
-- Follow project conventions
-- Prefer explicit names over brevity
+Readability is the highest priority. Code should communicate
+its purpose and organization without requiring the author
+to explain it.
+
+- Use descriptive, concise names for functions, variables,
+  classes, and modules.
+- Give each component a clear, focused responsibility.
+- Keep control flow understandable and predictable.
+- Use comments to explain intent, decisions, and
+  non-obvious behavior—not to restate the code.
+- Prefer simple changes for one-off functionality.
+- Introduce abstractions when there is demonstrated or
+  reasonably anticipated reuse.
+- Test public behavior with automated tests.
+- Verify integration or hardware behavior when applicable.
+
+These are expectations for the resulting software, not
+a mandatory implementation methodology.
+
+For substantial feature development or architectural
+changes, use the software-development skill.
+
+### Comments
+Use comments to explain intent, decisions, and non-obvious behavior—not to restate code.
+
+Separate distinct functional sections in a function or method with a blank line. Add a short comment at the beginning of a section when its purpose or intent is not clear from the code. Keep section comments to roughly 80 characters or less.
 

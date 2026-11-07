@@ -2,7 +2,6 @@
 name: bug-verifier
 description: Post-fix verification specialist. Runs the failing test or reproduction command after a fix is applied and reports pass/fail. If still failing, returns structured output ready to hand back to bug-investigator for another round.
 tools: Read, Grep, Glob, Bash
-model: haiku
 color: green
 ---
 

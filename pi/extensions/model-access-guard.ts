@@ -26,21 +26,30 @@ interface Rule {
 interface Config {
   enabled: boolean;
   rules: Rule[];
+  error?: string;
 }
 
 function expandHome(p: string): string {
   return p.startsWith("~") ? join(homedir(), p.slice(1)) : p;
 }
 
-function loadConfig(): Config {
+function loadConfig(configPath: string): Config {
   try {
-    const raw = JSON.parse(readFileSync(join(getAgentDir(), "model-access.json"), "utf-8"));
-    return {
-      enabled: raw.enabled ?? true,
-      rules: Array.isArray(raw.rules) ? raw.rules : [],
-    };
-  } catch {
-    return { enabled: true, rules: [] };
+    const raw = JSON.parse(readFileSync(configPath, "utf-8"));
+    if (!raw || typeof raw !== "object" || Array.isArray(raw) ||
+        (raw.enabled !== undefined && typeof raw.enabled !== "boolean") || !Array.isArray(raw.rules)) {
+      throw new Error("Expected an optional boolean enabled and a rules array");
+    }
+    const nonEmptyString = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+    for (const rule of raw.rules) {
+      if (!rule || !nonEmptyString(rule.modelPattern) || !nonEmptyString(rule.path) ||
+          !Array.isArray(rule.globs) || rule.globs.length === 0 || !rule.globs.every(nonEmptyString)) {
+        throw new Error("Each rule requires modelPattern, path, and non-empty globs");
+      }
+    }
+    return { enabled: raw.enabled ?? true, rules: raw.rules };
+  } catch (error) {
+    return { enabled: true, rules: [], error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -90,7 +99,7 @@ function checkPath(absPath: string, provider: string, id: string, rules: Rule[])
       if (globToRegExp(glob).test(rel)) {
         return {
           blocked: true,
-          reason: `Blocked by model-access-guard: model "${provider}/${id}" matches "${rule.modelPattern}" and "${rel}" matches "${glob}" under ${rule.path}. This file is off-limits to this model.`,
+          reason: `Blocked by model-access-guard: model "${provider}/${id}" matches "${rule.modelPattern}" and "${rel}" matches "${glob}" under ${rule.path}. You are NOT allowed to read, edit, or otherwise access this file using any tool. Do not try another tool or command.`,
         };
       }
     }
@@ -115,7 +124,7 @@ function checkBashCommand(command: string, provider: string, id: string, rules: 
     if (extensions.some((ext) => command.includes(`.${ext}`))) {
       return {
         blocked: true,
-        reason: `Blocked by model-access-guard: command references restricted path "${rule.path}" and a blocked file type for model "${provider}/${id}".`,
+        reason: `Blocked by model-access-guard: command references restricted path "${rule.path}" and a blocked file type for model "${provider}/${id}". You are NOT allowed to read, edit, or otherwise access restricted files using any tool. Do not try another tool or command.`,
       };
     }
   }
@@ -123,10 +132,17 @@ function checkBashCommand(command: string, provider: string, id: string, rules: 
 }
 
 export default function (pi: ExtensionAPI) {
-  const config = loadConfig();
+  const configPath = join(getAgentDir(), "model-access.json");
+  const config = loadConfig(configPath);
   let runtimeEnabled: boolean | undefined;
 
   const isEnabled = () => runtimeEnabled ?? config.enabled;
+  const configError = config.error ?? (config.rules.length === 0 ? "No rules configured" : undefined);
+  const errorMessage = `model-guard: ERROR in ${configPath}: ${configError}. All tool calls are blocked. Fix the config and run /reload.`;
+
+  pi.on("session_start", async (_event, ctx) => {
+    if (isEnabled() && configError && ctx.hasUI) ctx.ui.notify(errorMessage, "error");
+  });
 
   pi.registerCommand("model-guard", {
     description: "Toggle or check the model-access-guard extension (on|off|status)",
@@ -134,20 +150,26 @@ export default function (pi: ExtensionAPI) {
       const arg = args.trim().toLowerCase();
       if (arg === "on" || arg === "off") {
         runtimeEnabled = arg === "on";
-        ctx.ui.notify(`model-guard: ${arg.toUpperCase()} (this session)`, "info");
+        if (isEnabled() && configError) ctx.ui.notify(errorMessage, "error");
+        else ctx.ui.notify(`model-guard: ${arg.toUpperCase()} (this session)`, "info");
+        return;
+      }
+      if (isEnabled() && configError) {
+        ctx.ui.notify(errorMessage, "error");
         return;
       }
       const override = runtimeEnabled !== undefined ? `, session override active` : "";
-      ctx.ui.notify(`model-guard: ${isEnabled() ? "ON" : "OFF"} (config default: ${config.enabled ? "on" : "off"}${override})`, "info");
+      ctx.ui.notify(`model-guard: ${isEnabled() ? "ON" : "OFF"} (${config.rules.length} rules from ${configPath}; config default: ${config.enabled ? "on" : "off"}${override})`, "info");
     },
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    if (!isEnabled() || config.rules.length === 0) return;
+    if (!isEnabled()) return;
+    if (configError) return { block: true, reason: errorMessage };
     const provider = ctx.model.provider;
     const id = ctx.model.id;
 
-    if (isToolCallEventType("read", event) || isToolCallEventType("edit", event)) {
+    if (isToolCallEventType("read", event) || isToolCallEventType("edit", event) || isToolCallEventType("write", event)) {
       const absPath = isAbsolute(event.input.path) ? event.input.path : join(ctx.cwd, event.input.path);
       const result = checkPath(absPath, provider, id, config.rules);
       if (result.blocked) return { block: true, reason: result.reason };

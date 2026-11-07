@@ -2,7 +2,6 @@
 name: cmake-configurator
 description: CMake build system design and maintenance. Writes and refactors CMakeLists.txt using modern target-based CMake only. Use when setting up a project, adding targets, managing dependencies, or fixing CMake structure.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
-model: sonnet
 ---
 
 # CMake Configurator

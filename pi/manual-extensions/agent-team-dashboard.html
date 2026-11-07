@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Agent Team Observatory</title>
+	<style>
+		:root { color-scheme: dark; --bg:#0b0d12; --panel:#121620; --raised:#181d29; --line:#282f3e; --text:#edf1f7; --muted:#919bad; --blue:#79a7ff; --green:#58d6a5; --red:#ff7b88; --amber:#f3bd62; --purple:#b79cff; }
+		* { box-sizing: border-box; }
+		body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+		button,select { font:inherit; }
+		header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 22px; border-bottom:1px solid var(--line); }
+		h1 { margin:0; font:500 18px/1.2 system-ui,sans-serif; letter-spacing:.01em; }
+		.subhead { color:var(--muted); font-size:12px; margin-top:4px; max-width:70vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+		.live { display:flex; align-items:center; gap:8px; color:var(--muted); white-space:nowrap; }
+		.live::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); }
+		.metrics { display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:1px; background:var(--line); border-bottom:1px solid var(--line); }
+		.metric { background:var(--panel); padding:14px 18px; }
+		.metric label { display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+		.metric strong { display:block; margin-top:4px; font-size:20px; font-weight:500; }
+		.shell { display:grid; grid-template-columns:300px minmax(420px,1fr) 280px; min-height:calc(100vh - 135px); }
+		.sidebar,.analysis { background:var(--panel); }
+		.sidebar { border-right:1px solid var(--line); }
+		.analysis { border-left:1px solid var(--line); }
+		.toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:49px; padding:9px 12px; border-bottom:1px solid var(--line); }
+		.section-title { font:500 12px/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+		select { border:1px solid var(--line); border-radius:5px; padding:5px 8px; color:var(--text); background:var(--raised); }
+		.run-list { padding:8px; }
+		.run { width:100%; border:1px solid transparent; border-radius:7px; background:transparent; color:inherit; text-align:left; padding:10px; margin-bottom:4px; }
+		.run:hover { background:var(--raised); }
+		.run.selected { border-color:#3a465d; background:var(--raised); }
+		.run-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+		.agent { font-weight:500; color:var(--text); }
+		.kind { margin-left:7px; color:var(--purple); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+		.status { font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+		.status.running { color:var(--blue); } .status.done { color:var(--green); } .status.error { color:var(--red); } .status.interrupted { color:var(--amber); }
+		.task { color:var(--muted); font-size:12px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+		.run-meta { color:var(--muted); font-size:11px; margin-top:7px; }
+		.timeline-head { padding:12px 16px; min-height:49px; border-bottom:1px solid var(--line); }
+		.timeline-head strong { font-weight:500; }
+		.timeline-head span { color:var(--muted); margin-left:8px; }
+		.timeline { padding:14px 18px 50px; }
+		.event { position:relative; display:grid; grid-template-columns:74px 14px minmax(0,1fr); gap:10px; padding-bottom:16px; }
+		.event:not(:last-child)::after { content:""; position:absolute; left:91px; top:15px; bottom:0; width:1px; background:var(--line); }
+		.time { color:var(--muted); font-size:11px; padding-top:1px; text-align:right; }
+		.dot { position:relative; z-index:1; width:9px; height:9px; border-radius:50%; margin-top:4px; background:var(--purple); box-shadow:0 0 0 3px var(--bg); }
+		.event.tool_start .dot,.event.tool_end .dot { background:var(--amber); }
+		.event.dispatch_start .dot,.event.dispatch_end .dot { background:var(--green); }
+		.event.dispatch_error .dot,.event.stderr .dot { background:var(--red); }
+		.event-title { color:var(--text); font-size:12px; }
+		.event-copy { color:var(--muted); margin-top:4px; white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; }
+		details { margin-top:5px; }
+		summary { color:var(--blue); user-select:none; }
+		pre { color:#c5cddd; background:#0d1017; border:1px solid var(--line); border-radius:5px; padding:8px; overflow:auto; max-height:240px; white-space:pre-wrap; }
+		.analysis-body { padding:14px; }
+		.facts { display:grid; grid-template-columns:1fr auto; gap:9px 12px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+		.facts span:nth-child(odd) { color:var(--muted); }
+		.tools { margin-top:16px; }
+		.tool-row { display:grid; grid-template-columns:80px 1fr 30px; align-items:center; gap:8px; margin-top:10px; font-size:12px; }
+		.tool-name { overflow:hidden; text-overflow:ellipsis; }
+		.track { height:5px; background:#252b38; border-radius:3px; overflow:hidden; }
+		.bar { height:100%; background:var(--blue); }
+		.empty { color:var(--muted); padding:40px 20px; text-align:center; }
+		#error { display:none; margin:14px; padding:10px; background:#391b22; color:#ffb5bd; border-radius:6px; }
+		@media (max-width:1000px) { .shell{grid-template-columns:260px 1fr}.analysis{display:none}.metrics{grid-template-columns:repeat(3,1fr)} }
+		@media (max-width:700px) { header{align-items:flex-start}.metrics{grid-template-columns:repeat(2,1fr)}.shell{display:block}.sidebar{border:0;border-bottom:1px solid var(--line)}.run-list{display:flex;overflow:auto}.run{min-width:230px}.timeline{padding-inline:10px}.event{grid-template-columns:56px 12px minmax(0,1fr)}.event:not(:last-child)::after{left:73px} }
+	</style>
+</head>
+<body>
+	<header>
+		<div><h1>Agent Team Observatory</h1><div class="subhead" id="project">Waiting for traces…</div></div>
+		<div class="live" id="updated">connecting</div>
+	</header>
+	<div class="metrics" aria-label="Team metrics">
+		<div class="metric"><label>Runs</label><strong id="m-runs">—</strong></div>
+		<div class="metric"><label>Active</label><strong id="m-active">—</strong></div>
+		<div class="metric"><label>Avg duration</label><strong id="m-duration">—</strong></div>
+		<div class="metric"><label>Tool error rate</label><strong id="m-errors">—</strong></div>
+		<div class="metric"><label>Observed cost</label><strong id="m-cost">—</strong></div>
+	</div>
+	<div id="error" role="alert"></div>
+	<main class="shell">
+		<aside class="sidebar">
+			<div class="toolbar"><span class="section-title">Runs</span><select id="status-filter" aria-label="Filter status"><option value="all">All status</option><option value="running">Running</option><option value="done">Done</option><option value="error">Error</option><option value="interrupted">Interrupted</option></select></div>
+			<div class="run-list" id="runs"></div>
+		</aside>
+		<section>
+			<div class="timeline-head" id="timeline-head"><strong>Timeline</strong><span>Select a run</span></div>
+			<div class="timeline" id="timeline"></div>
+		</section>
+		<aside class="analysis">
+			<div class="toolbar"><span class="section-title">Telemetry</span></div>
+			<div class="analysis-body" id="analysis"></div>
+		</aside>
+	</main>
+	<script>
+		const state = { snapshot:null, selected:null, filter:"all", timelineSignature:null };
+		const $ = id => document.getElementById(id);
+		const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
+		const duration = ms => ms < 1000 ? `${Math.round(ms)}ms` : ms < 60000 ? `${(ms/1000).toFixed(ms < 10000 ? 1 : 0)}s` : `${Math.floor(ms/60000)}m ${Math.round((ms%60000)/1000)}s`;
+		const count = n => n >= 1e6 ? `${(n/1e6).toFixed(1)}m` : n >= 1e3 ? `${(n/1e3).toFixed(1)}k` : String(Math.round(n || 0));
+		const clock = iso => new Date(iso).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+
+		function eventView(event) {
+			const p = event.payload || {};
+			let title = event.type.replaceAll("_", " ");
+			let copy = "";
+			let detail = null;
+			if (event.type === "dispatch_start") { title = "Dispatch started"; copy = p.task; }
+			else if (event.type === "assistant_stream") { title = "Assistant stream"; copy = p.text; }
+			else if (event.type === "assistant_final") { title = "Final assistant output"; copy = p.text; }
+			else if (event.type === "plan_presented") { title = "Plan presented"; copy = `${p.previousState || "planning"} → ${p.state || "awaiting approval"}`; }
+			else if (event.type === "approval_requested") { title = "Approval requested"; copy = p.source || ""; }
+			else if (event.type === "approval_granted") { title = "Approval granted"; copy = p.source || ""; }
+			else if (event.type === "approval_denied") { title = "Approval denied"; copy = p.source || ""; }
+			else if (event.type === "tool_start") { title = `Tool · ${p.toolName || "unknown"}`; detail = p.args; }
+			else if (event.type === "tool_end") { title = `${p.isError ? "Tool error" : "Tool complete"} · ${p.toolName || "unknown"}`; detail = p.result; }
+			else if (event.type === "message_end") { title = "Model turn complete"; const u=p.usage||{}; copy=`${count(u.input)} input · ${count(u.output)} output${u.cost?.total ? ` · $${u.cost.total.toFixed(4)}` : ""}`; }
+			else if (event.type === "dispatch_end") { title = `Dispatch ${p.status || "ended"}`; copy = `${duration(p.elapsedMs || 0)} · ${p.toolCount || 0} tools`; }
+			else if (event.type === "dispatch_error") { title = "Dispatch error"; copy = p.message; }
+			else if (event.type === "stderr") { title = "Process stderr"; copy = p.text; }
+			const details = detail == null ? "" : `<details data-event-sequence="${event.sequence}"><summary>Inspect payload</summary><pre data-scroll-key="payload:${event.sequence}">${esc(JSON.stringify(detail,null,2))}</pre></details>`;
+			return `<article class="event ${esc(event.type)}"><time class="time">${esc(clock(event.timestamp))}</time><span class="dot"></span><div><div class="event-title">${esc(title)}</div>${copy ? `<div class="event-copy" data-scroll-key="copy:${event.sequence}">${esc(copy)}</div>` : ""}${details}</div></article>`;
+		}
+
+		function render() {
+			const snapshot = state.snapshot;
+			if (!snapshot) return;
+			$("project").textContent = snapshot.project;
+			$("updated").textContent = `updated ${clock(snapshot.generatedAt)}`;
+			$("m-runs").textContent = snapshot.metrics.runs;
+			$("m-active").textContent = snapshot.metrics.running;
+			$("m-duration").textContent = duration(snapshot.metrics.averageDurationMs);
+			$("m-errors").textContent = `${(snapshot.metrics.toolErrorRate*100).toFixed(1)}%`;
+			$("m-cost").textContent = snapshot.metrics.cost ? `$${snapshot.metrics.cost.toFixed(3)}` : "—";
+			const runs = snapshot.runs.filter(run => state.filter === "all" || run.status === state.filter);
+			if (!runs.some(run => run.id === state.selected)) state.selected = runs[0]?.id ?? null;
+			$("runs").innerHTML = runs.length ? runs.map(run => `<button class="run ${run.id===state.selected?"selected":""}" data-run="${esc(run.id)}"><div class="run-head"><span><span class="agent">${esc(run.agent)}</span>${run.kind==="dispatcher"?'<span class="kind">lead</span>':""}</span><span class="status ${esc(run.status)}">${esc(run.status)}</span></div><div class="task">${esc(run.task || "No task captured")}</div><div class="run-meta">${esc(run.team)} · ${duration(run.durationMs)} · ${run.toolCount} tools</div></button>`).join("") : `<div class="empty">No matching traces yet.</div>`;
+			const selected = runs.find(run => run.id === state.selected);
+			if (!selected) { $("timeline").innerHTML='<div class="empty">Start an agent dispatch to populate this view.</div>'; $("timeline").dataset.runId=""; state.timelineSignature=null; $("analysis").innerHTML=""; return; }
+			const sameRun = $("timeline").dataset.runId === selected.id;
+			const timelineSignature = JSON.stringify(selected.events);
+			const timelineChanged = !sameRun || state.timelineSignature !== timelineSignature;
+			$("timeline-head").innerHTML = `<strong>${esc(selected.agent)}</strong><span>${esc(selected.model)} · thinking ${esc(selected.thinking || "off")}</span>`;
+			if (timelineChanged) {
+				const expandedEvents = sameRun
+					? new Set(Array.from($("timeline").querySelectorAll("details[open][data-event-sequence]"), detail => detail.dataset.eventSequence))
+					: new Set();
+				const scrollOffsets = sameRun
+					? new Map(Array.from($("timeline").querySelectorAll("[data-scroll-key]"), element => [
+						element.dataset.scrollKey,
+						{ top: element.scrollTop, left: element.scrollLeft },
+					]))
+					: new Map();
+				$("timeline").innerHTML = selected.events.map(eventView).join("");
+				$("timeline").dataset.runId = selected.id;
+				state.timelineSignature = timelineSignature;
+				for (const detail of $("timeline").querySelectorAll("details[data-event-sequence]")) {
+					if (expandedEvents.has(detail.dataset.eventSequence)) detail.open = true;
+				}
+				for (const element of $("timeline").querySelectorAll("[data-scroll-key]")) {
+					const offset = scrollOffsets.get(element.dataset.scrollKey);
+					if (offset) {
+						element.scrollTop = offset.top;
+						element.scrollLeft = offset.left;
+					}
+				}
+			}
+			const tools = Object.entries(selected.tools).sort((a,b)=>b[1]-a[1]);
+			const max = Math.max(1,...tools.map(([,value])=>value));
+			$("analysis").innerHTML = `<div class="facts"><span>Role</span><b>${selected.kind === "dispatcher" ? "Dispatcher" : "Agent"}</b><span>Status</span><b class="status ${esc(selected.status)}">${esc(selected.status)}</b><span>Duration</span><b>${duration(selected.durationMs)}</b><span>Tools</span><b>${selected.toolCount}</b><span>Tool errors</span><b>${selected.toolErrors}</b><span>Input tokens</span><b>${count(selected.usage.input)}</b><span>Output tokens</span><b>${count(selected.usage.output)}</b><span>Cache read</span><b>${count(selected.usage.cacheRead)}</b><span>Context window</span><b>${count(selected.contextWindow)}</b><span>Cost</span><b>${selected.usage.cost ? `$${selected.usage.cost.toFixed(4)}` : "—"}</b></div><div class="tools"><span class="section-title">Tool mix</span>${tools.length ? tools.map(([name,value])=>`<div class="tool-row"><span class="tool-name">${esc(name)}</span><div class="track"><div class="bar" style="width:${value/max*100}%"></div></div><span>${value}</span></div>`).join("") : '<div class="empty">No tools used</div>'}</div>`;
+		}
+
+		$("status-filter").addEventListener("change", event => { state.filter=event.target.value; render(); });
+		$("runs").addEventListener("click", event => { const button=event.target.closest("[data-run]"); if(button){state.selected=button.dataset.run;render();} });
+		async function refresh() {
+			try { const response=await fetch("/api/snapshot",{cache:"no-store"}); if(!response.ok) throw new Error(`HTTP ${response.status}`); state.snapshot=await response.json(); $("error").style.display="none"; render(); }
+			catch(error) { $("error").textContent=`Unable to read traces: ${error.message}`; $("error").style.display="block"; }
+		}
+		refresh(); setInterval(refresh,1000);
+	</script>
+</body>
+</html>

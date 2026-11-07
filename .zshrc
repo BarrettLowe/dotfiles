@@ -157,6 +157,11 @@ if [[ -f "$HOME/.local/ai/profiles.conf" ]]; then
   }
 fi
 
+# Opt-in Ornith support; keep the current Pi profile and extensions.
+pi-local() {
+  pi --extension "$HOME/dotfiles/pi/manual-extensions/local-model-support/index.ts" --model llama.cpp/ornith_1.5 "$@"
+}
+
 # Pair programming mode: only the pair skill loaded, no other extensions/skills
 pipair() {
   pi --no-extensions --no-skills --skill ~/dotfiles/ai/skills/pair "$@"
@@ -262,17 +267,19 @@ bindkey -M viins "jk" vi-cmd-mode
 
 # Auto-attach to tmux (only for interactive shells)
 #if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
-if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ ! -f /.dockerenv ]] && [[ -z "$TMUX" ]] && command -v tmux &>/dev/null; then
-    if tmux has-session -t Pasta 2>/dev/null; then
-        if tmux has-session -t Salad 2>/dev/null; then
-            tmux attach-session -d -t Pasta
-        else
-            tmux new-session -s Salad
-        fi
-    else 
-        tmux new-session -s Pasta
-    fi
-fi
+# if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ ! -f /.dockerenv ]] && [[ -z "$TMUX" ]] && command -v tmux &>/dev/null; then
+#     if tmux has-session -t Pasta 2>/dev/null; then
+#         if tmux has-session -t Salad 2>/dev/null; then
+#             tmux attach-session -d -t Pasta
+#         else
+#             tmux new-session -s Salad
+#         fi
+#     else
+#         tmux new-session -s Pasta
+#     fi
+# fi
+
+alias tn="tmux new-session -s"
 
 # Sync Pi profiles: shared dotfiles + machine-local overrides
 [[ -f "$HOME/dotfiles/ai/sync.sh" ]] && bash "$HOME/dotfiles/ai/sync.sh"
